@@ -1,4 +1,4 @@
-<table name="Crackdown Assets - Player Overhaul" min_lib_ver="4.3" global_key="deathvoxcore">
-	<AssetUpdates id="Crackdown-PD2/Crackdown-Assets-Overhaul" branch="main" provider="github" version="1.0.0" release="true" important="false" dont_delete="false">
+<mod name="Crackdown Assets - Player Overhaul" min_lib_ver="4.3">
+	<AssetUpdates id="Crackdown-PD2/Crackdown-Assets-Overhaul" branch="main" provider="github" version="1.0.0" release="true" important="false" dont_delete="false"/>
 	<XML path="crackdownplayeroverhaul.xml" use_clbk="deathvox:IsTotalCrackdownEnabled"/>
-</table>
+</mod>
