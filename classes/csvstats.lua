@@ -8,7 +8,7 @@ _G.CSVStatReader = {
 	
 	DAMAGE_CAP = 210, --damage is technically on a lookup table from 0 to 210
 	IGNORED_HEADERS = 2,
-	INPUT_DIRECTORY = deathvox.ModPath .. "csv/",
+	INPUT_DIRECTORY = "csv/",
 	WEAPONS_SUBDIR = "weapons/",
 	ATTACHMENTS_SUBDIR = "attachments/",
 	MELEES_SUBDIR = "melees/",
@@ -395,7 +395,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 	local olog = self.log
 	local DAMAGE_CAP = self.DAMAGE_CAP
 	local IGNORED_HEADERS = self.IGNORED_HEADERS
-	local input_directory = self.INPUT_DIRECTORY
+	local input_directory = deathvox.ModPath .. self.INPUT_DIRECTORY
 	
 	local target_subdir = input_directory .. self.WEAPONS_SUBDIR
 	
@@ -865,7 +865,7 @@ function CSVStatReader:read_melees()
 	local olog = self.log
 	local DAMAGE_CAP = self.DAMAGE_CAP
 	local IGNORED_HEADERS = self.IGNORED_HEADERS
-	local input_directory = self.INPUT_DIRECTORY
+	local input_directory = deathvox.ModPath .. self.INPUT_DIRECTORY
 end
 
 function CSVStatReader:read_attachments(parent_tweak_data)
@@ -886,7 +886,7 @@ function CSVStatReader:read_attachments(parent_tweak_data)
 	local olog = self.log
 --	local DAMAGE_CAP = self.DAMAGE_CAP
 	local IGNORED_HEADERS = self.IGNORED_HEADERS
-	local input_directory = self.INPUT_DIRECTORY
+	local input_directory = deathvox.ModPath .. self.INPUT_DIRECTORY
 	
 	local target_subdir = input_directory .. self.ATTACHMENTS_SUBDIR
 	
@@ -1111,6 +1111,7 @@ function CSVStatReader:read_attachments(parent_tweak_data)
 							--so that each attachment can inherit stats from the base game's stats
 							--instead of overwriting the base stats immediately and then using that as the template for the next attachments
 							local part_data = {
+								supported = true,
 								part_id = attachment_id
 							}
 							
@@ -1125,6 +1126,7 @@ function CSVStatReader:read_attachments(parent_tweak_data)
 								concealment = concealment,
 								suppression = suppression,
 								reload = reload_mul,
+								alert_size = alert_size,
 								zoom = zoom,
 								value = value
 							}
