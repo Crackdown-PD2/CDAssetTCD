@@ -1054,7 +1054,7 @@ function CSVStatReader:read_attachments(parent_tweak_data)
 							
 							--Reload Multiplier
 							local reload_mul
-							local _reload_mul = raw_csv_values[STAT_INDICES.reload_internal]
+							local _reload_mul = raw_csv_values[STAT_INDICES.reload]
 							if not_empty(_reload_mul) then 
 								--pre-converted
 								reload_mul = tonumber(_reload_mul)
