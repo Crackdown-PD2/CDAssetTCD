@@ -4,7 +4,7 @@
 --requres utf8.to_lower() from PAYDAY 2's utf8 util library
 
 _G.CSVStatReader = {
-	debug_mode_enabled = true, 
+	debug_mode_enabled = false, 
 	
 	DAMAGE_CAP = 210, --damage is technically on a lookup table from 0 to 210
 	IGNORED_HEADERS = 2,
@@ -929,6 +929,9 @@ function CSVStatReader:read_attachments(parent_tweak_data)
 								if _bm_weapon_id then 
 									--is valid weapon
 									bm_weapon_id = _bm_weapon_id 
+									if not parent_tweak_data[bm_weapon_id] then
+										olog("Warning: weapon may not exist for bm_weapon_id: " .. tostring(bm_weapon_id))
+									end
 								else
 									olog("Error: bad bm_weapon_id: " .. tostring(raw_csv_values[STAT_INDICES.weapon_override]))
 								end
