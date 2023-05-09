@@ -5,7 +5,10 @@
 
 _G.CSVStatReader = {
 	debug_mode_enabled = false, 
-	
+	SEVERITY = {
+		FATAL = 1,
+		WARNING = 2
+	},
 	DAMAGE_CAP = 210, --damage is technically on a lookup table from 0 to 210
 	IGNORED_HEADERS = 2,
 	INPUT_DIRECTORY = "csv/",
@@ -216,10 +219,19 @@ for i = 1,41 do
 	CSVStatReader.TOTAL_AMMO_LOOKUP[i] = (i-21) * 0.05
 end
 
-function CSVStatReader.log(s)
+function CSVStatReader.log(s,sev_index)
 -- [[
+	local color,params
+	if sev_index == CSVStatReader.SEVERITY.FATAL then 
+		color = Color("ff6262")
+	elseif sev_index == CSVStatReader.SEVERITY.WARNING then 
+		color = Color("ffff00")
+	end
+	if color then
+		params = { color = color }
+	end
 	if Console and Console.Log then
-		Console:Log("TCD csv Parser: " .. s)
+		Console:Log("TCD csv Parser: " .. s,params)
 	end
 --]]
 end
@@ -393,6 +405,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 	local table_concat = self.table_concat
 	
 	local olog = self.log
+	local SEVERITY = self.SEVERITY
 	local DAMAGE_CAP = self.DAMAGE_CAP
 	local IGNORED_HEADERS = self.IGNORED_HEADERS
 	local input_directory = deathvox.ModPath .. self.INPUT_DIRECTORY
@@ -420,7 +433,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 					if not_empty(weapon_id) and not_null(weapon_id) then 
 						local wtd = parent_tweak_data[weapon_id]
 						if wtd then --found valid weapon data to edit
-							olog("Processing weapon id " .. tostring(weapon_id) .. " (line " .. tostring(line_num) .. ")")
+							olog("Processing weapon id " .. tostring(weapon_id) .. " (line " .. tostring(line_num) .. ")",SEVERITY.WARNING)
 							
 							--Primary class
 							local primary_class
@@ -432,7 +445,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 								elseif self.PRIMARY_CLASS_NAME_LOOKUP[_primary_class] then 
 									primary_class = self.PRIMARY_CLASS_NAME_LOOKUP[_primary_class]
 								else
-									olog("Error: bad primary_class: " .. tostring(raw_csv_values[STAT_INDICES.primary_class]))
+									olog("Error: bad primary_class: " .. tostring(raw_csv_values[STAT_INDICES.primary_class]),SEVERITY.ERROR)
 									return
 								end
 							end
@@ -451,14 +464,14 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 									elseif self.SUBCLASS_NAME_LOOKUP[_secondary_class] then
 										secondary_class = self.SUBCLASS_NAME_LOOKUP[_secondary_class]
 									else
-										olog("Unknown secondary class " .. tostring(_secondary_class))
+										olog("Unknown secondary class " .. tostring(_secondary_class),SEVERITY.WARNING)
 									end
 									
 									if secondary_class then 
 										if secondary_class ~= "" and not table.contains(secondary_classes,secondary_class) then 
 											table.insert(secondary_classes,secondary_class)
 										else
-											olog("Error: bad subclass: " .. tostring(_secondary_class))
+											olog("Error: bad subclass: " .. tostring(_secondary_class),SEVERITY.WARNING)
 											--subclass is not required so don't break here
 										end
 									end
@@ -472,7 +485,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 							local _magazine = raw_csv_values[STAT_INDICES.magazine]
 							magazine = not_empty(_magazine) and math.floor(tonumber(_magazine))
 							if not magazine then 
-								olog("Error: bad magazine size: " .. tostring(magazine))
+								olog("Error: bad magazine size: " .. tostring(magazine),SEVERITY.FATAL)
 								return
 							end
 							
@@ -483,7 +496,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 							local _total_ammo = raw_csv_values[STAT_INDICES.total_ammo]
 							total_ammo = not_empty(_total_ammo) and tonumber(_total_ammo)
 							if not total_ammo then 
-								olog("Error: bad total_ammo size: " .. tostring(_total_ammo))
+								olog("Error: bad total_ammo size: " .. tostring(_total_ammo),SEVERITY.FATAL)
 								return
 							end
 							
@@ -495,7 +508,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 							local _fire_rate = raw_csv_values[STAT_INDICES.fire_rate]
 							fire_rate = not_empty(_fire_rate) and convert_rof(tonumber(_fire_rate))
 							if not fire_rate then 
-								olog("Error: bad fire_rate: " .. tostring(_fire_rate))
+								olog("Error: bad fire_rate: " .. tostring(_fire_rate),SEVERITY.FATAL)
 								return
 							end
 							
@@ -511,7 +524,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 									damage = DAMAGE_CAP
 								end
 							else
-								olog("Error: bad damage: " .. tostring(_damage))
+								olog("Error: bad damage: " .. tostring(_damage),SEVERITY.FATAL)
 								return
 							end
 							
@@ -525,7 +538,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 								spread = convert_accstab(accuracy)
 							end
 							if not spread then 
-								olog("Error: bad accuracy: " .. tostring(_accuracy))
+								olog("Error: bad accuracy: " .. tostring(_accuracy),SEVERITY.FATAL)
 								return
 							end
 							
@@ -538,7 +551,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 								recoil = convert_accstab(stability)
 							end
 							if not recoil then 
-								olog("Error: bad stability: " .. tostring(_stability))
+								olog("Error: bad stability: " .. tostring(_stability),SEVERITY.FATAL)
 								return
 							end
 							
@@ -548,7 +561,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 							local _concealment = raw_csv_values[STAT_INDICES.concealment]
 							concealment = not_empty(_concealment) and tonumber(_concealment)
 							if not concealment then
-								olog("Error: bad concealment: " .. tostring(_concealment))
+								olog("Error: bad concealment: " .. tostring(_concealment),SEVERITY.FATAL)
 								return
 							end
 							
@@ -566,7 +579,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 								suppression = convert_threat(threat)
 							end
 							if not suppression then
-								olog("Error: bad suppression: " .. tostring(_concealment))
+								olog("Error: bad suppression: " .. tostring(_concealment),SEVERITY.FATAL)
 								return
 							end
 							--]]
@@ -592,7 +605,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 								end
 							end
 							if not fire_mode then 
-								olog("Error: Bad firemode: " .. tostring(_firemode))
+								olog("Error: Bad firemode: " .. tostring(_firemode),SEVERITY.WARNING)
 							end
 							--]]
 							
@@ -623,7 +636,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 							local _reload_partial = raw_csv_values[STAT_INDICES.reload_partial]
 							reload_partial = not_empty(_reload_partial) and tonumber(_reload_partial)
 							if not reload_partial then
-								olog("Error: bad reload_partial: " .. tostring(_reload_partial))
+								olog("Error: bad reload_partial: " .. tostring(_reload_partial),SEVERITY.FATAL)
 								return
 							end
 							
@@ -633,7 +646,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 							local _reload_full = raw_csv_values[STAT_INDICES.reload_full]
 							reload_full = not_empty(_reload_full) and tonumber(_reload_full)
 							if not reload_full then
-								olog("Error: bad reload_full: " .. tostring(_reload_full))
+								olog("Error: bad reload_full: " .. tostring(_reload_full),SEVERITY.FATAL)
 								return
 							end
 							
@@ -643,7 +656,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 							local _equip = raw_csv_values[STAT_INDICES.equip]
 							equip = not_empty(_equip) and tonumber(_equip)
 							if not equip then 
-								olog("Error: bad equip timer: " .. tostring(_equip))
+								olog("Error: bad equip timer: " .. tostring(_equip),SEVERITY.FATAL)
 								return
 							end
 							unequip = equip
@@ -655,7 +668,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 								local _unequip = raw_csv_values[STAT_INDICES.unequip]
 								local unequip = not_empty(_unequip) and tonumber(_unequip)
 								if not unequip then 
-									olog("Error: bad unequip timer: " .. tostring(_unequip))
+									olog("Error: bad unequip timer: " .. tostring(_unequip),SEVERITY.FATAL)
 									return
 								end
 								--]]
@@ -701,7 +714,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 							local _pickup_high = raw_csv_values[STAT_INDICES.pickup_high]
 							pickup_high = not_empty(_pickup_high) and tonumber(_pickup_high)
 							if not (pickup_low and pickup_high) then 
-								olog("Error: bad pickup stat(s): " .. tostring(_pickup_low) .. ", " .. tostring(_pickup_high))
+								olog("Error: bad pickup stat(s): " .. tostring(_pickup_low) .. ", " .. tostring(_pickup_high),SEVERITY.FATAL)
 								return
 							end
 							
@@ -752,7 +765,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 							local _kick_x_max = raw_csv_values[STAT_INDICES.kick_x_max]
 							local kick_x_max = not_empty(_kick_x_max) and tonumber(_kick_x_max)
 							if not (kick_y_min and kick_y_max and kick_x_min and kick_x_max) then 
-								olog("Error: Bad kick value(s): [ " .. table_concat({_kick_y_min,_kick_y_max,_kick_x_min,_kick_x_max}," / ") .. " ]")
+								olog("Error: Bad kick value(s): [ " .. table_concat({_kick_y_min,_kick_y_max,_kick_x_min,_kick_x_max}," / ") .. " ]",SEVERITY.FATAL)
 								return
 							end
 							--]]
@@ -835,7 +848,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 								self.debug_data.weapons[line_num] = new_stats
 							end
 						else
-							olog("Error! No weapon stats exist for weapon with id: [" .. tostring(weapon_id) .. "]") 
+							olog("Error! No weapon stats exist for weapon with id: [" .. tostring(weapon_id) .. "]",SEVERITY.WARNING) 
 						end
 					end
 				end
@@ -844,7 +857,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 			input_file:close()
 			olog("Stat reading complete.")
 		else
-			olog("Error! Bad file type: " .. tostring(extension))
+			olog("Error! Bad file type: " .. tostring(extension),SEVERITY.FATAL)
 		end
 	end
 
@@ -863,6 +876,7 @@ function CSVStatReader:read_melees()
 	local table_concat = self.table_concat
 	
 	local olog = self.log
+	local SEVERITY = self.SEVERITY
 	local DAMAGE_CAP = self.DAMAGE_CAP
 	local IGNORED_HEADERS = self.IGNORED_HEADERS
 	local input_directory = deathvox.ModPath .. self.INPUT_DIRECTORY
@@ -884,6 +898,7 @@ function CSVStatReader:read_attachments(parent_tweak_data)
 	local table_concat = self.table_concat
 	
 	local olog = self.log
+	local SEVERITY = self.SEVERITY
 --	local DAMAGE_CAP = self.DAMAGE_CAP
 	local IGNORED_HEADERS = self.IGNORED_HEADERS
 	local input_directory = deathvox.ModPath .. self.INPUT_DIRECTORY
@@ -930,10 +945,10 @@ function CSVStatReader:read_attachments(parent_tweak_data)
 									--is valid weapon
 									bm_weapon_id = _bm_weapon_id 
 									if not parent_tweak_data[bm_weapon_id] then
-										olog("Warning: weapon may not exist for bm_weapon_id: " .. tostring(bm_weapon_id))
+										olog("Warning: weapon may not exist for bm_weapon_id: " .. tostring(bm_weapon_id),SEVERITY.WARNING)
 									end
 								else
-									olog("Error: bad bm_weapon_id: " .. tostring(raw_csv_values[STAT_INDICES.weapon_override]))
+									olog("Warning: bad bm_weapon_id: " .. tostring(raw_csv_values[STAT_INDICES.weapon_override]),SEVERITY.WARNING)
 								end
 							end
 							
@@ -946,7 +961,7 @@ function CSVStatReader:read_attachments(parent_tweak_data)
 								elseif self.PRIMARY_CLASS_NAME_LOOKUP[_primary_class] then 
 									primary_class = self.PRIMARY_CLASS_NAME_LOOKUP[_primary_class]
 								else
-									olog("Error: bad primary_class: " .. tostring(raw_csv_values[STAT_INDICES.primary_class]))
+									olog("Error: bad primary_class: " .. tostring(raw_csv_values[STAT_INDICES.primary_class]),SEVERITY.FATAL)
 									return
 								end
 							end
@@ -968,7 +983,7 @@ function CSVStatReader:read_attachments(parent_tweak_data)
 										if secondary_class ~= "" and not table.contains(secondary_classes,secondary_class) then 
 											table.insert(secondary_classes,secondary_class)
 										else
-											olog("Error: bad subclass: " .. tostring(_secondary_class))
+											olog("Error: bad subclass: " .. tostring(_secondary_class),SEVERITY.WARNING)
 											--subclass is not required so don't break here
 										end
 									end
@@ -1221,7 +1236,7 @@ function CSVStatReader:read_attachments(parent_tweak_data)
 				ptd.supported = true
 			end
 		else
-			olog("Error: Tried to add data to nonexistent/unknown part: " .. tostring(attachment_id) .. "!")
+			olog("Error: Tried to add data to nonexistent/unknown part: " .. tostring(attachment_id) .. "!",SEVERITY.WARNING)
 		end
 		
 	end
