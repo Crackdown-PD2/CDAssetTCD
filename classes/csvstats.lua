@@ -1226,6 +1226,11 @@ function CSVStatReader:read_attachments(parent_tweak_data)
 			--fields must be manually selected in WeaponFactoryManager:_part_data()
 			for bm_weapon_id,part_data in pairs(attachment_data.bm_override) do 
 				ptd.tcd_stats[bm_weapon_id] = part_data
+				
+				--disable vanilla part override for this weapon/attachment combo
+				if parent_tweak_data[bm_weapon_id] and parent_tweak_data[bm_weapon_id].override then
+					parent_tweak_data[bm_weapon_id].override[attachment_id] = nil
+				end
 			end
 			
 			--eventually this should be phased out
