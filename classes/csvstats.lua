@@ -408,7 +408,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 	local SEVERITY = self.SEVERITY
 	local DAMAGE_CAP = self.DAMAGE_CAP
 	local IGNORED_HEADERS = self.IGNORED_HEADERS
-	local input_directory = deathvox.ModPath .. self.INPUT_DIRECTORY
+	local input_directory = deathvox_overhaul:GetPath() .. self.INPUT_DIRECTORY
 	
 	local target_subdir = input_directory .. self.WEAPONS_SUBDIR
 	
@@ -879,7 +879,7 @@ function CSVStatReader:read_melees()
 	local SEVERITY = self.SEVERITY
 	local DAMAGE_CAP = self.DAMAGE_CAP
 	local IGNORED_HEADERS = self.IGNORED_HEADERS
-	local input_directory = deathvox.ModPath .. self.INPUT_DIRECTORY
+	local input_directory = deathvox_overhaul:GetPath() .. self.INPUT_DIRECTORY
 end
 
 function CSVStatReader:read_attachments(parent_tweak_data)
@@ -901,7 +901,7 @@ function CSVStatReader:read_attachments(parent_tweak_data)
 	local SEVERITY = self.SEVERITY
 --	local DAMAGE_CAP = self.DAMAGE_CAP
 	local IGNORED_HEADERS = self.IGNORED_HEADERS
-	local input_directory = deathvox.ModPath .. self.INPUT_DIRECTORY
+	local input_directory = deathvox_overhaul:GetPath() .. self.INPUT_DIRECTORY
 	
 	local target_subdir = input_directory .. self.ATTACHMENTS_SUBDIR
 	
