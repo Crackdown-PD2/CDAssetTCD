@@ -303,7 +303,7 @@ function CSVStatReader.convert_rof(rpm) --converts rounds per minute to seconds 
 end
 
 function CSVStatReader.convert_accstab(stat) --converts acc/stab from a [0-100] value to the weird internal multiple of 4 stat thing pd2 has going on
-	return math.round((stat + 4) / 4)
+	return math.round(stat / 4)
 end
 
 function CSVStatReader.convert_threat(target_threat)
@@ -397,7 +397,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 	
 	local convert_threat = self.convert_threat
 	local convert_boolean = self.convert_boolean
-	local convert_accstab = self.convert_accstab
+	local convert_accstab = self.convert_accstab --important note: weapon acc/stab values are off by an index of +1 compared to attachmentns
 	local convert_rof = self.convert_rof
 	local remove_extra_spaces = self.remove_extra_spaces
 	local not_empty = self.not_empty
@@ -535,7 +535,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 							local _accuracy = raw_csv_values[STAT_INDICES.accuracy]
 							local accuracy = not_empty(_accuracy) and tonumber(_accuracy)
 							if accuracy then 
-								spread = convert_accstab(accuracy)
+								spread = convert_accstab(accuracy) + 1
 							end
 							if not spread then 
 								olog("Error: bad accuracy: " .. tostring(_accuracy),SEVERITY.FATAL)
@@ -548,7 +548,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 							local _stability = raw_csv_values[STAT_INDICES.stability]
 							local stability = not_empty(_stability) and tonumber(_stability)
 							if stability then
-								recoil = convert_accstab(stability)
+								recoil = convert_accstab(stability) + 1
 							end
 							if not recoil then 
 								olog("Error: bad stability: " .. tostring(_stability),SEVERITY.FATAL)
@@ -729,7 +729,7 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 							--spread_moving (inherited
 							local spread_moving
 							local _spread_moving = raw_csv_values[STAT_INDICES.spread_moving]
-							spread_moving = not_empty(_spread_moving) and convert_accstab(tonumber(_spread_moving))
+							spread_moving = not_empty(_spread_moving) and convert_accstab(tonumber(_spread_moving)) + 1
 							--]]
 							
 							--assorted piercing stats
@@ -772,8 +772,12 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 							
 							local spread_moving
 							local _spread_moving = raw_csv_values[STAT_INDICES.spread_moving]
-							spread_moving = not_empty(_spread_moving) and convert_accstab(tonumber(_spread_moving))
-							
+							if not_empty(_spread_moving) then 
+								_spread_moving = tonumber(_spread_moving)
+								if _spread_moving then
+									spread_moving = convert_accstab(_spread_moving) + 1
+								end
+							end
 							
 							wtd.primary_class = primary_class
 							wtd.subclasses = secondary_classes
@@ -863,14 +867,11 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 
 end
 
-function CSVStatReader:read_melees()
+function CSVStatReader:read_melees() --not implemented
 	local file_util = _G.FileIO
 	local path_util = BeardLib.Utils.Path
 	
-	local convert_threat = self.convert_threat
 	local convert_boolean = self.convert_boolean
-	local convert_accstab = self.convert_accstab
-	local convert_rof = self.convert_rof
 	local remove_extra_spaces = self.remove_extra_spaces
 	local not_empty = self.not_empty
 	local table_concat = self.table_concat
