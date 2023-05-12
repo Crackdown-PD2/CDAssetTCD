@@ -243,7 +243,7 @@ wpn_fps_upg_a_grenade_launcher_incendiary,Incendiary Round,wpn_fps_gre_m32,,Area
 wpn_fps_saw_body_silent,Silent Motor,,,,,,,0,-200,,,,,10,,,,0,,9,,,,,,,,,,,
 wpn_fps_saw_body_speed,Fast Motor,,,,,,,0,400,,,,,-20,,,,0,,,,,,,,,,,,,
 wpn_fps_saw_m_blade_durable,Durable Blade,,,,100,,,0,,-5,,,,,,,,0,,,,,,,,,,,,,
-wpn_fps_saw_m_blade_sharp,Sharp Blade,,,,-100,,,0,,,,,,,,,,0,,,,,,,,,,,,,
+wpn_fps_saw_m_blade_sharp,Sharp Blade,,,,-100,,,0,,5,,,,,,,,0,,,,,,,,,,,,,
 ,>SECONDARY WEAPONS,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 ,[Chimano 88],glock_17,,,,,,,,,,,,,,,,0,,,,,,,,,,,,,
 wpn_fps_pis_g18c_m_mag_33rnd,Extended Magazine,wpn_fps_pis_g17,,,12,,,0,,,,,,-3,,,,0,,,,,,,,,,,,,
