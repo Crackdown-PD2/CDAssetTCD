@@ -6,11 +6,6 @@
 		<animation path="anims/fps/unarmed/throw_tripmine_throwable_idle" force="true" load="true" unload="false"/>
 		<animation path="anims/fps/unarmed/throw_tripmine_throwable_equip" force="true" load="true" unload="false"/>
 		
-		<object 		path="units/equipment/tripmine_throwable/tripmine_throwable_dummy"/>
-		<cooked_physics path="units/equipment/tripmine_throwable/tripmine_throwable_dummy"/>
-		<material_conf 	path="units/equipment/tripmine_throwable/tripmine_throwable_dummy"/>
-		<model 			path="units/equipment/tripmine_throwable/tripmine_throwable_dummy"/> 
-		<unit 			path="units/equipment/tripmine_throwable/tripmine_throwable_dummy"/>
-		
+		<unit_mat path="units/equipment/tripmine_throwable/tripmine_throwable_dummy"/>
 	</AddFiles>
 </mod> 
