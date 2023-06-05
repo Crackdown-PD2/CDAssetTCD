@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<unit type="wpn" slot="1">
+	<object file="units/pd2_dlc_pim/weapons/wpn_prj_target/wpn_prj_target_husk" />
+	<extensions>
+		<extension name="unit_data" class="ScriptUnitData" />
+	</extensions>
+</unit>

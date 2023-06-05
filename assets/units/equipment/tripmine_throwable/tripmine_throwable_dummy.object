@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<dynamic_object>
+	<diesel materials="units/equipment/tripmine_throwable/tripmine_throwable_dummy" orientation_object="rp_wpn_prj_target_husk" />
+	<graphics>
+		<object name="g_g" enabled="true" />
+	</graphics>
+</dynamic_object>

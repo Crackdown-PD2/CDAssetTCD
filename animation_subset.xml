@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<tweaks>
+	<tweak version="2" name="anims/fps/fps_spawn" extension="animation_subset">
+		<search>
+			<xml/>
+			<anim name="throw_target_equip"/>
+		</search>
+		<target mode="append">
+			<anim name="throw_tripmine_throwable" file="anims/fps/unarmed/throw_tripmine_throwable" blend_set="all"/>
+			<anim name="throw_tripmine_throwable_idle" file="anims/fps/unarmed/throw_tripmine_throwable_idle" blend_set="all"/>
+			<anim name="throw_tripmine_throwable_equip" file="anims/fps/unarmed/throw_tripmine_throwable_equip" blend_set="all"/>
+		</target>
+	</tweak>
+</tweaks>
