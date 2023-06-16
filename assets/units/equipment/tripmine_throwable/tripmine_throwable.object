@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<dynamic_object>
+	<diesel materials="units/equipment/tripmine_throwable/tripmine_throwable_dummy" orientation_object="g_g" />
+	<bodies>
+		<!--error in havok forces pushed_by_mover="false" to be used to not collide with mover-->
+			<!--
+		<body name="dynamic_body" collision_class="projectile" collision_script_filter="0" collision_script_quiet_time="0.0" collision_script_tag="impact" enabled="true" template="small_prop" friction="0.5" sweep="true" restitution="0.4" lin_damping="0" ang_damping="0" pushed_by_mover="false">
+			<object name="g_g" enabled="true" collision_type="sphere" mass="0.4" padding="-2.5" />
+			<object name="c_sphere" enabled="true" collision_type="sphere" mass="0.4" padding="-2.5" />
+			<object name="c_box" enabled="true" collision_type="box" mass="0.1" padding="-2.5" />
+		</body>
+			-->
+		<!--error in havok forces pushed_by_mover="false" to be used to not collide with mover-->
+		<!--
+		<body name="dynamic_body_spinn" collision_class="minor_debris" collision_script_filter="0" collision_script_quiet_time="0.0" collision_script_tag="impact" enabled="true" template="small_prop" friction="0.5" sweep="true" restitution="0.4" lin_damping="0" ang_damping="0" pushed_by_mover="false">
+			<object name="c_sphere_2" enabled="true" collision_type="sphere" mass="0.5" padding="-2.5" />
+		</body>
+		-->
+	</bodies>
+	<graphics>
+		<object name="g_g" enabled="true" />
+	</graphics>
+</dynamic_object>

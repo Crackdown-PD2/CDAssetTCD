@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<unit type="gen" slot="13">
+	<network sync="spawn" />
+	<object file="units/equipment/tripmine_throwable/tripmine_throwable_dummy" />
+	<extensions>
+		<extension name="base" class="TripmineThrowable" >
+			<var name="_tweak_projectile_entry" value="tripmine_throwable" />
+		</extension>
+		<extension name="unit_data" class="ScriptUnitData" />
+		<extension name="damage" class="UnitDamage" >
+			<var name="_skip_give_body_collision_damage" value="true" />
+		</extension>
+		<extension name="contour" class="ContourExt" />
+	</extensions>
+	<sounds>
+		<default_soundsource source="g_g" />
+		<soundsource name="snd" source="g_g" />
+	</sounds>
+</unit>
