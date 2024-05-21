@@ -16,7 +16,6 @@
 	
 	
 	<AddFiles name="tcd_addfiles" directory="assets" use_clbk="deathvox:IsTotalCrackdownEnabled">
-	
 	<!-- Shotgun Choke attachment assets -->
 		<texture path="guis/textures/pd2/blackmarket/inv_mod_choke"/>
 		<texture path="guis/dlcs/mods/textures/pd2/blackmarket/icons/mods/wpn_fps_sho_choke_a"/>
@@ -35,9 +34,28 @@
 		<texture path="guis/textures/pd2/skilltree_2/icons_atlas_2"/>
 		<texture path="guis/textures/pd2/specialization/icons_atlas"/>
 	
-	<!-- Equipment/throwables -->
-		<texture path="guis/textures/pd2/blackmarket/icons/grenades/tripmine_throwable" force="false"/>
+	<!-- Friendship Collar (Replaces the Silenced Sentry Gun) -->
 		<texture path="guis/textures/pd2/blackmarket/icons/deployables/sentry_gun_silent"/>
+		
+	<!-- Throwable Tripmine -->
+		<texture path="guis/textures/pd2/blackmarket/icons/grenades/tripmine_throwable" force="false"/>
+		
+		<animation path="anims/fps/unarmed/throw_tripmine_throwable" force="true" load="true" unload="false"/>
+		<animation path="anims/fps/unarmed/throw_tripmine_throwable_idle" force="true" load="true" unload="false"/>
+		<animation path="anims/fps/unarmed/throw_tripmine_throwable_equip" force="true" load="true" unload="false"/>
+		
+		<unit_mat path="units/equipment/tripmine_throwable/tripmine_throwable_dummy"/>
+		<unit path="units/equipment/tripmine_throwable/tripmine_throwable"/>
+		<object path="units/equipment/tripmine_throwable/tripmine_throwable"/>
+		
+		<!--
+		<animation path="anims/fps/unarmed/throw_tripmine_throwable"/>
+		<animation path="anims/fps/unarmed/throw_tripmine_throwable_equip"/>
+		<animation path="anims/fps/unarmed/throw_tripmine_throwable_idle"/>
+		<model path="units/pd2_mod_throwabletripmine/wpn_tripmine_throwable"/>
+		<material_config path="units/pd2_mod_throwabletripmine/wpn_tripmine_throwable"/>
+		-->
+		
 		
 	<!-- Sociopath perk deck assets -->
 		<texture path="guis/textures/pd2/hud_health_sociopath" />
