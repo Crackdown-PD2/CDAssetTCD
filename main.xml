@@ -1,4 +1,4 @@
-<mod name="Crackdown Assets - Player Overhaul" priority="1" min_lib_ver="4.3" global_key="deathvox_overhaul">
+<mod name="Crackdown Assets - Player Overhaul" priority="1" min_lib_ver="4.3" global_key="DeathvoxOverhaul" >
 <!--
 	<AssetUpdates id="Crackdown-PD2/Crackdown-Assets-Overhaul" branch="standalone" provider="github" version="1.1.1" release="true" important="false" dont_delete="false"/>
 	-->
