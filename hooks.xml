@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<hooks directory="lua">
+<!-- IOU some hooks
+	<hook post="true" file="lib/managers/menumanager.lua" source_file="lib/managers/menumanager"/>
+	<hook post="true" file="lua/lib/tweak_data/upgradestweakdata.lua" source_file="lib/tweak_data/upgradestweakdata"/>
+	<hook post="true" file="lua/lib/tweak_data/skilltreetweakdata.lua" source_file="lib/tweak_data/skilltreetweakdata"/>
+-->
+</hooks>

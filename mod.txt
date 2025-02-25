@@ -1,6 +1,6 @@
 {
 	"name" : "Crackdown Assets - Player Overhaul",
-	"description" : "Required assets for Total Crackdown, the player-side overhaul in Crackdown.",
+	"description" : "Standalone version of the Total Crackdown Player-Side Overhaul",
 	"author" : "The Crackdown Team",
 	"contact" : "https://discord.gg/BdN4as7",
 	"blt_version" : 2,

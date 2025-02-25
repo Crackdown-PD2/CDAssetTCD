@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <table name="tcd_modules">
 	
-	<Hooks name="tcd_hooks">
+	<Hooks name="tcd_hook_csvstats">
 	<!-- since csvstats is used to replace/edit tweakdata, it must be loaded even earlier than the classes module is able to -->
 		<hook pre="true" file="classes/csvstats.lua" source_file="lib/entry"/>
 	</Hooks>
@@ -15,7 +15,7 @@
 	</Classes>
 	
 	
-	<AddFiles name="tcd_addfiles" directory="assets" use_clbk="deathvox:IsTotalCrackdownEnabled">
+	<AddFiles name="tcd_addfiles" directory="assets">
 	
 	<!-- Shotgun Choke attachment assets -->
 		<texture path="guis/textures/pd2/blackmarket/inv_mod_choke"/>
