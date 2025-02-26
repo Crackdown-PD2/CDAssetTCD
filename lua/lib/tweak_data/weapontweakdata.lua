@@ -57,9 +57,9 @@ Hooks:PostHook(WeaponTweakData, "_init_data_player_weapons", "tcd_weapontd_load_
 -- The structure of weapon stats in the game data is still the same,
 -- but now, TCD weapon stats are entered in a spreadsheet, downloaded as csvs, and parsed into game data. See below for the link:
 -- https://docs.google.com/spreadsheets/d/1zZlGRYfnp6kHd6Vzm_pbJUCiLhY5pU-sWg_pYs-IQOU/edit#gid=0
----------------
+-- =================
 -- ********************************************************************************************************************************
----------------
+-- =================
 
 
 
@@ -135,31 +135,20 @@ Hooks:PostHook(WeaponTweakData, "_init_data_player_weapons", "tcd_weapontd_load_
 		ray = {0.005,0.005}
 	}
 	
-	
-	
-	--[[
 	do 
-		local csv_parser = DeathvoxOverhaul:require("lua/classes/csvstats.lua")
-		
-		
-		
-		
+		local csv_parser = assert(DeathvoxOverhaulCore:require("lua/classes/csvstats"),"CSV Stat Parser could not be loaded!")
 		local file_util = _G.FileIO
 		local path_util = BeardLib.Utils.Path
 		
-		for _,filename in pairs(file_util:GetFiles(path)) do
-			
+		for _,filename in pairs(file_util:GetFiles(TotalCrackdown._CSV_WEAPONS_PATH)) do
 			local extension = utf8.to_lower(path_util:GetFileExtension(filename))
 			if extension == "csv" then 
+				csv_parser:read_firearms(self,TotalCrackdown._CSV_WEAPONS_PATH .. filename)
 			else
-				olog("Error! Bad file type: " .. tostring(extension),SEVERITY.FATAL)
+				log("TotalCrackdown: Invalid filetype when parsing csv stats (" .. tostring(filename) .. ", " .. tostring(extension))
 			end
-		
-			olog("Stat reading complete.")
 		end
-		CSVStatReader:read_files("weapon",self)
 	end
-	--]]
 	
 --saw but again (secondary saw is cloned directly from saw stats as a special case)
 	self.saw_secondary = deep_clone(self.saw)

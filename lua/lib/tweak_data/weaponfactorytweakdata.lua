@@ -1,9 +1,23 @@
 Hooks:PostHook(WeaponFactoryTweakData, "init", "tcd_weaponfactd_init", function(self)
-	do return end
-	
+
 	-- Begin Total Crackdown Weapon Attachment materials
+	do 
+		local tcd_path = TotalCrackdown:GetPath()
+		
+		local csv_parser = assert(DeathvoxOverhaulCore:require("lua/classes/csvstats"),"CSV Stat Parser could not be loaded!")
+		local file_util = _G.FileIO
+		local path_util = BeardLib.Utils.Path
+		
+		for _,filename in pairs(file_util:GetFiles(TotalCrackdown._CSV_ATTACHS_PATH)) do
+			local extension = utf8.to_lower(path_util:GetFileExtension(filename))
+			if extension == "csv" then 
+				csv_parser:read_attachments(self,TotalCrackdown._CSV_ATTACHS_PATH .. filename)
+			else
+				log("DeathvoxOverhaul: Invalid filetype when parsing csv stats (" .. tostring(filename) .. ", " .. tostring(extension))
+			end
+		end
+	end
 	
-	--CSVStatReader:read_files("attachment",self)
 	--any manual adjustments should be written after read_files() 
 	
 --Mod stats info:
@@ -69,9 +83,9 @@ Hooks:PostHook(WeaponFactoryTweakData, "init", "tcd_weaponfactd_init", function(
 		"subclass_areadenial"
 	}
 	
-	--------------------------------------
+	-- ------------------------------------
 	--Shared Attachments--
-	--------------------------------------
+	-- ------------------------------------
 	
 	--auto and singlefire mods
 	self.parts.wpn_fps_upg_i_singlefire.stats = {value = 5}
