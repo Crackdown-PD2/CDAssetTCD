@@ -1,19 +1,17 @@
 Hooks:PostHook(WeaponFactoryTweakData, "init", "tcd_weaponfactd_init", function(self)
-
 	-- Begin Total Crackdown Weapon Attachment materials
 	do 
-		local tcd_path = TotalCrackdown:GetPath()
-		
+		local attachments_path = TotalCrackdown:GetPath() .. "csv/attachments/"
 		local csv_parser = assert(DeathvoxOverhaulCore:require("lua/classes/csvstats"),"CSV Stat Parser could not be loaded!")
 		local file_util = _G.FileIO
 		local path_util = BeardLib.Utils.Path
 		
-		for _,filename in pairs(file_util:GetFiles(TotalCrackdown._CSV_ATTACHS_PATH)) do
+		for _,filename in pairs(file_util:GetFiles(attachments_path)) do
 			local extension = utf8.to_lower(path_util:GetFileExtension(filename))
 			if extension == "csv" then 
-				csv_parser:read_attachments(self,TotalCrackdown._CSV_ATTACHS_PATH .. filename)
+				csv_parser:read_attachments(self,attachments_path .. filename)
 			else
-				log("DeathvoxOverhaul: Invalid filetype when parsing csv stats (" .. tostring(filename) .. ", " .. tostring(extension))
+				log("TotalCrackdown: Invalid filetype when parsing attachment csv stats (" .. tostring(attachments_path) .. "/" .. tostring(filename) .. ")")
 			end
 		end
 	end

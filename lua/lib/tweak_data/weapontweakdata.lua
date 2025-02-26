@@ -136,16 +136,18 @@ Hooks:PostHook(WeaponTweakData, "_init_data_player_weapons", "tcd_weapontd_load_
 	}
 	
 	do 
+		local weapons_path = TotalCrackdown:GetPath() .. "csv/weapons/"
 		local csv_parser = assert(DeathvoxOverhaulCore:require("lua/classes/csvstats"),"CSV Stat Parser could not be loaded!")
 		local file_util = _G.FileIO
 		local path_util = BeardLib.Utils.Path
 		
-		for _,filename in pairs(file_util:GetFiles(TotalCrackdown._CSV_WEAPONS_PATH)) do
+		for _,filename in pairs(file_util:GetFiles(weapons_path)) do
 			local extension = utf8.to_lower(path_util:GetFileExtension(filename))
 			if extension == "csv" then 
-				csv_parser:read_firearms(self,TotalCrackdown._CSV_WEAPONS_PATH .. filename)
+				log("TotalCrackdown: Reading: (" .. tostring(weapons_path) .. "/" .. tostring(filename))
+				csv_parser:read_firearms(self,weapons_path .. filename)
 			else
-				log("TotalCrackdown: Invalid filetype when parsing csv stats (" .. tostring(filename) .. ", " .. tostring(extension))
+				log("TotalCrackdown: Invalid filetype when parsing weapon csv stats (" .. tostring(weapons_path) .. "/" .. tostring(filename))
 			end
 		end
 	end
