@@ -391,10 +391,10 @@ function CSVStatReader:read_files(mode,parent_tweak_data)
 	end
 end
 
-function CSVStatReader:read_firearms(parent_tweak_data)
-	local file_util = _G.FileIO
-	local path_util = BeardLib.Utils.Path
-	
+function CSVStatReader:read_firearms(parent_tweak_data,path)
+	if not io.file_is_readable(path) then
+		error("CSVStatReader:read_firearms(): File could not be read:",path)
+	end
 	local convert_threat = self.convert_threat
 	local convert_boolean = self.convert_boolean
 	local convert_accstab = self.convert_accstab --important note: weapon acc/stab values are off by an index of +1 compared to attachmentns
@@ -408,466 +408,451 @@ function CSVStatReader:read_firearms(parent_tweak_data)
 	local SEVERITY = self.SEVERITY
 	local DAMAGE_CAP = self.DAMAGE_CAP
 	local IGNORED_HEADERS = self.IGNORED_HEADERS
-	local input_directory = deathvox_overhaul:GetPath() .. self.INPUT_DIRECTORY
-	
-	local target_subdir = input_directory .. self.WEAPONS_SUBDIR
 	
 	local STAT_INDICES = self.WEAPON_STAT_INDICES
+
+	local input_file = io.open(path)
+	self.log("Doing weapon stats file: [" .. tostring(path) .. "]")
 	
-	for _,filename in pairs(file_util:GetFiles(target_subdir)) do
+	local line_num = 0
+	for raw_line in input_file:lines() do 
+		line_num = line_num + 1
+		local raw_csv_values = string.split(raw_line,",",true) --csv values? nice. my favorite type of tea is chai tea
+		if line_num > IGNORED_HEADERS then 
 		
-		local extension = utf8.to_lower(path_util:GetFileExtension(filename))
-		if extension == "csv" then 
-			local input_file = io.open(target_subdir .. filename)
-			self.log("Doing weapon stats file: [" .. tostring(filename) .. "]")
-			
-			local line_num = 0
-			for raw_line in input_file:lines() do 
-			
-				line_num = line_num + 1
-				local raw_csv_values = string.split(raw_line,",",true) --csv values? nice. my favorite type of tea is chai tea
-				if line_num > IGNORED_HEADERS then 
-				
-					--weapon_id
-					local weapon_id = raw_csv_values[STAT_INDICES.id]
-					if not_empty(weapon_id) and not_null(weapon_id) then 
-						local wtd = parent_tweak_data[weapon_id]
-						if wtd then --found valid weapon data to edit
-							olog("Processing weapon id " .. tostring(weapon_id) .. " (line " .. tostring(line_num) .. ")",SEVERITY.WARNING)
-							
-							--Primary class
-							local primary_class
-							
-							local _primary_class = utf8.to_lower(raw_csv_values[STAT_INDICES.primary_class])
-							if _primary_class then
-								if self.VALID_PRIMARY_CLASSES[_primary_class] then
-									primary_class = _primary_class
-								elseif self.PRIMARY_CLASS_NAME_LOOKUP[_primary_class] then 
-									primary_class = self.PRIMARY_CLASS_NAME_LOOKUP[_primary_class]
-								else
-									olog("Error: bad primary_class: " .. tostring(raw_csv_values[STAT_INDICES.primary_class]),SEVERITY.ERROR)
-									return
-								end
-							end
-							
-							
-							--Secondary classes
-							local secondary_classes = {}
-							
-							local _secondary_classes = remove_extra_spaces(utf8.to_lower(raw_csv_values[STAT_INDICES.subclasses]))
-							if _secondary_classes and not_empty(_secondary_classes) then 
-								for _,_secondary_class in pairs(string.split(_secondary_classes,";") or {}) do 
-									_secondary_class = remove_extra_spaces(_secondary_class)
-									local secondary_class
-									if self.VALID_SUBCLASSES[_secondary_class] then 
-										secondary_class = _secondary_class
-									elseif self.SUBCLASS_NAME_LOOKUP[_secondary_class] then
-										secondary_class = self.SUBCLASS_NAME_LOOKUP[_secondary_class]
-									else
-										olog("Unknown secondary class " .. tostring(_secondary_class),SEVERITY.WARNING)
-									end
-									
-									if secondary_class then 
-										if secondary_class ~= "" and not table.contains(secondary_classes,secondary_class) then 
-											table.insert(secondary_classes,secondary_class)
-										else
-											olog("Error: bad subclass: " .. tostring(_secondary_class),SEVERITY.WARNING)
-											--subclass is not required so don't break here
-										end
-									end
-								end
-							end
-							
-							
-							--Magazine size (aka CLIP_AMMO_MAX)
-							local magazine
-							
-							local _magazine = raw_csv_values[STAT_INDICES.magazine]
-							magazine = not_empty(_magazine) and math.floor(tonumber(_magazine))
-							if not magazine then 
-								olog("Error: bad magazine size: " .. tostring(magazine),SEVERITY.FATAL)
-								return
-							end
-							
-							
-							--Total Ammo (aka Reserve Ammo) (not to be confused with total_ammo_mod)
-							local total_ammo
-							
-							local _total_ammo = raw_csv_values[STAT_INDICES.total_ammo]
-							total_ammo = not_empty(_total_ammo) and tonumber(_total_ammo)
-							if not total_ammo then 
-								olog("Error: bad total_ammo size: " .. tostring(_total_ammo),SEVERITY.FATAL)
-								return
-							end
-							
-							
-							--Fire Rate
-							local fire_rate
-							
---								fire_rate = tonumber(raw_csv_values[STAT_INDICES.fire_rate_internal])
-							local _fire_rate = raw_csv_values[STAT_INDICES.fire_rate]
-							fire_rate = not_empty(_fire_rate) and convert_rof(tonumber(_fire_rate))
-							if not fire_rate then 
-								olog("Error: bad fire_rate: " .. tostring(_fire_rate),SEVERITY.FATAL)
-								return
-							end
-							
-							
-							--Damage
-							local damage,damage_mul
-							
-							local _damage = raw_csv_values[STAT_INDICES.damage]
-							damage = not_empty(_damage) and tonumber(_damage)
-							if damage then 
-								if damage > DAMAGE_CAP then 
-									damage_mul = damage / DAMAGE_CAP
-									damage = DAMAGE_CAP
-								end
-							else
-								olog("Error: bad damage: " .. tostring(_damage),SEVERITY.FATAL)
-								return
-							end
-							
-							
-							--Accuracy/Spread
-							local spread
-							
-							local _accuracy = raw_csv_values[STAT_INDICES.accuracy]
-							local accuracy = not_empty(_accuracy) and tonumber(_accuracy)
-							if accuracy then 
-								spread = convert_accstab(accuracy) + 1
-							end
-							if not spread then 
-								olog("Error: bad accuracy: " .. tostring(_accuracy),SEVERITY.FATAL)
-								return
-							end
-							
-							--Stability/Recoil
-							local recoil 
-							
-							local _stability = raw_csv_values[STAT_INDICES.stability]
-							local stability = not_empty(_stability) and tonumber(_stability)
-							if stability then
-								recoil = convert_accstab(stability) + 1
-							end
-							if not recoil then 
-								olog("Error: bad stability: " .. tostring(_stability),SEVERITY.FATAL)
-								return
-							end
-							
-							--Concealment
-							local concealment
-							
-							local _concealment = raw_csv_values[STAT_INDICES.concealment]
-							concealment = not_empty(_concealment) and tonumber(_concealment)
-							if not concealment then
-								olog("Error: bad concealment: " .. tostring(_concealment),SEVERITY.FATAL)
-								return
-							end
-							
-							
-							--Threat/Suppression
-							
-							local suppression = tonumber(raw_csv_values[STAT_INDICES.suppression])
-							--data validation for this field is done on the spreadsheet input side
-							
-							--[[
-							local suppression
-							local _threat = raw_csv_values[STAT_INDICES.threat]
-							local threat = not_empty(_threat) and tonumber(_threat)
-							if threat then 
-								suppression = convert_threat(threat)
-							end
-							if not suppression then
-								olog("Error: bad suppression: " .. tostring(_concealment),SEVERITY.FATAL)
-								return
-							end
-							--]]
-							
-							--[[
-							--Firemode Toggle
-							local is_firemode_toggleable
-							local _is_firemode_toggleable = raw_csv_values[STAT_INDICES.is_firemode_toggleable]
-							if (_is_firemode_toggleable ~= nil) and (_is_firemode_toggleable ~= "") then 
-								is_firemode_toggleable = convert_boolean(_is_firemode_toggleable)
-							end
-							--]]
-							
-							--[[
-							--Firemode
-							local fire_mode
-							local _fire_mode = utf8.to_lower(raw_csv_values[STAT_INDICES.firemode])
-							if _fire_mode then 
-								if VALID_FIREMODES[_fire_mode] then 
-									fire_mode = _fire_mode
-								elseif FIREMODE_NAME_LOOKUP[_fire_mode] then
-									fire_mode = FIREMODE_NAME_LOOKUP[_fire_mode]
-								end
-							end
-							if not fire_mode then 
-								olog("Error: Bad firemode: " .. tostring(_firemode),SEVERITY.WARNING)
-							end
-							--]]
-							
-							
-						--timers subsection
-							--inherit from base game weapon timers data
-							local timers = table.deep_map_copy(wtd.timers)
-							
-							local _use_shotgun_reload = raw_csv_values[STAT_INDICES.use_shotgun_reload]
-							local use_shotgun_reload
-							if not_empty(_use_shotgun_reload) then 
-								use_shotgun_reload = convert_boolean(_use_shotgun_reload)
-							else
-								use_shotgun_reload = wtd.use_shotgun_reload
-								--inherit from base
-								--NOTE: inheritance for this stat should be avoided if possible-
-								--in the base game, this stat is normally only defined for 
-								--the exceptional non-shotgun weapons which use shotgun reloads,
-								--like the piglet/m32 grenade launcher, or the repeater sniper rifle.
-								--for shotgun category weapons, this is mostly defined by the weapon base;
-								--SaigaWeaponBase defaults to using normal reloads, and ShotgunWeaponBase defaults to shotgun reloads.
-								--...essentially, the explicit definition is reliable, but the assumed case is not.
-							end
-						
-							--Partial Reload timer
-							local reload_partial 
-							
-							local _reload_partial = raw_csv_values[STAT_INDICES.reload_partial]
-							reload_partial = not_empty(_reload_partial) and tonumber(_reload_partial)
-							if not reload_partial then
-								olog("Error: bad reload_partial: " .. tostring(_reload_partial),SEVERITY.FATAL)
-								return
-							end
-							
-							--Full Reload timer
-							local reload_full
-							
-							local _reload_full = raw_csv_values[STAT_INDICES.reload_full]
-							reload_full = not_empty(_reload_full) and tonumber(_reload_full)
-							if not reload_full then
-								olog("Error: bad reload_full: " .. tostring(_reload_full),SEVERITY.FATAL)
-								return
-							end
-							
-							--Equip/Unequip timer
-							local equip,unequip
-							
-							local _equip = raw_csv_values[STAT_INDICES.equip]
-							equip = not_empty(_equip) and tonumber(_equip)
-							if not equip then 
-								olog("Error: bad equip timer: " .. tostring(_equip),SEVERITY.FATAL)
-								return
-							end
-							unequip = equip
-							if use_shotgun_reload then
-								timers.shotgun_reload_exit_empty = reload_full
-								timers.shotgun_reload_exit_not_empty = reload_partial
-							else
-								--[[
-								local _unequip = raw_csv_values[STAT_INDICES.unequip]
-								local unequip = not_empty(_unequip) and tonumber(_unequip)
-								if not unequip then 
-									olog("Error: bad unequip timer: " .. tostring(_unequip),SEVERITY.FATAL)
-									return
-								end
-								--]]
-								
-								timers.reload_not_empty = reload_partial
-								timers.reload_empty = reload_full
-								
-								--only used for the Aran G2 Sniper Rifle
-								if timers.reload_steelsight then
-									timers.reload_steelsight = timers.reload_empty
-								end
-								if timers.reload_steelsight_not_empty then
-									timers.reload_steelsight = timers.reload_not_empty
-								end
-							end
-							timers.equip = equip
-							timers.unequip = unequip
-							--timers subsection end
-							
-							
-							--[[
-							--Reload speed multiplier (inherited)
-							local reload
-							local _reload = raw_csv_values[STAT_INDICES.reload]
-							reload = not_empty(_reload) and tonumber(_reload)
-							--]]
-							
-							--zoom (optional/inherited)
-							local _zoom = raw_csv_values[STAT_INDICES.zoom]
-							local zoom = not_empty(_zoom) and tonumber(_zoom)
-							
-							
-							--value aka pc_value aka Price (optional/inherited)
-							local _price = raw_csv_values[STAT_INDICES.pc_value]
-							local price = not_empty(_price) and tonumber(_price)
-							
-							
-							--Ammo Pickup High/Ammo Pickup Low
-							local pickup_low,pickup_high
-							
-							local _pickup_low = raw_csv_values[STAT_INDICES.pickup_low]
-							pickup_low = not_empty(_pickup_low) and tonumber(_pickup_low)
-							local _pickup_high = raw_csv_values[STAT_INDICES.pickup_high]
-							pickup_high = not_empty(_pickup_high) and tonumber(_pickup_high)
-							if not (pickup_low and pickup_high) then 
-								olog("Error: bad pickup stat(s): " .. tostring(_pickup_low) .. ", " .. tostring(_pickup_high),SEVERITY.FATAL)
-								return
-							end
-							
-							--[[
-							--Alert Size (inherited)
-							local alert_size
-							local _alert_size = raw_csv_values[STAT_INDICES.alert_size]
-							alert_size = not_empty(_alert_size) and tonumber(_alert_size)
-							--]]
-							
-							--[[
-							--spread_moving (inherited
-							local spread_moving
-							local _spread_moving = raw_csv_values[STAT_INDICES.spread_moving]
-							spread_moving = not_empty(_spread_moving) and convert_accstab(tonumber(_spread_moving)) + 1
-							--]]
-							
-							--assorted piercing stats
-							local _can_shoot_through_enemy = raw_csv_values[STAT_INDICES.can_pierce_enemy]
-							local can_shoot_through_enemy = not_empty(_can_shoot_through_enemy) and convert_boolean(_can_shoot_through_enemy)
-							local _can_shoot_through_shield = raw_csv_values[STAT_INDICES.can_pierce_shield]
-							local can_shoot_through_shield = not_empty(_can_shoot_through_shield) and convert_boolean(_can_shoot_through_shield)
-							local _can_shoot_through_wall = raw_csv_values[STAT_INDICES.can_pierce_wall]
-							local can_shoot_through_wall = not_empty(_can_shoot_through_wall) and convert_boolean(_can_shoot_through_wall)
-							local _armor_piercing_chance = raw_csv_values[STAT_INDICES.armor_piercing_chance]
-							local armor_piercing_chance = not_empty(_armor_piercing_chance) and tonumber(_armor_piercing_chance)
-							
-							--[[
-							--extra magazine size bonus (inherited)
-							local _extra_ammo = raw_csv_values[STAT_INDICES.extra_ammo]
-							local extra_ammo = not_empty(_extra_ammo) and tonumber(_extra_ammo)
-							--]]
-							
-							--[[
-							--total_ammo_mod reserve ammo multiplier (inherited)
-							local _total_ammo_mod = raw_csv_values[STAT_INDICES.total_ammo_mod]
-							local total_ammo_mod = not_empty(_total_ammo_mod) and tonumber(_total_ammo_mod)
-							--]]
-							
-							--Kick matrix (kick/stability system overhaul not yet implemented)
-							--[[
-							local _kick_y_min = raw_csv_values[STAT_INDICES.kick_y_min]
-							local kick_y_min = not_empty(_kick_y_min) and tonumber(_kick_y_min)
-							local _kick_y_max = raw_csv_values[STAT_INDICES.kick_y_max]
-							local kick_y_max = not_empty(_kick_y_max) and tonumber(_kick_y_max)
-							local _kick_x_min = raw_csv_values[STAT_INDICES.kick_x_min]
-							local kick_x_min = not_empty(_kick_x_min) and tonumber(_kick_x_min)
-							local _kick_x_max = raw_csv_values[STAT_INDICES.kick_x_max]
-							local kick_x_max = not_empty(_kick_x_max) and tonumber(_kick_x_max)
-							if not (kick_y_min and kick_y_max and kick_x_min and kick_x_max) then 
-								olog("Error: Bad kick value(s): [ " .. table_concat({_kick_y_min,_kick_y_max,_kick_x_min,_kick_x_max}," / ") .. " ]",SEVERITY.FATAL)
-								return
-							end
-							--]]
-							
-							local spread_moving
-							local _spread_moving = raw_csv_values[STAT_INDICES.spread_moving]
-							if not_empty(_spread_moving) then 
-								_spread_moving = tonumber(_spread_moving)
-								if _spread_moving then
-									spread_moving = convert_accstab(_spread_moving) + 1
-								end
-							end
-							
-							wtd.primary_class = primary_class
-							wtd.subclasses = secondary_classes
-							
-							wtd.timers = timers
-							
-							wtd.CLIP_AMMO_MAX = magazine
-							wtd.AMMO_MAX = total_ammo
-							if pickup_low and pickup_high then 
-								wtd.AMMO_PICKUP[1] = pickup_low
-								wtd.AMMO_PICKUP[2] = pickup_high
-							end
-							
-							wtd.fire_mode_data = {
-								fire_rate = fire_rate
-							}
-							wtd.FIRE_MODE = fire_mode or wtd.FIRE_MODE
-							if is_firemode_toggleable ~= nil then 
-								wtd.CAN_TOGGLE_FIREMODE = is_firemode_toggleable
-							end
-							
-							local new_stats = {}
-							new_stats.damage = damage --damage is an index from 1-210, generally linear. larger numbers than 210 can be used, as the parser will automatically convert them using the game's damage multiplier in stats_modifiers. however, this must still be an integer! bigger number more owie.
-							new_stats.spread = spread --default accuracy deviation; index from 1-20
-							new_stats.spread_moving = spread_moving or wtd.stats.spread_moving --dummy stat
-							new_stats.recoil = recoil --change in accuracy deviation over time; index from 1-20
-							new_stats.concealment = concealment
-							new_stats.suppression = suppression --calculates the displayed Threat stat using a lookup table, from 1-20. larger numbers have a lower threat value.
-							new_stats.zoom = zoom or wtd.stats.zoom --zoom is an index from 1-10. larger numbers have greater magnification
-							new_stats.value = price or wtd.stats.value --value is an index from 1-10, for a lookup table that determines buy/sell value. larger numbers indicate a more expensive weapon
-							new_stats.alert_size = alert_size or wtd.stats.alert_size --alert size is an index from 1-20 for a lookup table, ranging from 300m to 0m. larger numbers have a smaller effective radius
-							new_stats.total_ammo_mod = total_ammo_mod or 21 --total_ammo is an index for a lookup table, which is used as a multiplier for the weapon's reserve ammo amount. leave at 21 = 1x 
-							new_stats.extra_ammo = extra_ammo or 101 --index from 1-201 in TCD (1-101 in the base game); should only be used for weapon attachments that modify magazine ammo count. leave at 101 = +0 bonus magazine size
-							new_stats.reload = reload or 11 --index from 1 to 20, used as a reload speed multiplier. leave at 11 = 1x
-							
-							if can_shoot_through_enemy ~= nil then 
-								wtd.can_shoot_through_enemy = can_shoot_through_enemy
-							end
-							if can_shoot_through_shield ~= nil then 
-								wtd.can_shoot_through_shield = can_shoot_through_shield
-							end
-							if can_shoot_through_wall ~= nil then 
-								wtd.can_shoot_through_wall = can_shoot_through_wall
-							end
-							if armor_piercing_chance ~= nil then 
-								wtd.armor_piercing_chance = armor_piercing_chance
-							end
-			--				wtd.panic_suppression_chance --???
-							
-							--[[
-							wtd.kick = {
-								standing = kick,
-								crouching = kick,
-								steelsight = kick
-							}
-							--]]
-							
-							
-							if self.WIPE_PREVIOUS_STATS then --does not affect inherited stats
-								wtd.stats = new_stats
-							else
-								for k,v in pairs(new_stats) do 
-									wtd.stats[k] = new_stats[k] or v
-								end
-							end
-							
-							--damage_mul for damage values above DAMAGE_CAP (210)
-							wtd.stats_modifiers = wtd.stats_modifiers or {}
-							wtd.stats_modifiers.damage = damage_mul
-							
-							if self.debug_mode_enabled then
-								self.debug_data.weapons[line_num] = new_stats
-							end
+			--weapon_id
+			local weapon_id = raw_csv_values[STAT_INDICES.id]
+			if not_empty(weapon_id) and not_null(weapon_id) then 
+				local wtd = parent_tweak_data[weapon_id]
+				if wtd then --found valid weapon data to edit
+					olog("Processing weapon id " .. tostring(weapon_id) .. " (line " .. tostring(line_num) .. ")",SEVERITY.WARNING)
+					
+					--Primary class
+					local primary_class
+					
+					local _primary_class = utf8.to_lower(raw_csv_values[STAT_INDICES.primary_class])
+					if _primary_class then
+						if self.VALID_PRIMARY_CLASSES[_primary_class] then
+							primary_class = _primary_class
+						elseif self.PRIMARY_CLASS_NAME_LOOKUP[_primary_class] then 
+							primary_class = self.PRIMARY_CLASS_NAME_LOOKUP[_primary_class]
 						else
-							olog("Error! No weapon stats exist for weapon with id: [" .. tostring(weapon_id) .. "]",SEVERITY.WARNING) 
+							olog("Error: bad primary_class: " .. tostring(raw_csv_values[STAT_INDICES.primary_class]),SEVERITY.ERROR)
+							return
 						end
 					end
+					
+					
+					--Secondary classes
+					local secondary_classes = {}
+					
+					local _secondary_classes = remove_extra_spaces(utf8.to_lower(raw_csv_values[STAT_INDICES.subclasses]))
+					if _secondary_classes and not_empty(_secondary_classes) then 
+						for _,_secondary_class in pairs(string.split(_secondary_classes,";") or {}) do 
+							_secondary_class = remove_extra_spaces(_secondary_class)
+							local secondary_class
+							if self.VALID_SUBCLASSES[_secondary_class] then 
+								secondary_class = _secondary_class
+							elseif self.SUBCLASS_NAME_LOOKUP[_secondary_class] then
+								secondary_class = self.SUBCLASS_NAME_LOOKUP[_secondary_class]
+							else
+								olog("Unknown secondary class " .. tostring(_secondary_class),SEVERITY.WARNING)
+							end
+							
+							if secondary_class then 
+								if secondary_class ~= "" and not table.contains(secondary_classes,secondary_class) then 
+									table.insert(secondary_classes,secondary_class)
+								else
+									olog("Error: bad subclass: " .. tostring(_secondary_class),SEVERITY.WARNING)
+									--subclass is not required so don't break here
+								end
+							end
+						end
+					end
+					
+					
+					--Magazine size (aka CLIP_AMMO_MAX)
+					local magazine
+					
+					local _magazine = raw_csv_values[STAT_INDICES.magazine]
+					magazine = not_empty(_magazine) and math.floor(tonumber(_magazine))
+					if not magazine then 
+						olog("Error: bad magazine size: " .. tostring(magazine),SEVERITY.FATAL)
+						return
+					end
+					
+					
+					--Total Ammo (aka Reserve Ammo) (not to be confused with total_ammo_mod)
+					local total_ammo
+					
+					local _total_ammo = raw_csv_values[STAT_INDICES.total_ammo]
+					total_ammo = not_empty(_total_ammo) and tonumber(_total_ammo)
+					if not total_ammo then 
+						olog("Error: bad total_ammo size: " .. tostring(_total_ammo),SEVERITY.FATAL)
+						return
+					end
+					
+					
+					--Fire Rate
+					local fire_rate
+					
+--								fire_rate = tonumber(raw_csv_values[STAT_INDICES.fire_rate_internal])
+					local _fire_rate = raw_csv_values[STAT_INDICES.fire_rate]
+					fire_rate = not_empty(_fire_rate) and convert_rof(tonumber(_fire_rate))
+					if not fire_rate then 
+						olog("Error: bad fire_rate: " .. tostring(_fire_rate),SEVERITY.FATAL)
+						return
+					end
+					
+					
+					--Damage
+					local damage,damage_mul
+					
+					local _damage = raw_csv_values[STAT_INDICES.damage]
+					damage = not_empty(_damage) and tonumber(_damage)
+					if damage then 
+						if damage > DAMAGE_CAP then 
+							damage_mul = damage / DAMAGE_CAP
+							damage = DAMAGE_CAP
+						end
+					else
+						olog("Error: bad damage: " .. tostring(_damage),SEVERITY.FATAL)
+						return
+					end
+					
+					
+					--Accuracy/Spread
+					local spread
+					
+					local _accuracy = raw_csv_values[STAT_INDICES.accuracy]
+					local accuracy = not_empty(_accuracy) and tonumber(_accuracy)
+					if accuracy then 
+						spread = convert_accstab(accuracy) + 1
+					end
+					if not spread then 
+						olog("Error: bad accuracy: " .. tostring(_accuracy),SEVERITY.FATAL)
+						return
+					end
+					
+					--Stability/Recoil
+					local recoil 
+					
+					local _stability = raw_csv_values[STAT_INDICES.stability]
+					local stability = not_empty(_stability) and tonumber(_stability)
+					if stability then
+						recoil = convert_accstab(stability) + 1
+					end
+					if not recoil then 
+						olog("Error: bad stability: " .. tostring(_stability),SEVERITY.FATAL)
+						return
+					end
+					
+					--Concealment
+					local concealment
+					
+					local _concealment = raw_csv_values[STAT_INDICES.concealment]
+					concealment = not_empty(_concealment) and tonumber(_concealment)
+					if not concealment then
+						olog("Error: bad concealment: " .. tostring(_concealment),SEVERITY.FATAL)
+						return
+					end
+					
+					
+					--Threat/Suppression
+					
+					local suppression = tonumber(raw_csv_values[STAT_INDICES.suppression])
+					--data validation for this field is done on the spreadsheet input side
+					
+					--[[
+					local suppression
+					local _threat = raw_csv_values[STAT_INDICES.threat]
+					local threat = not_empty(_threat) and tonumber(_threat)
+					if threat then 
+						suppression = convert_threat(threat)
+					end
+					if not suppression then
+						olog("Error: bad suppression: " .. tostring(_concealment),SEVERITY.FATAL)
+						return
+					end
+					--]]
+					
+					--[[
+					--Firemode Toggle
+					local is_firemode_toggleable
+					local _is_firemode_toggleable = raw_csv_values[STAT_INDICES.is_firemode_toggleable]
+					if (_is_firemode_toggleable ~= nil) and (_is_firemode_toggleable ~= "") then 
+						is_firemode_toggleable = convert_boolean(_is_firemode_toggleable)
+					end
+					--]]
+					
+					--[[
+					--Firemode
+					local fire_mode
+					local _fire_mode = utf8.to_lower(raw_csv_values[STAT_INDICES.firemode])
+					if _fire_mode then 
+						if VALID_FIREMODES[_fire_mode] then 
+							fire_mode = _fire_mode
+						elseif FIREMODE_NAME_LOOKUP[_fire_mode] then
+							fire_mode = FIREMODE_NAME_LOOKUP[_fire_mode]
+						end
+					end
+					if not fire_mode then 
+						olog("Error: Bad firemode: " .. tostring(_firemode),SEVERITY.WARNING)
+					end
+					--]]
+					
+					
+				--timers subsection
+					--inherit from base game weapon timers data
+					local timers = table.deep_map_copy(wtd.timers)
+					
+					local _use_shotgun_reload = raw_csv_values[STAT_INDICES.use_shotgun_reload]
+					local use_shotgun_reload
+					if not_empty(_use_shotgun_reload) then 
+						use_shotgun_reload = convert_boolean(_use_shotgun_reload)
+					else
+						use_shotgun_reload = wtd.use_shotgun_reload
+						--inherit from base
+						--NOTE: inheritance for this stat should be avoided if possible-
+						--in the base game, this stat is normally only defined for 
+						--the exceptional non-shotgun weapons which use shotgun reloads,
+						--like the piglet/m32 grenade launcher, or the repeater sniper rifle.
+						--for shotgun category weapons, this is mostly defined by the weapon base;
+						--SaigaWeaponBase defaults to using normal reloads, and ShotgunWeaponBase defaults to shotgun reloads.
+						--...essentially, the explicit definition is reliable, but the assumed case is not.
+					end
+				
+					--Partial Reload timer
+					local reload_partial 
+					
+					local _reload_partial = raw_csv_values[STAT_INDICES.reload_partial]
+					reload_partial = not_empty(_reload_partial) and tonumber(_reload_partial)
+					if not reload_partial then
+						olog("Error: bad reload_partial: " .. tostring(_reload_partial),SEVERITY.FATAL)
+						return
+					end
+					
+					--Full Reload timer
+					local reload_full
+					
+					local _reload_full = raw_csv_values[STAT_INDICES.reload_full]
+					reload_full = not_empty(_reload_full) and tonumber(_reload_full)
+					if not reload_full then
+						olog("Error: bad reload_full: " .. tostring(_reload_full),SEVERITY.FATAL)
+						return
+					end
+					
+					--Equip/Unequip timer
+					local equip,unequip
+					
+					local _equip = raw_csv_values[STAT_INDICES.equip]
+					equip = not_empty(_equip) and tonumber(_equip)
+					if not equip then 
+						olog("Error: bad equip timer: " .. tostring(_equip),SEVERITY.FATAL)
+						return
+					end
+					unequip = equip
+					if use_shotgun_reload then
+						timers.shotgun_reload_exit_empty = reload_full
+						timers.shotgun_reload_exit_not_empty = reload_partial
+					else
+						--[[
+						local _unequip = raw_csv_values[STAT_INDICES.unequip]
+						local unequip = not_empty(_unequip) and tonumber(_unequip)
+						if not unequip then 
+							olog("Error: bad unequip timer: " .. tostring(_unequip),SEVERITY.FATAL)
+							return
+						end
+						--]]
+						
+						timers.reload_not_empty = reload_partial
+						timers.reload_empty = reload_full
+						
+						--only used for the Aran G2 Sniper Rifle
+						if timers.reload_steelsight then
+							timers.reload_steelsight = timers.reload_empty
+						end
+						if timers.reload_steelsight_not_empty then
+							timers.reload_steelsight = timers.reload_not_empty
+						end
+					end
+					timers.equip = equip
+					timers.unequip = unequip
+					--timers subsection end
+					
+					
+					--[[
+					--Reload speed multiplier (inherited)
+					local reload
+					local _reload = raw_csv_values[STAT_INDICES.reload]
+					reload = not_empty(_reload) and tonumber(_reload)
+					--]]
+					
+					--zoom (optional/inherited)
+					local _zoom = raw_csv_values[STAT_INDICES.zoom]
+					local zoom = not_empty(_zoom) and tonumber(_zoom)
+					
+					
+					--value aka pc_value aka Price (optional/inherited)
+					local _price = raw_csv_values[STAT_INDICES.pc_value]
+					local price = not_empty(_price) and tonumber(_price)
+					
+					
+					--Ammo Pickup High/Ammo Pickup Low
+					local pickup_low,pickup_high
+					
+					local _pickup_low = raw_csv_values[STAT_INDICES.pickup_low]
+					pickup_low = not_empty(_pickup_low) and tonumber(_pickup_low)
+					local _pickup_high = raw_csv_values[STAT_INDICES.pickup_high]
+					pickup_high = not_empty(_pickup_high) and tonumber(_pickup_high)
+					if not (pickup_low and pickup_high) then 
+						olog("Error: bad pickup stat(s): " .. tostring(_pickup_low) .. ", " .. tostring(_pickup_high),SEVERITY.FATAL)
+						return
+					end
+					
+					--[[
+					--Alert Size (inherited)
+					local alert_size
+					local _alert_size = raw_csv_values[STAT_INDICES.alert_size]
+					alert_size = not_empty(_alert_size) and tonumber(_alert_size)
+					--]]
+					
+					--[[
+					--spread_moving (inherited
+					local spread_moving
+					local _spread_moving = raw_csv_values[STAT_INDICES.spread_moving]
+					spread_moving = not_empty(_spread_moving) and convert_accstab(tonumber(_spread_moving)) + 1
+					--]]
+					
+					--assorted piercing stats
+					local _can_shoot_through_enemy = raw_csv_values[STAT_INDICES.can_pierce_enemy]
+					local can_shoot_through_enemy = not_empty(_can_shoot_through_enemy) and convert_boolean(_can_shoot_through_enemy)
+					local _can_shoot_through_shield = raw_csv_values[STAT_INDICES.can_pierce_shield]
+					local can_shoot_through_shield = not_empty(_can_shoot_through_shield) and convert_boolean(_can_shoot_through_shield)
+					local _can_shoot_through_wall = raw_csv_values[STAT_INDICES.can_pierce_wall]
+					local can_shoot_through_wall = not_empty(_can_shoot_through_wall) and convert_boolean(_can_shoot_through_wall)
+					local _armor_piercing_chance = raw_csv_values[STAT_INDICES.armor_piercing_chance]
+					local armor_piercing_chance = not_empty(_armor_piercing_chance) and tonumber(_armor_piercing_chance)
+					
+					--[[
+					--extra magazine size bonus (inherited)
+					local _extra_ammo = raw_csv_values[STAT_INDICES.extra_ammo]
+					local extra_ammo = not_empty(_extra_ammo) and tonumber(_extra_ammo)
+					--]]
+					
+					--[[
+					--total_ammo_mod reserve ammo multiplier (inherited)
+					local _total_ammo_mod = raw_csv_values[STAT_INDICES.total_ammo_mod]
+					local total_ammo_mod = not_empty(_total_ammo_mod) and tonumber(_total_ammo_mod)
+					--]]
+					
+					--Kick matrix (kick/stability system overhaul not yet implemented)
+					--[[
+					local _kick_y_min = raw_csv_values[STAT_INDICES.kick_y_min]
+					local kick_y_min = not_empty(_kick_y_min) and tonumber(_kick_y_min)
+					local _kick_y_max = raw_csv_values[STAT_INDICES.kick_y_max]
+					local kick_y_max = not_empty(_kick_y_max) and tonumber(_kick_y_max)
+					local _kick_x_min = raw_csv_values[STAT_INDICES.kick_x_min]
+					local kick_x_min = not_empty(_kick_x_min) and tonumber(_kick_x_min)
+					local _kick_x_max = raw_csv_values[STAT_INDICES.kick_x_max]
+					local kick_x_max = not_empty(_kick_x_max) and tonumber(_kick_x_max)
+					if not (kick_y_min and kick_y_max and kick_x_min and kick_x_max) then 
+						olog("Error: Bad kick value(s): [ " .. table_concat({_kick_y_min,_kick_y_max,_kick_x_min,_kick_x_max}," / ") .. " ]",SEVERITY.FATAL)
+						return
+					end
+					--]]
+					
+					local spread_moving
+					local _spread_moving = raw_csv_values[STAT_INDICES.spread_moving]
+					if not_empty(_spread_moving) then 
+						_spread_moving = tonumber(_spread_moving)
+						if _spread_moving then
+							spread_moving = convert_accstab(_spread_moving) + 1
+						end
+					end
+					
+					wtd.primary_class = primary_class
+					wtd.subclasses = secondary_classes
+					
+					wtd.timers = timers
+					
+					wtd.CLIP_AMMO_MAX = magazine
+					wtd.AMMO_MAX = total_ammo
+					if pickup_low and pickup_high then 
+						wtd.AMMO_PICKUP[1] = pickup_low
+						wtd.AMMO_PICKUP[2] = pickup_high
+					end
+					
+					wtd.fire_mode_data = {
+						fire_rate = fire_rate
+					}
+					wtd.FIRE_MODE = fire_mode or wtd.FIRE_MODE
+					if is_firemode_toggleable ~= nil then 
+						wtd.CAN_TOGGLE_FIREMODE = is_firemode_toggleable
+					end
+					
+					local new_stats = {}
+					new_stats.damage = damage --damage is an index from 1-210, generally linear. larger numbers than 210 can be used, as the parser will automatically convert them using the game's damage multiplier in stats_modifiers. however, this must still be an integer! bigger number more owie.
+					new_stats.spread = spread --default accuracy deviation; index from 1-20
+					new_stats.spread_moving = spread_moving or wtd.stats.spread_moving --dummy stat
+					new_stats.recoil = recoil --change in accuracy deviation over time; index from 1-20
+					new_stats.concealment = concealment
+					new_stats.suppression = suppression --calculates the displayed Threat stat using a lookup table, from 1-20. larger numbers have a lower threat value.
+					new_stats.zoom = zoom or wtd.stats.zoom --zoom is an index from 1-10. larger numbers have greater magnification
+					new_stats.value = price or wtd.stats.value --value is an index from 1-10, for a lookup table that determines buy/sell value. larger numbers indicate a more expensive weapon
+					new_stats.alert_size = alert_size or wtd.stats.alert_size --alert size is an index from 1-20 for a lookup table, ranging from 300m to 0m. larger numbers have a smaller effective radius
+					new_stats.total_ammo_mod = total_ammo_mod or 21 --total_ammo is an index for a lookup table, which is used as a multiplier for the weapon's reserve ammo amount. leave at 21 = 1x 
+					new_stats.extra_ammo = extra_ammo or 101 --index from 1-201 in TCD (1-101 in the base game); should only be used for weapon attachments that modify magazine ammo count. leave at 101 = +0 bonus magazine size
+					new_stats.reload = reload or 11 --index from 1 to 20, used as a reload speed multiplier. leave at 11 = 1x
+					
+					if can_shoot_through_enemy ~= nil then 
+						wtd.can_shoot_through_enemy = can_shoot_through_enemy
+					end
+					if can_shoot_through_shield ~= nil then 
+						wtd.can_shoot_through_shield = can_shoot_through_shield
+					end
+					if can_shoot_through_wall ~= nil then 
+						wtd.can_shoot_through_wall = can_shoot_through_wall
+					end
+					if armor_piercing_chance ~= nil then 
+						wtd.armor_piercing_chance = armor_piercing_chance
+					end
+	--				wtd.panic_suppression_chance --???
+					
+					--[[
+					wtd.kick = {
+						standing = kick,
+						crouching = kick,
+						steelsight = kick
+					}
+					--]]
+					
+					
+					if self.WIPE_PREVIOUS_STATS then --does not affect inherited stats
+						wtd.stats = new_stats
+					else
+						for k,v in pairs(new_stats) do 
+							wtd.stats[k] = new_stats[k] or v
+						end
+					end
+					
+					--damage_mul for damage values above DAMAGE_CAP (210)
+					wtd.stats_modifiers = wtd.stats_modifiers or {}
+					wtd.stats_modifiers.damage = damage_mul
+					
+					if self.debug_mode_enabled then
+						self.debug_data.weapons[line_num] = new_stats
+					end
+				else
+					olog("Error! No weapon stats exist for weapon with id: [" .. tostring(weapon_id) .. "]",SEVERITY.WARNING) 
 				end
 			end
-			
-			input_file:close()
-			olog("Stat reading complete.")
-		else
-			olog("Error! Bad file type: " .. tostring(extension),SEVERITY.FATAL)
 		end
+		input_file:close()
 	end
-
 end
 
-function CSVStatReader:read_melees() --not implemented
+function CSVStatReader:read_melees(parent_tweak_data,target_subdir) --not implemented
 	local file_util = _G.FileIO
 	local path_util = BeardLib.Utils.Path
 	
