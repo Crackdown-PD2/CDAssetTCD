@@ -3,8 +3,8 @@
 --requires table.index_of() from PAYDAY 2's table util library
 --requres utf8.to_lower() from PAYDAY 2's utf8 util library
 
-_G.CSVStatReader = {
 	debug_mode_enabled = false, 
+local CSVStatReader = {
 	SEVERITY = {
 		FATAL = 1,
 		WARNING = 2
@@ -1236,3 +1236,4 @@ function CSVStatReader:read_attachments(parent_tweak_data)
 	
 end
 
+return CSVStatReader

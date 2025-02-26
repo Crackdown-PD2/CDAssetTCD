@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <table name="tcd_modules">
 	
-	<!--
 	<Hooks name="tcd_hook_csvstats">
-	< ! - - since csvstats is used to replace/edit tweakdata, it must be loaded even earlier than the classes module is able to - - >
-		<hook pre="true" file="lua/classes/csvstats.lua" source_file="lib/entry"/>
+		<!-- since csvstats is used to replace/edit tweakdata, it must be loaded even earlier than the classes module is able to -->
+		<hook pre="true" file="lua/DeathvoxOverhaulCore.lua" source_file="lib/entry"/>
 	</Hooks>
 	
 	
+	<!--
 	<Classes name="tcd_classes" directory="lua/classes">
 		<class file="radialmousemenu.lua"/>
 		<class file="sentrycontrolmenu.lua"/>
