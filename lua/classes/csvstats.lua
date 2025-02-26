@@ -2,19 +2,16 @@
 --requires table.deep_map_copy() from PAYDAY 2's table util library
 --requires table.index_of() from PAYDAY 2's table util library
 --requres utf8.to_lower() from PAYDAY 2's utf8 util library
+--requires io.file_is_readable() from SuperBLT's IO library
 
-	debug_mode_enabled = false, 
 local CSVStatReader = {
+	debug_mode_enabled = false, 
 	SEVERITY = {
 		FATAL = 1,
 		WARNING = 2
 	},
 	DAMAGE_CAP = 210, --damage is technically on a lookup table from 0 to 210
 	IGNORED_HEADERS = 2,
-	INPUT_DIRECTORY = "csv/",
-	WEAPONS_SUBDIR = "weapons/",
-	ATTACHMENTS_SUBDIR = "attachments/",
-	MELEES_SUBDIR = "melees/",
 	WIPE_PREVIOUS_STATS = true,
 	PRIMARY_CLASS_NAME_LOOKUP = {
 	--yes i wrote it this way on purpose
@@ -379,16 +376,6 @@ function CSVStatReader.remove_extra_spaces(s)
 	end
 	
 	return s
-end
-
-function CSVStatReader:read_files(mode,parent_tweak_data)
-	if mode == "weapon" then 
-		return self:read_firearms(parent_tweak_data)
-	elseif mode == "attachment" then 
-		return self:read_attachments(parent_tweak_data)
-	elseif mode == "melee" then
-		return self:read_melees(parent_tweak_data)
-	end
 end
 
 function CSVStatReader:read_firearms(parent_tweak_data,path)
@@ -868,6 +855,9 @@ function CSVStatReader:read_melees(parent_tweak_data,path) --not implemented
 end
 
 function CSVStatReader:read_attachments(parent_tweak_data,path)
+	if not io.file_is_readable(path) then
+		error("CSVStatReader:read_attachments(): File could not be read:",path)
+	end
 	local file_util = _G.FileIO
 	local path_util = BeardLib.Utils.Path
 	
