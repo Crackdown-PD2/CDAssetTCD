@@ -848,8 +848,8 @@ function CSVStatReader:read_firearms(parent_tweak_data,path)
 				end
 			end
 		end
-		input_file:close()
 	end
+	input_file:close()
 end
 
 function CSVStatReader:read_melees(parent_tweak_data,target_subdir) --not implemented
@@ -868,7 +868,7 @@ function CSVStatReader:read_melees(parent_tweak_data,target_subdir) --not implem
 	local input_directory = deathvox_overhaul:GetPath() .. self.INPUT_DIRECTORY
 end
 
-function CSVStatReader:read_attachments(parent_tweak_data)
+function CSVStatReader:read_attachments(parent_tweak_data,path)
 	local file_util = _G.FileIO
 	local path_util = BeardLib.Utils.Path
 	
@@ -895,301 +895,293 @@ function CSVStatReader:read_attachments(parent_tweak_data)
 	
 	local output_data = {}
 	
-	for _,filename in pairs(file_util:GetFiles(target_subdir)) do
-		local extension = utf8.to_lower(path_util:GetFileExtension(filename))
-		if extension == "csv" then 
-			local input_file = io.open(target_subdir .. filename)
-			self.log("Doing weapon stats file: [" .. tostring(filename) .. "]")
-			local line_num = 0
-			for raw_line in input_file:lines() do 
-				line_num = line_num + 1
-				local raw_csv_values = string.split(raw_line,",",true) --csv values? nice. my favorite type of tea is chai tea
-				if line_num > IGNORED_HEADERS then 
-					local attachment_id = raw_csv_values[STAT_INDICES.id]
+	local input_file = io.open(path)
+	local line_num = 0
+	for raw_line in input_file:lines() do 
+		line_num = line_num + 1
+		local raw_csv_values = string.split(raw_line,",",true) --csv values? nice. my favorite type of tea is chai tea
+		if line_num > IGNORED_HEADERS then 
+			local attachment_id = raw_csv_values[STAT_INDICES.id]
+			
+			if not_empty(attachment_id) and not_null(attachment_id) then 
+				local ptd = parent_tweak_data.parts[attachment_id]
+				if ptd then 
 					
-					if not_empty(attachment_id) and not_null(attachment_id) then 
-						local ptd = parent_tweak_data.parts[attachment_id]
-						if ptd then 
-							
-							local base_stats = ptd.stats
-							local base_custom_stats = ptd.custom_stats
-							
-							local skip_inherit_custom_stats = false
-							local _meta_skip_inherit_custom = raw_csv_values[STAT_INDICES.meta_skip_inherit_custom]
-							if not_null(_meta_skip_inherit_custom) and not_empty(_meta_skip_inherit_custom) then 
-								skip_inherit_custom_stats = convert_boolean(_meta_skip_inherit_custom)
+					local base_stats = ptd.stats
+					local base_custom_stats = ptd.custom_stats
+					
+					local skip_inherit_custom_stats = false
+					local _meta_skip_inherit_custom = raw_csv_values[STAT_INDICES.meta_skip_inherit_custom]
+					if not_null(_meta_skip_inherit_custom) and not_empty(_meta_skip_inherit_custom) then 
+						skip_inherit_custom_stats = convert_boolean(_meta_skip_inherit_custom)
+					end
+					
+					olog("Processing attachment id " .. tostring(attachment_id) .. " (line " .. tostring(line_num) .. ")")
+					
+					--Weapon (for weapon-specific attachment stat balancing)
+					local bm_weapon_id
+					local weapon_override_id = utf8.to_lower(raw_csv_values[STAT_INDICES.weapon_override])
+					if not_null(weapon_override_id) and not_empty(weapon_override_id) then 
+						local _bm_weapon_id = weapon_override_id
+						if _bm_weapon_id then 
+							--is valid weapon
+							bm_weapon_id = _bm_weapon_id 
+							if not parent_tweak_data[bm_weapon_id] then
+								olog("Warning: weapon may not exist for bm_weapon_id: " .. tostring(bm_weapon_id),SEVERITY.WARNING)
+							end
+						else
+							olog("Warning: bad bm_weapon_id: " .. tostring(raw_csv_values[STAT_INDICES.weapon_override]),SEVERITY.WARNING)
+						end
+					end
+					
+					--Primary Class
+					local primary_class
+					local _primary_class = utf8.to_lower(raw_csv_values[STAT_INDICES.primary_class])
+					if not_null(_primary_class) and not_empty(_primary_class) then 
+						if self.VALID_PRIMARY_CLASSES[_primary_class] then 
+							primary_class = _primary_class
+						elseif self.PRIMARY_CLASS_NAME_LOOKUP[_primary_class] then 
+							primary_class = self.PRIMARY_CLASS_NAME_LOOKUP[_primary_class]
+						else
+							olog("Error: bad primary_class: " .. tostring(raw_csv_values[STAT_INDICES.primary_class]),SEVERITY.FATAL)
+							return
+						end
+					end
+					
+					--Secondary classes
+					local secondary_classes = {}
+					local _secondary_classes = remove_extra_spaces(utf8.to_lower(raw_csv_values[STAT_INDICES.subclasses]))
+					if _secondary_classes and _secondary_classes ~= "" then 
+						for _,_secondary_class in pairs(string.split(_secondary_classes,";") or {}) do 
+							_secondary_class = remove_extra_spaces(_secondary_class)
+							local secondary_class
+							if self.VALID_SUBCLASSES[_secondary_class] then 
+								secondary_class = _secondary_class
+							elseif self.SUBCLASS_NAME_LOOKUP[_secondary_class] then
+								secondary_class = self.SUBCLASS_NAME_LOOKUP[_secondary_class]
 							end
 							
-							olog("Processing attachment id " .. tostring(attachment_id) .. " (line " .. tostring(line_num) .. ")")
-							
-							--Weapon (for weapon-specific attachment stat balancing)
-							local bm_weapon_id
-							local weapon_override_id = utf8.to_lower(raw_csv_values[STAT_INDICES.weapon_override])
-							if not_null(weapon_override_id) and not_empty(weapon_override_id) then 
-								local _bm_weapon_id = weapon_override_id
-								if _bm_weapon_id then 
-									--is valid weapon
-									bm_weapon_id = _bm_weapon_id 
-									if not parent_tweak_data[bm_weapon_id] then
-										olog("Warning: weapon may not exist for bm_weapon_id: " .. tostring(bm_weapon_id),SEVERITY.WARNING)
-									end
+							if secondary_class then 
+								if secondary_class ~= "" and not table.contains(secondary_classes,secondary_class) then 
+									table.insert(secondary_classes,secondary_class)
 								else
-									olog("Warning: bad bm_weapon_id: " .. tostring(raw_csv_values[STAT_INDICES.weapon_override]),SEVERITY.WARNING)
+									olog("Error: bad subclass: " .. tostring(_secondary_class),SEVERITY.WARNING)
+									--subclass is not required so don't break here
 								end
-							end
-							
-							--Primary Class
-							local primary_class
-							local _primary_class = utf8.to_lower(raw_csv_values[STAT_INDICES.primary_class])
-							if not_null(_primary_class) and not_empty(_primary_class) then 
-								if self.VALID_PRIMARY_CLASSES[_primary_class] then 
-									primary_class = _primary_class
-								elseif self.PRIMARY_CLASS_NAME_LOOKUP[_primary_class] then 
-									primary_class = self.PRIMARY_CLASS_NAME_LOOKUP[_primary_class]
-								else
-									olog("Error: bad primary_class: " .. tostring(raw_csv_values[STAT_INDICES.primary_class]),SEVERITY.FATAL)
-									return
-								end
-							end
-							
-							--Secondary classes
-							local secondary_classes = {}
-							local _secondary_classes = remove_extra_spaces(utf8.to_lower(raw_csv_values[STAT_INDICES.subclasses]))
-							if _secondary_classes and _secondary_classes ~= "" then 
-								for _,_secondary_class in pairs(string.split(_secondary_classes,";") or {}) do 
-									_secondary_class = remove_extra_spaces(_secondary_class)
-									local secondary_class
-									if self.VALID_SUBCLASSES[_secondary_class] then 
-										secondary_class = _secondary_class
-									elseif self.SUBCLASS_NAME_LOOKUP[_secondary_class] then
-										secondary_class = self.SUBCLASS_NAME_LOOKUP[_secondary_class]
-									end
-									
-									if secondary_class then 
-										if secondary_class ~= "" and not table.contains(secondary_classes,secondary_class) then 
-											table.insert(secondary_classes,secondary_class)
-										else
-											olog("Error: bad subclass: " .. tostring(_secondary_class),SEVERITY.WARNING)
-											--subclass is not required so don't break here
-										end
-									end
-								end
-							end
-							
-							
-							--Magazine size bonus (aka extra_ammo)
-							local extra_ammo
-							local _extra_ammo = raw_csv_values[STAT_INDICES.extra_ammo]
-							if not_empty(_extra_ammo) then
-								extra_ammo = tonumber(_extra_ammo)
-								--so apparently this is just. a 1:1 direct additive bonus.
---								extra_ammo = convert_extra_ammo(tonumber(_extra_ammo))
-							end
-							
-							
-							--Total Ammo Add Bonus (additive bonus to Reserve Ammo)
-							local total_ammo_add
-							local _total_ammo_add = raw_csv_values[STAT_INDICES.total_ammo_add]
-							if not_empty(_total_ammo_add) then 
-								total_ammo_add = tonumber(_total_ammo_add)
-							end
-							
-							--Total Ammo Mul Bonus (multiplicative bonus to Reserve Ammo)
-							local _total_ammo_mul = raw_csv_values[STAT_INDICES.total_ammo]
-							local total_ammo_mul
-							if not_empty(_total_ammo_mul) then 
-								total_ammo_mul = tonumber(_total_ammo_mul)
-							end
-							--[[
-							local total_ammo_mul
-							if not_empty(_total_ammo_mul) then 
-								total_ammo_mul = convert_total_ammo_mul(tonumber(_total_ammo_mul))
-							end
-							--]]
-							
-							--Fire Rate bonus
-							local fire_rate
-							local _fire_rate = raw_csv_values[STAT_INDICES.fire_rate]
-							if not_empty(_fire_rate) then
-								--pre-converted
-								fire_rate = convert_rof(tonumber(_fire_rate))
-							end
-							
-							
-							--Damage
-							local damage
-							local _damage = raw_csv_values[STAT_INDICES.damage]
-							if not_empty(_damage) then
-								--pre-converted
-								damage = tonumber(_damage)
-							end
-							
-							
-							--Accuracy/Spread bonus
-							local spread
-							local _spread = raw_csv_values[STAT_INDICES.accuracy]
-							if not_empty(_spread) then 
-								--pre-converted
-								spread = convert_accstab(tonumber(_spread))
-							end
-							
-							
-							--Stability/Recoil bonus
-							local recoil 
-							local _recoil = raw_csv_values[STAT_INDICES.stability]
-							if not_empty(_recoil) then
-								recoil = convert_accstab(tonumber(_recoil))
-							end
-							
-							--Concealment
-							local concealment
-							local _concealment = raw_csv_values[STAT_INDICES.concealment]
-							if not_empty(_concealment) then
-								concealment = tonumber(_concealment)
-							end
-							
-							
-							--Threat/Suppression bonus
-							local suppression
-							local _suppression = raw_csv_values[STAT_INDICES.suppression]
-							if not_empty(_suppression) then
-								suppression = tonumber(_suppression)
-							end
-							
-							--Reload Multiplier
-							local reload_mul
-							local _reload_mul = raw_csv_values[STAT_INDICES.reload]
-							if not_empty(_reload_mul) then 
-								--pre-converted
-								reload_mul = tonumber(_reload_mul)
-							end
-							
-							--Zoom (inherited)
-							local zoom = base_stats.zoom
-							local _zoom = raw_csv_values[STAT_INDICES.zoom]
-							if not_empty(_zoom) then 
-								zoom = tonumber(_zoom)
-							end
-							
-							--Alert Size (inherited)
-							local alert_size = base_stats.alert_size
-							local _alert_size = raw_csv_values[STAT_INDICES.alert_size]
-							if not_empty(_alert_size) then 
-								alert_size = tonumber(_alert_size)
-							end
-							
-							--Value (inherited)
-							local value = base_stats.value
-							local _value = raw_csv_values[STAT_INDICES.pc_value]
-							if not_empty(_value) then 
-								value = tonumber(_value)
-							end
-							
-							--Ammo Pickup High/Ammo Pickup Low
-							local pickup_low,pickup_high
-							
-							local _pickup_low = raw_csv_values[STAT_INDICES.pickup_low]
-							if not_empty(_pickup_low) then
-								pickup_low = tonumber(_pickup_low)
-							end
-							local _pickup_high = raw_csv_values[STAT_INDICES.pickup_high]
-							if not_empty(_pickup_high) then
-								pickup_high = tonumber(_pickup_high)
-							end
-							--assorted piercing stats
-							local _can_shoot_through_enemy = raw_csv_values[STAT_INDICES.can_pierce_enemy]
-							local can_shoot_through_enemy = not_empty(_can_shoot_through_enemy) and convert_boolean(_can_shoot_through_enemy)
-							local _can_shoot_through_shield = raw_csv_values[STAT_INDICES.can_pierce_shield]
-							local can_shoot_through_shield = not_empty(_can_shoot_through_shield) and convert_boolean(_can_shoot_through_shield)
-							local _can_shoot_through_wall = raw_csv_values[STAT_INDICES.can_pierce_wall]
-							local can_shoot_through_wall = not_empty(_can_shoot_through_wall) and convert_boolean(_can_shoot_through_wall)
-							local _armor_piercing_chance = raw_csv_values[STAT_INDICES.armor_piercing_chance]
-							local armor_piercing_chance
-							if not_empty(_armor_piercing_chance) then
-								armor_piercing_chance = tonumber(_armor_piercing_chance)
-							end
-							
-							
-							--all final stats and data for this attachment entry
-							--saving to game tweakdata is done outside of the file read loop
-							--so that each attachment can inherit stats from the base game's stats
-							--instead of overwriting the base stats immediately and then using that as the template for the next attachments
-							local part_data = {
-								supported = true,
-								part_id = attachment_id
-							}
-							
-							local stats = {
-								extra_ammo = extra_ammo, --additive mag size bonus index
-								total_ammo_mod = total_ammo_mul, --reserve ammo multiplicative bonus index modifier
-								fire_rate = fire_rate,
-								damage = damage,
-								spread = spread,
-								spread_moving = nil, --not used
-								recoil = recoil,
-								concealment = concealment,
-								suppression = suppression,
-								reload = reload_mul,
-								alert_size = alert_size,
-								zoom = zoom,
-								value = value
-							}
-							part_data.stats = stats
-							
-							local custom_stats
-							if base_custom_stats and not skip_inherit_custom_stats then
-								--inherit custom_stats from base game
-								custom_stats = table.deep_map_copy(base_custom_stats)
-							else
-								--do not inherit custom_stats from base game;
-								--start fresh
-								custom_stats = {}
-							end
-							
-							local new_custom_stats = {
-								total_ammo_add = total_ammo_add, --custom stat from tcd (additive reserve ammo bonus)
-								ammo_pickup_max_add = pickup_low, --custom stat
-								ammo_pickup_min_add = pickup_high, --custom stat
-								armor_piercing_add = armor_piercing_chance,
-								can_shoot_through_shield = can_shoot_through_shield,
-								can_shoot_through_wall = can_shoot_through_wall,
-								can_shoot_through_enemy = can_shoot_through_enemy
-							}
-							
-							--merge new custom_stats from csv over base custom_stats
-							for custom_stat_key,custom_stat_value in pairs(new_custom_stats) do 
-								custom_stats[custom_stat_key] = custom_stat_value
-							end
-							
-							part_data.custom_stats = custom_stats
-							
-							part_data.class_modifier = primary_class
-							part_data.subclass_modifiers = secondary_classes
-							
-							--add part data to output table
-							--this will be merged with game data after loop
-							output_data[attachment_id] = output_data[attachment_id] or {bm_override = {}}
-							
-							if bm_weapon_id then
-								output_data[attachment_id].bm_override[bm_weapon_id] = part_data
-							else
-								output_data[attachment_id].part_data = part_data
-							end
-							
-							if self.debug_mode_enabled then
-								self.debug_data.attachments[line_num] = part_data
 							end
 						end
 					end
 					
 					
+					--Magazine size bonus (aka extra_ammo)
+					local extra_ammo
+					local _extra_ammo = raw_csv_values[STAT_INDICES.extra_ammo]
+					if not_empty(_extra_ammo) then
+						extra_ammo = tonumber(_extra_ammo)
+						--so apparently this is just. a 1:1 direct additive bonus.
+--								extra_ammo = convert_extra_ammo(tonumber(_extra_ammo))
+					end
+					
+					
+					--Total Ammo Add Bonus (additive bonus to Reserve Ammo)
+					local total_ammo_add
+					local _total_ammo_add = raw_csv_values[STAT_INDICES.total_ammo_add]
+					if not_empty(_total_ammo_add) then 
+						total_ammo_add = tonumber(_total_ammo_add)
+					end
+					
+					--Total Ammo Mul Bonus (multiplicative bonus to Reserve Ammo)
+					local _total_ammo_mul = raw_csv_values[STAT_INDICES.total_ammo]
+					local total_ammo_mul
+					if not_empty(_total_ammo_mul) then 
+						total_ammo_mul = tonumber(_total_ammo_mul)
+					end
+					--[[
+					local total_ammo_mul
+					if not_empty(_total_ammo_mul) then 
+						total_ammo_mul = convert_total_ammo_mul(tonumber(_total_ammo_mul))
+					end
+					--]]
+					
+					--Fire Rate bonus
+					local fire_rate
+					local _fire_rate = raw_csv_values[STAT_INDICES.fire_rate]
+					if not_empty(_fire_rate) then
+						--pre-converted
+						fire_rate = convert_rof(tonumber(_fire_rate))
+					end
+					
+					
+					--Damage
+					local damage
+					local _damage = raw_csv_values[STAT_INDICES.damage]
+					if not_empty(_damage) then
+						--pre-converted
+						damage = tonumber(_damage)
+					end
+					
+					
+					--Accuracy/Spread bonus
+					local spread
+					local _spread = raw_csv_values[STAT_INDICES.accuracy]
+					if not_empty(_spread) then 
+						--pre-converted
+						spread = convert_accstab(tonumber(_spread))
+					end
+					
+					
+					--Stability/Recoil bonus
+					local recoil 
+					local _recoil = raw_csv_values[STAT_INDICES.stability]
+					if not_empty(_recoil) then
+						recoil = convert_accstab(tonumber(_recoil))
+					end
+					
+					--Concealment
+					local concealment
+					local _concealment = raw_csv_values[STAT_INDICES.concealment]
+					if not_empty(_concealment) then
+						concealment = tonumber(_concealment)
+					end
+					
+					
+					--Threat/Suppression bonus
+					local suppression
+					local _suppression = raw_csv_values[STAT_INDICES.suppression]
+					if not_empty(_suppression) then
+						suppression = tonumber(_suppression)
+					end
+					
+					--Reload Multiplier
+					local reload_mul
+					local _reload_mul = raw_csv_values[STAT_INDICES.reload]
+					if not_empty(_reload_mul) then 
+						--pre-converted
+						reload_mul = tonumber(_reload_mul)
+					end
+					
+					--Zoom (inherited)
+					local zoom = base_stats.zoom
+					local _zoom = raw_csv_values[STAT_INDICES.zoom]
+					if not_empty(_zoom) then 
+						zoom = tonumber(_zoom)
+					end
+					
+					--Alert Size (inherited)
+					local alert_size = base_stats.alert_size
+					local _alert_size = raw_csv_values[STAT_INDICES.alert_size]
+					if not_empty(_alert_size) then 
+						alert_size = tonumber(_alert_size)
+					end
+					
+					--Value (inherited)
+					local value = base_stats.value
+					local _value = raw_csv_values[STAT_INDICES.pc_value]
+					if not_empty(_value) then 
+						value = tonumber(_value)
+					end
+					
+					--Ammo Pickup High/Ammo Pickup Low
+					local pickup_low,pickup_high
+					
+					local _pickup_low = raw_csv_values[STAT_INDICES.pickup_low]
+					if not_empty(_pickup_low) then
+						pickup_low = tonumber(_pickup_low)
+					end
+					local _pickup_high = raw_csv_values[STAT_INDICES.pickup_high]
+					if not_empty(_pickup_high) then
+						pickup_high = tonumber(_pickup_high)
+					end
+					--assorted piercing stats
+					local _can_shoot_through_enemy = raw_csv_values[STAT_INDICES.can_pierce_enemy]
+					local can_shoot_through_enemy = not_empty(_can_shoot_through_enemy) and convert_boolean(_can_shoot_through_enemy)
+					local _can_shoot_through_shield = raw_csv_values[STAT_INDICES.can_pierce_shield]
+					local can_shoot_through_shield = not_empty(_can_shoot_through_shield) and convert_boolean(_can_shoot_through_shield)
+					local _can_shoot_through_wall = raw_csv_values[STAT_INDICES.can_pierce_wall]
+					local can_shoot_through_wall = not_empty(_can_shoot_through_wall) and convert_boolean(_can_shoot_through_wall)
+					local _armor_piercing_chance = raw_csv_values[STAT_INDICES.armor_piercing_chance]
+					local armor_piercing_chance
+					if not_empty(_armor_piercing_chance) then
+						armor_piercing_chance = tonumber(_armor_piercing_chance)
+					end
+					
+					
+					--all final stats and data for this attachment entry
+					--saving to game tweakdata is done outside of the file read loop
+					--so that each attachment can inherit stats from the base game's stats
+					--instead of overwriting the base stats immediately and then using that as the template for the next attachments
+					local part_data = {
+						supported = true,
+						part_id = attachment_id
+					}
+					
+					local stats = {
+						extra_ammo = extra_ammo, --additive mag size bonus index
+						total_ammo_mod = total_ammo_mul, --reserve ammo multiplicative bonus index modifier
+						fire_rate = fire_rate,
+						damage = damage,
+						spread = spread,
+						spread_moving = nil, --not used
+						recoil = recoil,
+						concealment = concealment,
+						suppression = suppression,
+						reload = reload_mul,
+						alert_size = alert_size,
+						zoom = zoom,
+						value = value
+					}
+					part_data.stats = stats
+					
+					local custom_stats
+					if base_custom_stats and not skip_inherit_custom_stats then
+						--inherit custom_stats from base game
+						custom_stats = table.deep_map_copy(base_custom_stats)
+					else
+						--do not inherit custom_stats from base game;
+						--start fresh
+						custom_stats = {}
+					end
+					
+					local new_custom_stats = {
+						total_ammo_add = total_ammo_add, --custom stat from tcd (additive reserve ammo bonus)
+						ammo_pickup_max_add = pickup_low, --custom stat
+						ammo_pickup_min_add = pickup_high, --custom stat
+						armor_piercing_add = armor_piercing_chance,
+						can_shoot_through_shield = can_shoot_through_shield,
+						can_shoot_through_wall = can_shoot_through_wall,
+						can_shoot_through_enemy = can_shoot_through_enemy
+					}
+					
+					--merge new custom_stats from csv over base custom_stats
+					for custom_stat_key,custom_stat_value in pairs(new_custom_stats) do 
+						custom_stats[custom_stat_key] = custom_stat_value
+					end
+					
+					part_data.custom_stats = custom_stats
+					
+					part_data.class_modifier = primary_class
+					part_data.subclass_modifiers = secondary_classes
+					
+					--add part data to output table
+					--this will be merged with game data after loop
+					output_data[attachment_id] = output_data[attachment_id] or {bm_override = {}}
+					
+					if bm_weapon_id then
+						output_data[attachment_id].bm_override[bm_weapon_id] = part_data
+					else
+						output_data[attachment_id].part_data = part_data
+					end
+					
+					if self.debug_mode_enabled then
+						self.debug_data.attachments[line_num] = part_data
+					end
 				end
 			end
-			if input_file then 
-				input_file:close()
-			end
 		end
-	end	
+	end
+	if input_file then 
+		input_file:close()
+	end
 	
 	if self.debug_mode_enabled then 
 		self.debug_data.attachments.out = output_data
