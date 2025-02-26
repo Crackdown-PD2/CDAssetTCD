@@ -852,7 +852,7 @@ function CSVStatReader:read_firearms(parent_tweak_data,path)
 	input_file:close()
 end
 
-function CSVStatReader:read_melees(parent_tweak_data,target_subdir) --not implemented
+function CSVStatReader:read_melees(parent_tweak_data,path) --not implemented
 	local file_util = _G.FileIO
 	local path_util = BeardLib.Utils.Path
 	
@@ -865,7 +865,6 @@ function CSVStatReader:read_melees(parent_tweak_data,target_subdir) --not implem
 	local SEVERITY = self.SEVERITY
 	local DAMAGE_CAP = self.DAMAGE_CAP
 	local IGNORED_HEADERS = self.IGNORED_HEADERS
-	local input_directory = deathvox_overhaul:GetPath() .. self.INPUT_DIRECTORY
 end
 
 function CSVStatReader:read_attachments(parent_tweak_data,path)
@@ -887,9 +886,6 @@ function CSVStatReader:read_attachments(parent_tweak_data,path)
 	local SEVERITY = self.SEVERITY
 --	local DAMAGE_CAP = self.DAMAGE_CAP
 	local IGNORED_HEADERS = self.IGNORED_HEADERS
-	local input_directory = deathvox_overhaul:GetPath() .. self.INPUT_DIRECTORY
-	
-	local target_subdir = input_directory .. self.ATTACHMENTS_SUBDIR
 	
 	local STAT_INDICES = self.ATTACHMENT_STAT_INDICES
 	
