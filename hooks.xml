@@ -2,10 +2,20 @@
 
 <hooks directory="lua">
 	
-	<hook post="true" file="lib/tweak_data/upgradestweakdata.lua" source_file="lib/tweak_data/upgradestweakdata"/>
 	<hook post="true" file="lib/tweak_data/skilltreetweakdata.lua" source_file="lib/tweak_data/skilltreetweakdata"/>
+	<hook post="true" file="lib/tweak_data/upgradestweakdata.lua" source_file="lib/tweak_data/upgradestweakdata"/>
 	<hook post="true" file="lib/tweak_data/weapontweakdata.lua" source_file="lib/tweak_data/weapontweakdata"/>
 	<hook post="true" file="lib/tweak_data/weaponfactorytweakdata.lua" source_file="lib/tweak_data/weaponfactorytweakdata"/>
+	
+	<hook post="true" file="lib/managers/blackmarketmanager.lua" source_file="lib/managers/blackmarketmanager"/>
+	<hook post="true" file="lib/managers/weaponfactorymanager.lua" source_file="lib/managers/weaponfactorymanager"/>
+	
+	<hook post="true" file="lib/managers/menu/blackmarketgui.lua" source_file="lib/managers/menu/blackmarketgui"/>
+	<hook post="true" file="lib/managers/menu/playerinventorygui.lua" source_file="lib/managers/menu/playerinventorygui"/>
+	<hook post="true" file="lib/managers/menu/skilltreeguinew.lua" source_file="lib/managers/menu/skilltreeguinew"/>
+
+	<hook post="true" file="lib/utils/inventorydescription.lua" source_file="lib/utils/inventorydescription"/>
+
 <!-- IOU some hooks
 	<hook post="true" file="lib/managers/menumanager.lua" source_file="lib/managers/menumanager"/>
 -->

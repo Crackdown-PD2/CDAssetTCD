@@ -16,7 +16,7 @@ Hooks:PostHook(WeaponFactoryTweakData, "init", "tcd_weaponfactd_init", function(
 		end
 	end
 	
-	--any manual adjustments should be written after read_files() 
+	--any manual adjustments should be written after read_attachments() 
 	
 --Mod stats info:
 --      damage - Damage increased/decreased by attachment. (Note. If weapon use stats_modifiers for damage this value will be multiplied by it)

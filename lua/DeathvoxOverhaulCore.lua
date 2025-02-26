@@ -17,3 +17,84 @@ function DeathvoxOverhaulCore:require(_path)
 		error("CoreDeathvoxOverhaul:require() File could not be read: " .. tostring(path))
 	end
 end
+
+DeathvoxOverhaulCore.TCD_GUI_DATA = {
+	weapons = {
+		class = {
+			class_grenade = "guis/textures/pd2/blackmarket/icons/tcd/class_grenade",
+			class_heavy = "guis/textures/pd2/blackmarket/icons/tcd/class_heavy",
+			class_melee = "guis/textures/pd2/blackmarket/icons/tcd/class_melee",
+			class_precision = "guis/textures/pd2/blackmarket/icons/tcd/class_precision",
+			class_rapidfire = "guis/textures/pd2/blackmarket/icons/tcd/class_rapidfire",
+			class_saw = "guis/textures/pd2/blackmarket/icons/tcd/class_saw",
+			class_shotgun = "guis/textures/pd2/blackmarket/icons/tcd/class_shotgun",
+			class_specialist = "guis/textures/pd2/blackmarket/icons/tcd/class_specialist",
+			class_throwing = "guis/textures/pd2/blackmarket/icons/tcd/class_throwing"
+		},
+		subclass = {
+			subclass_areadenial = "guis/textures/pd2/blackmarket/icons/tcd/subclass_areadenial",
+			subclass_poison = "guis/textures/pd2/blackmarket/icons/tcd/subclass_poison",
+			subclass_quiet = "guis/textures/pd2/blackmarket/icons/tcd/subclass_quiet"
+		}
+	}
+}
+
+DeathvoxOverhaulCore.TCD_ICON_CHARS = {
+	heavy = {
+		character = "─",
+		macro = "ICN_HVY",
+	},
+	grenade = {
+		character = "┼",
+		macro = "ICN_GRN"
+	},
+	area_denial = {
+		character = "═",
+		macro = "ICN_ARD"
+	},
+	throwing = {
+		character = "╤",
+		macro = "ICN_THR"
+	},
+	specialist = {
+		character = "╥",
+		macro = "ICN_SPC"
+	},
+	shotgun = {
+		character = "╦",
+		macro = "ICN_SHO"
+	},
+	saw = {
+		character = "╧",
+		macro = "ICN_SAW"
+	},
+	rapidfire = {
+		character = "╨",
+		macro = "ICN_RPF"
+	},
+	quiet = {
+		character = "╩",
+		macro = "ICN_QUT"
+	},
+	precision = {
+		character = "╪",
+		macro = "ICN_PRE"
+	},
+	poison = {
+		character = "╫",
+		macro = "ICN_POI"
+	},
+	melee = {
+		character = "╬",
+		macro = "ICN_MEL"
+	}
+}
+
+function DeathvoxOverhaulCore.insert_tcd_macros(macros)
+	for _,v in pairs(DeathvoxOverhaulCore.tcd_icon_chars) do  --just adds wpn class/subclass icon macros
+		if v.macro and v.character then
+			macros[v.macro] = v.character
+		end
+	end
+end
+	
