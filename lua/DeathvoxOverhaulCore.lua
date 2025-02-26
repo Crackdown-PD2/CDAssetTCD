@@ -91,7 +91,7 @@ DeathvoxOverhaulCore.TCD_ICON_CHARS = {
 }
 
 function DeathvoxOverhaulCore.insert_tcd_macros(macros)
-	for _,v in pairs(DeathvoxOverhaulCore.tcd_icon_chars) do  --just adds wpn class/subclass icon macros
+	for _,v in pairs(DeathvoxOverhaulCore.TCD_ICON_CHARS) do  --just adds wpn class/subclass icon macros
 		if v.macro and v.character then
 			macros[v.macro] = v.character
 		end

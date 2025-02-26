@@ -563,7 +563,7 @@ function BlackMarketGui:update_info_text()
 			if not slot_data.unlocked then
 				updated_texts[2].text = "##" .. managers.localization:to_upper_text("bm_menu_item_locked") .. "##"
 				updated_texts[2].resource_color = tweak_data.screen_colors.important_1
-				updated_texts[3].text = slot_data.dlc_locked and managers.localization:to_upper_text(slot_data.dlc_locked) or managers.localization:to_upper_text("bm_menu_dlc_locked")
+				updated_texts[3].text = slot_data.dlc_locked and managers.localization:to_upper_text(slot_data.dlc_locked) or managers.localization:to_upper_text(managers.dlc:get_unavailable_id(slot_data.global_value))
 			end
 
 			local desc_id = player_style_tweak.desc_id
@@ -596,7 +596,7 @@ function BlackMarketGui:update_info_text()
 		if not slot_data.unlocked then
 			updated_texts[2].text = "##" .. managers.localization:to_upper_text("bm_menu_item_locked") .. "##"
 			updated_texts[2].resource_color = tweak_data.screen_colors.important_1
-			updated_texts[3].text = slot_data.dlc_locked and managers.localization:to_upper_text(slot_data.dlc_locked) or managers.localization:to_upper_text("bm_menu_dlc_locked")
+			updated_texts[3].text = slot_data.dlc_locked and managers.localization:to_upper_text(slot_data.dlc_locked) or managers.localization:to_upper_text(managers.dlc:get_unavailable_id(slot_data.global_value))
 		end
 
 		local desc_id = suit_variation_tweak and suit_variation_tweak.desc_id or "menu_default"
@@ -627,7 +627,7 @@ function BlackMarketGui:update_info_text()
 			if not slot_data.unlocked then
 				updated_texts[2].text = "##" .. managers.localization:to_upper_text("bm_menu_item_locked") .. "##"
 				updated_texts[2].resource_color = tweak_data.screen_colors.important_1
-				updated_texts[3].text = slot_data.dlc_locked and managers.localization:to_upper_text(slot_data.dlc_locked) or managers.localization:to_upper_text("bm_menu_dlc_locked")
+				updated_texts[3].text = slot_data.dlc_locked and managers.localization:to_upper_text(slot_data.dlc_locked) or managers.localization:to_upper_text(managers.dlc:get_unavailable_id(slot_data.global_value))
 			end
 
 			local desc_id = glove_tweak.desc_id
@@ -1362,7 +1362,7 @@ function BlackMarketGui:update_info_text()
 					local have_color = managers.blackmarket:has_item(global_value, "weapon_skins", color_id)
 
 					if not unlocked then
-						updated_texts[5].text = managers.localization:text(gvalue_tweak and gvalue_tweak.unlock_id or "bm_menu_dlc_locked")
+						updated_texts[5].text = managers.localization:text(gvalue_tweak and gvalue_tweak.unlock_id or managers.dlc:get_unavailable_id(global_value))
 					elseif not have_color then
 						local achievement_locked_content = managers.dlc:weapon_color_achievement_locked_content(color_id)
 						local dlc_tweak = tweak_data.dlc[achievement_locked_content]
@@ -1370,9 +1370,9 @@ function BlackMarketGui:update_info_text()
 
 						if achievement and managers.achievment:get_info(achievement) then
 							local achievement_visual = tweak_data.achievement.visual[achievement]
-							updated_texts[5].text = managers.localization:text(achievement_visual and achievement_visual.desc_id or "achievement_" .. tostring(achievement) .. "_desc" or "bm_menu_dlc_locked")
+							updated_texts[5].text = managers.localization:text(achievement_visual and achievement_visual.desc_id or "achievement_" .. tostring(achievement) .. "_desc" or managers.dlc:get_unavailable_id(global_value))
 						else
-							updated_texts[5].text = managers.localization:text("bm_menu_dlc_locked")
+							updated_texts[5].text = managers.localization:text(managers.dlc:get_unavailable_id(global_value))
 						end
 					end
 				end

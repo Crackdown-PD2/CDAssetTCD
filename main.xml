@@ -3,5 +3,6 @@
 	<AssetUpdates id="Crackdown-PD2/Crackdown-Assets-Overhaul" branch="standalone" provider="github" version="1.1.1" release="true" important="false" dont_delete="false"/>
 	-->
 	<XML path="crackdownplayeroverhaul.xml"/> 
+	<Localization name="tcd_localization" directory="l10n" default="en.json"/>
 	<Hooks name="tcd_hooks" file="hooks.xml" />
 </mod> 

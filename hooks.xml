@@ -13,6 +13,7 @@
 	<hook post="true" file="lib/managers/menu/blackmarketgui.lua" source_file="lib/managers/menu/blackmarketgui"/>
 	<hook post="true" file="lib/managers/menu/playerinventorygui.lua" source_file="lib/managers/menu/playerinventorygui"/>
 	<hook post="true" file="lib/managers/menu/skilltreeguinew.lua" source_file="lib/managers/menu/skilltreeguinew"/>
+	<hook post="true" file="lib/managers/menu/specializationguinew.lua" source_file="lib/managers/menu/specializationguinew"/>
 
 	<hook post="true" file="lib/utils/inventorydescription.lua" source_file="lib/utils/inventorydescription"/>
 
