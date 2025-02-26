@@ -275,3 +275,207 @@ function SpecializationGuiNew:update_detail_panels(item)
 		y_pos = ability_text:bottom()
 	end
 end
+
+-- =========================
+-- perk deck shake code below
+local ANGLE = 10 --angle that the icon will rotate in either direction
+local ROTATION_SPEED = 0.5 --rotation cycles per second
+local TIME_OFFSET = 0.33 --seconds delay for the shadow bitmap
+local ROTATION_OFFSET = 0 --degrees delay for the shadow bitmap (functionally the same as TIME_OFFSET but by a different measure)
+local SCANLINES_SPEED = 10 --px/sec
+
+local SCANLINES_RESTING_ALPHA = 0.33
+local SHADOW_RESTING_ALPHA = 0.33
+
+Hooks:PostHook(SpecializationGuiNew,"update","tcd_specguinew_update",function(self,t,dt)
+	local list_items = self._scroll_list and self._scroll_list:items()
+	
+	for index, item in ipairs(list_items) do
+		if item.specialization_data.shake then
+			local shake_t = item._shake_t + dt
+			item._shake_t = shake_t
+			
+			local current_tier = item:get_current_tier()
+			
+			for i,card_panel in ipairs(item._card_panels) do
+				if alive(card_panel) then
+					if item._shake_selected then
+						if current_tier >= i then 
+							card_panel:child("icon"):set_rotation(math.sin(shake_t * 360 * ROTATION_SPEED) * ANGLE)
+							card_panel:child("icon_shadow"):set_rotation(math.sin((shake_t - TIME_OFFSET) * 360 * ROTATION_SPEED) * ANGLE)
+						
+							local scanlines_panel = card_panel:child("scanlines_panel")
+							local tier_scanlines = scanlines_panel:child("tier_scanlines")
+							
+--							tier_scanlines:set_alpha(math.sin(
+							local scanline_y = tier_scanlines:y() + (dt * SCANLINES_SPEED)
+							if scanline_y >= 0 then 
+								tier_scanlines:set_y(-scanlines_panel:h())
+							else
+								tier_scanlines:set_y(scanline_y)
+							end
+							scanlines_panel:set_x((card_panel:w() - scanlines_panel:w()) / 2)
+						end
+					end
+				end
+			end
+		end
+	end
+end)
+
+
+local function animate_fade(o,to_a,duration)
+	local from_a = o:alpha()
+	local d_a = to_a - from_a
+	local lerp2 = 0
+	duration = duration or 1
+	over(duration,function(lerp)
+		lerp2 = math.bezier(
+			{
+				0,
+				0,
+				1,
+				1
+			},
+			lerp
+		)
+		o:set_alpha(from_a+(d_a*lerp2))
+	end)
+	o:set_alpha(to_a)
+end
+
+local function animate_lerp(o,to_rot,duration)
+	local from_rot = o:rotation()
+	local d_rot = to_rot - from_rot
+	local lerp2 = 0
+	duration = duration or 1
+	over(duration,function(lerp)
+		lerp2 = math.bezier(
+			{
+				0,
+				0,
+				1,
+				1
+			},
+			lerp
+		)
+		o:set_rotation(from_rot+(d_rot*lerp2))
+	end)
+	o:set_rotation(to_rot)
+end
+
+Hooks:PostHook(SpecializationListItem,"_selected_changed","tcd_speclistitem_onselectedchanged",function(self,state)
+	if self.specialization_data.shake then 
+		-- animate the neat elements to invisibility again
+		self._shake_selected = state
+		self._shake_t = 0
+		
+		local current_tier = self:get_current_tier()
+		for index, item in ipairs(self.specialization_data) do
+			local locked = current_tier < index
+			if not locked then
+				local card_panel = self._card_panels[index]
+				local icon = card_panel:child("icon")
+				local shadow = card_panel:child("icon_shadow")
+				local scanlines_panel = card_panel:child("scanlines_panel")
+				if state then
+					-- animate in
+					icon:stop()
+					shadow:stop()
+					scanlines_panel:stop()
+					shadow:animate(animate_fade,SHADOW_RESTING_ALPHA,0.5)
+					scanlines_panel:animate(animate_fade,1,0.5)
+				else
+					-- animate out
+					icon:stop()
+					icon:animate(animate_lerp,0)
+					shadow:stop()
+					scanlines_panel:stop()
+					shadow:animate(animate_lerp,0)
+					shadow:animate(animate_fade,0,1)
+					scanlines_panel:animate(animate_fade,0,1)
+				end
+			end
+		end
+	end
+end)
+
+Hooks:PostHook(SpecializationListItem,"setup","tcd_speclistitem_setup",function(self)
+	-- create other visual elements such as scanlines and shadow
+	if self.specialization_data.shake then
+		self._shake_t = 0
+		for index, item in ipairs(self.specialization_data) do
+			local current_tier = self:get_current_tier()
+			local locked = current_tier < index
+			
+			local card_panel = self._card_panels[index]
+			
+			local guis_catalog = "guis/"
+			
+			if item.texture_bundle_folder then
+				guis_catalog = guis_catalog .. "dlcs/" .. tostring(item.texture_bundle_folder) .. "/"
+			end
+
+			local atlas_name = item.icon_atlas or "icons_atlas"
+			local icon_atlas_texture = guis_catalog .. "textures/pd2/specialization/" .. atlas_name
+			local texture_rect_x = item.icon_xy and item.icon_xy[1] or 0
+			local texture_rect_y = item.icon_xy and item.icon_xy[2] or 0
+			local icon_texture_rect = item.icon_texture_rect or {
+				64,
+				64,
+				64,
+				64
+			}
+			
+			card_panel:child("icon"):set_layer(locked and 5 or 6) -- bump the layer up one so that there's room for the shadow
+			
+			local icon_shadow = card_panel:bitmap({
+				name = "icon_shadow",
+				texture = icon_atlas_texture,
+				texture_rect = {
+					texture_rect_x * icon_texture_rect[1],
+					texture_rect_y * icon_texture_rect[2],
+					icon_texture_rect[3],
+					icon_texture_rect[4],
+				},
+				halign = "scale",
+				valign = "scale",
+				rotation = ROTATION_OFFSET,
+				layer = locked and 4 or 5,
+				color = Color("000000"),
+				alpha = 0 -- updated on selection change
+			})
+			icon_shadow:grow(-16,-16)
+			icon_shadow:set_center(card_panel:w() / 2, card_panel:h() / 2)
+			icon_shadow:move(0,4)
+			
+			local scanlines_w = 64 - 22
+			local scanlines_h = 92 - 34
+			local scanlines_panel = card_panel:panel({
+				name = "scanlines_panel",
+				w = scanlines_w - 2,
+				h = scanlines_h,
+				x = (card_panel:w() - scanlines_w) / 2,
+				y = 3,
+				alpha = 0, -- updated on selection change
+				layer = 4
+			})
+			local tier_scanlines = scanlines_panel:bitmap({
+				name = "tier_scanlines",
+				texture = "guis/textures/pd2/damage_overlay_sociopath/scanlines_overlay",
+				texture_rect = {
+					0,math.random(360 - 92),1,92 + math.random(-4,4) --360 is the scanlines file height
+				},
+				x = 1,
+				w = scanlines_panel:w(),
+				h = scanlines_panel:h() * 2,
+				y = -scanlines_h,
+				blend_mode = "add",
+				halign = "scale",
+				valign = "scale",
+				alpha = SCANLINES_RESTING_ALPHA,
+				layer = 10
+			})
+		end
+	end
+end)
