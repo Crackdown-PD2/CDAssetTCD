@@ -22,6 +22,25 @@
 	<hook post="true" file="lib/managers/menu/skilltreeguinew.lua" source_file="lib/managers/menu/skilltreeguinew"/>
 	<hook post="true" file="lib/managers/menu/specializationguinew.lua" source_file="lib/managers/menu/specializationguinew"/>
 
+	<hook post="true" file="lib/units/weapons/bowweaponbase.lua" source_file="lib/units/weapons/bowweaponbase"/>
+	<hook post="true" file="lib/units/weapons/newraycastweaponbase.lua" source_file="lib/units/weapons/newraycastweaponbase"/>
+	<hook post="true" file="lib/units/weapons/raycastweaponbase.lua" source_file="lib/units/weapons/raycastweaponbase"/>
+	<hook post="true" file="lib/units/weapons/shotgun/shotgunbase.lua" source_file="lib/units/weapons/shotgun/shotgunbase"/>
+	<hook post="true" file="lib/units/weapons/sawweaponbase.lua" source_file="lib/units/weapons/sawweaponbase"/>
+	
+	<!-- pending rewrite of sentrygun/tripmine code, and their accompanying control menu classes
+	<hook post="true" file="lib/units/weapons/sentrygunweapon.lua" source_file="lib/units/weapons/sentrygunweapon"/>
+	<hook post="true" file="lib/units/weapons/trip_mine/tripminebase.lua" source_file="lib/units/weapons/trip_mine/tripminebase"/>
+	-->
+	
+	<hook post="true" file="lib/units/weapons/projectiles/arrowbase.lua" source_file="lib/units/weapons/projectiles/arrowbase"/>
+	<hook post="true" file="lib/units/weapons/projectiles/projectilebase.lua" source_file="lib/units/weapons/projectiles/projectilebase"/>
+	<hook post="true" file="lib/units/weapons/projectiles/tripminethrowablebase.lua" source_file="lib/units/weapons/projectiles/projectilebase"/>
+
+	<hook post="true" file="lib/units/weapons/grenades/concussiongrenade.lua" source_file="lib/units/weapons/grenades/concussiongrenade"/>
+	<hook post="true" file="lib/units/weapons/grenades/fraggrenade.lua" source_file="lib/units/weapons/grenades/fraggrenade"/>
+	<hook post="true" file="lib/units/weapons/grenades/incendiaryburstgrenade.lua" source_file="lib/units/weapons/grenades/incendiaryburstgrenade"/>
+	
 	<hook post="true" file="lib/utils/inventorydescription.lua" source_file="lib/utils/inventorydescription"/>
 
 <!-- IOU some hooks
