@@ -15,6 +15,7 @@
 	<hook post="true" file="lib/tweak_data/weaponfactorytweakdata.lua" source_file="lib/tweak_data/weaponfactorytweakdata"/>
 
 	<hook post="true" file="lib/managers/blackmarketmanager.lua" source_file="lib/managers/blackmarketmanager"/>
+	<hook post="true" file="lib/managers/playermanager.lua" source_file="lib/managers/playermanager"/>
 	<hook post="true" file="lib/managers/weaponfactorymanager.lua" source_file="lib/managers/weaponfactorymanager"/>
 	
 	<hook post="true" file="lib/managers/menu/blackmarketgui.lua" source_file="lib/managers/menu/blackmarketgui"/>
@@ -42,6 +43,9 @@
 	<hook post="true" file="lib/units/weapons/grenades/incendiaryburstgrenade.lua" source_file="lib/units/weapons/grenades/incendiaryburstgrenade"/>
 	
 	<hook post="true" file="lib/utils/inventorydescription.lua" source_file="lib/utils/inventorydescription"/>
+
+
+	<hook post="true" file="lib/units/civilians/civiliandamage.lua" source_file="lib/units/civilians/civiliandamage"/>
 
 <!-- IOU some hooks
 	<hook post="true" file="lib/managers/menumanager.lua" source_file="lib/managers/menumanager"/>
