@@ -51,6 +51,8 @@
 	<hook post="true" file="lib/units/weapons/grenades/fraggrenade.lua" source_file="lib/units/weapons/grenades/fraggrenade"/>
 	<hook post="true" file="lib/units/weapons/grenades/incendiaryburstgrenade.lua" source_file="lib/units/weapons/grenades/incendiaryburstgrenade"/>
 	
+	<hook post="true" file="lib/units/contourext.lua" source_file="lib/units/contourext"/>
+	
 	<hook post="true" file="lib/utils/inventorydescription.lua" source_file="lib/utils/inventorydescription"/>
 
 
