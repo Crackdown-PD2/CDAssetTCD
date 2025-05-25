@@ -22,9 +22,12 @@
 	<hook post="true" file="lib/managers/menu/playerinventorygui.lua" source_file="lib/managers/menu/playerinventorygui"/>
 	<hook post="true" file="lib/managers/menu/skilltreeguinew.lua" source_file="lib/managers/menu/skilltreeguinew"/>
 	<hook post="true" file="lib/managers/menu/specializationguinew.lua" source_file="lib/managers/menu/specializationguinew"/>
-
+	
+	
 	
 	<hook post="true" file="lib/units/beings/player/states/playerstandard.lua" source_file="lib/units/beings/player/states/playerstandard"/>
+	
+	<hook post="true" file="lib/units/civilians/civilianbase.lua" source_file="lib/units/civilians/civilianbase"/>
 	
 	<hook post="true" file="lib/units/interactions/interactionext.lua" source_file="lib/units/interactions/interactionext"/>
 	
