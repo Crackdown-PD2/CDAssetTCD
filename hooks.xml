@@ -28,6 +28,7 @@
 	<hook post="true" file="lib/units/beings/player/states/playerstandard.lua" source_file="lib/units/beings/player/states/playerstandard"/>
 	
 	<hook post="true" file="lib/units/civilians/civilianbase.lua" source_file="lib/units/civilians/civilianbase"/>
+	<hook post="true" file="lib/units/civilians/civiliandamage.lua" source_file="lib/units/civilians/civiliandamage"/>
 	
 	<hook post="true" file="lib/units/interactions/interactionext.lua" source_file="lib/units/interactions/interactionext"/>
 	
@@ -53,7 +54,6 @@
 	<hook post="true" file="lib/utils/inventorydescription.lua" source_file="lib/utils/inventorydescription"/>
 
 
-	<hook post="true" file="lib/units/civilians/civiliandamage.lua" source_file="lib/units/civilians/civiliandamage"/>
 
 <!-- IOU some hooks
 	<hook post="true" file="lib/managers/menumanager.lua" source_file="lib/managers/menumanager"/>
