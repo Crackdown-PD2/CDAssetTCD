@@ -23,6 +23,8 @@
 	<hook post="true" file="lib/managers/menu/skilltreeguinew.lua" source_file="lib/managers/menu/skilltreeguinew"/>
 	<hook post="true" file="lib/managers/menu/specializationguinew.lua" source_file="lib/managers/menu/specializationguinew"/>
 
+	<hook post="true" file="lib/units/interactions/interactionext.lua" source_file="lib/units/interactions/interactionext"/>
+	
 	<hook post="true" file="lib/units/weapons/bowweaponbase.lua" source_file="lib/units/weapons/bowweaponbase"/>
 	<hook post="true" file="lib/units/weapons/newraycastweaponbase.lua" source_file="lib/units/weapons/newraycastweaponbase"/>
 	<hook post="true" file="lib/units/weapons/raycastweaponbase.lua" source_file="lib/units/weapons/raycastweaponbase"/>
