@@ -2,7 +2,7 @@ local orig_damage_bullet = CivilianDamage.damage_bullet
 function CivilianDamage:damage_bullet(attack_data,...)
 	if managers.player:has_team_category_upgrade("player","civilian_hostage_stationary_invuln") then 
 		local brain = self._unit:brain()
-		if brain and brain:is_tied() or self._unit:anim_data().drop then
+		if brain and brain:is_tied() and self._unit:anim_data().drop then
 			return
 		end
 	end
@@ -14,7 +14,7 @@ local orig_damage_expl = CivilianDamage.damage_explosion
 function CivilianDamage:damage_explosion(attack_data,...)
 	if managers.player:has_team_category_upgrade("player","civilian_hostage_stationary_invuln") then 
 		local brain = self._unit:brain()
-		if brain and brain:is_tied() or self._unit:anim_data().drop then
+		if brain and brain:is_tied() and self._unit:anim_data().drop then
 			return
 		end
 	end
@@ -26,7 +26,7 @@ local orig_damage_fire = CivilianDamage.damage_fire
 function CivilianDamage:damage_fire(attack_data,...)
 	if managers.player:has_team_category_upgrade("player","civilian_hostage_stationary_invuln") then 
 		local brain = self._unit:brain()
-		if brain and brain:is_tied() or self._unit:anim_data().drop then
+		if brain and brain:is_tied() and self._unit:anim_data().drop then
 			return
 		end
 	end
@@ -38,7 +38,7 @@ local orig_damage_melee = CivilianDamage.damage_melee
 function CivilianDamage:damage_melee(attack_data,...)
 	if managers.player:has_team_category_upgrade("player","civilian_hostage_stationary_invuln") then 
 		local brain = self._unit:brain()
-		if brain and brain:is_tied() or self._unit:anim_data().drop then
+		if brain and brain:is_tied() and self._unit:anim_data().drop then
 			return
 		end
 	end
@@ -50,7 +50,7 @@ local orig_damage_tase = CivilianDamage.damage_tase
 function CivilianDamage:damage_tase(attack_data,...)
 	if managers.player:has_team_category_upgrade("player","civilian_hostage_stationary_invuln") then 
 		local brain = self._unit:brain()
-		if brain and brain:is_tied() or self._unit:anim_data().drop then
+		if brain and brain:is_tied() and self._unit:anim_data().drop then
 			return
 		end
 	end
