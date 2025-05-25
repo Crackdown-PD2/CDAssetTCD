@@ -27,8 +27,13 @@
 	
 	<hook post="true" file="lib/units/beings/player/states/playerstandard.lua" source_file="lib/units/beings/player/states/playerstandard"/>
 	
+		
 	<hook post="true" file="lib/units/civilians/civilianbase.lua" source_file="lib/units/civilians/civilianbase"/>
+	<hook post="true" file="lib/units/civilians/civilianbrain.lua" source_file="lib/units/civilians/civilianbrain"/>
 	<hook post="true" file="lib/units/civilians/civiliandamage.lua" source_file="lib/units/civilians/civiliandamage"/>
+	<hook post="true" file="lib/units/civilians/logics/civilianlogicsurrender.lua" source_file="lib/units/civilians/logics/civilianlogicsurrender"/>
+	
+	<hook post="true" file="lib/units/enemies/cop/copdamage.lua" source_file="lib/units/enemies/cop/copdamage"/>
 	
 	<hook post="true" file="lib/units/interactions/interactionext.lua" source_file="lib/units/interactions/interactionext"/>
 	
