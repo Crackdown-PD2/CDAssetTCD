@@ -169,6 +169,9 @@ Hooks:PostHook(PlayerManager,"check_skills","tcd_playermanager_checkskills",func
 end)
 
 Hooks:PostHook(PlayerManager,"update","tcd_playermanager_update",function(self,t,dt)
+	
+	managers.tcdbuff:update(t,dt)
+	
 	local player = self:local_player()
 	if player then
 		local current_state = self:get_current_state()
