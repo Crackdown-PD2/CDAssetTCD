@@ -377,7 +377,7 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 		}
 	}
 	self.values.player.point_and_click_stacks = { 
-		1		--stacks per hit
+		1 --stacks per kill
 	}
 
 	self.definitions.weapon_point_and_click_damage_bonus = {
@@ -474,7 +474,7 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 		}
 	}
 	self.values.player.point_and_click_stack_from_kill = {
-		1 --on kill
+		1
 	}
 	
 	self.definitions.player_point_and_click_stack_from_headshot_kill = {
@@ -487,7 +487,7 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 		}
 	}
 	self.values.player.point_and_click_stack_from_headshot_kill = {
-		1 --on headshot kill
+		1 -- grant 1 additional stack on headshot kill
 	}
 	
 	self.definitions.weapon_this_machine_basic = {
