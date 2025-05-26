@@ -6,6 +6,144 @@ local pairs_g = pairs
 local alive_g = alive
 local world_g = World
 
+Hooks:PostHook(PlayerManager,"check_skills","tcd_playermanager_checkskills",function(self)
+	
+	-- Point and Click related skill checks
+	do
+		if self:has_category_upgrade("player","point_and_click_stacks") then 
+			self:set_property("current_point_and_click_stacks",0)
+			self:set_property("point_and_click_deadshot_kills",0) -- kills without missing
+			
+			-- visually update stacks
+			managers.tcdbuff:add_listener("pointclick_stacks_changed","upd_pointclick_stacks",function(prev_stacks,new_stacks)
+				local hudbuff = managers.hud._hud_tcdbuff
+				if prev_stacks ~= new_stacks then
+					if new_stacks == 0 then
+						hudbuff:remove_buff("pointclick")
+					else
+						if not hudbuff:has_buff("pointclick") then
+							hudbuff:add_buff("pointclick",new_stacks)
+						end
+						
+						--hudbuff:set_tag_text(string.format("%i",new_stacks))
+						
+						hudbuff:set_label_text("pointclick",string.format("%i",new_stacks))
+					end
+				end
+			end)
+			
+			
+			-- Potential Exponential Aced miss detection
+			local has_potential_exponential = self:has_category_upgrade("player", "point_and_click_deadshot_mul")
+			if has_potential_exponential then
+				self._message_system:register(Message.OnWeaponFired, "point_and_click_on_miss",
+					function(weapon_unit, result)
+						if result and result.hit_enemy then
+							return
+						end
+						local player = self:local_player()
+						if not alive(player) then 
+							return
+						end
+						local weapon_base = weapon_unit and weapon_unit:base()
+						if weapon_base and weapon_base._setup and weapon_base._setup.user_unit and weapon_base:is_weapon_class("class_precision") then 
+							if weapon_base._setup.user_unit ~= player then 
+								return
+							end
+						else
+							return
+						end
+						
+						self:set_property("point_and_click_deadshot_kills", 0)
+					end
+				)
+			end
+			
+			-- Point and Click basic - add 1 stack
+			local amount = self:upgrade_value("player","point_and_click_stacks",0) -- base stack gain per kill
+			self._message_system:register(Message.OnEnemyKilled, "point_and_click_stack_on_kill",
+				function(weapon_unit, variant, killed_unit)
+					local player = self:local_player()
+					if not alive(player) then 
+						return
+					end
+					local weapon_base = weapon_unit and weapon_unit:base()
+					if weapon_base and weapon_base._setup and weapon_base._setup.user_unit and weapon_base:is_weapon_class("class_precision") then 
+						if weapon_base._setup.user_unit ~= player then 
+							return
+						end
+					else
+						return
+					end
+					
+					local add_amount = amount
+					if has_potential_exponential then
+						-- add kill count to stack bonus
+						add_amount = add_amount + self:get_property("point_and_click_deadshot_kills",0)
+						
+						--increment kill counter afterward
+						self:add_to_property("point_and_click_deadshot_kills",1)
+					end
+					
+					-- grant point+click stacks
+					
+					local prev_stacks = self:get_property("current_point_and_click_stacks",0)
+					self:add_to_property("current_point_and_click_stacks",add_amount)
+					managers.tcdbuff:call_listeners("pointclick_stacks_changed",prev_stacks,self:get_property("current_point_and_click_stacks",0))
+				end
+			)
+		else
+			self._message_system:unregister(Message.OnEnemyShot,"point_and_click_stack_on_kill")
+		end
+		
+		-- Investment Returns basic (headshots grant 1 additional pointclick stack)
+		if self:has_category_upgrade("player", "point_and_click_stack_from_headshot_kill") then
+			local pointclick_headshot_bonus_stacks = self:upgrade_value("player","point_and_click_stack_from_headshot_kill",0)
+			self._message_system:register(Message.OnLethalHeadShot, "pointclick_onheadshotkill",
+				-- must be a separate message hook since OnEnemyKilled can't check for headshots
+				-- unfortunately that causes an issue where the killcount label appears to flicker for one frame, since it's updated twice in a single frame
+				function(attack_data)
+					local player = self:local_player()
+					if not alive(player) then 
+						return
+					end
+					local weapon_base = attack_data and attack_data.weapon_unit and attack_data.weapon_unit:base()
+					if weapon_base and weapon_base._setup and weapon_base._setup.user_unit and weapon_base:is_weapon_class("class_precision") then 
+						if weapon_base._setup.user_unit ~= player then 
+							return
+						end
+					else
+						return
+					end
+					
+					local prev_stacks = self:get_property("current_point_and_click_stacks",0)
+					self:add_to_property("current_point_and_click_stacks",pointclick_headshot_bonus_stacks)
+					managers.tcdbuff:call_listeners("pointclick_stacks_changed",prev_stacks,self:get_property("current_point_and_click_stacks",0))
+				end
+			)
+		else
+			self._message_system:unregister(Message.OnLethalHeadShot,"pointclick_onheadshotkill")
+		end
+		
+	end
+	
+	
+	
+	
+	
+	
+end)
+
+
+
+
+
+
+
+
+
+
+
 --function written for cd, not vanilla
 function PlayerManager:team_upgrade_value_by_level(category, upgrade, level, default)
 	local cat = tweak_data.upgrades.values.team[category]

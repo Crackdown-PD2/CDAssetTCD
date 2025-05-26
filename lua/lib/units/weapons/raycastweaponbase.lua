@@ -395,12 +395,106 @@ function RaycastWeaponBase:fire(from_pos, direction, dmg_mul, shoot_player, spre
 	if mutator and mutator.get_free_ammo_chance and mutator:get_free_ammo_chance() then
 		ammo_usage = 0
 	end
-
 	
+	local do_money_shot
+	if is_player and pm:has_category_upgrade(self:get_weapon_class(),"money_shot") then
+		if mag == 1 then
+			self._money_shot_ready = true
+			self._money_shot_pierce = pm:has_category_upgrade(self:get_weapon_class(),"money_shot_pierce")
+			
+			local money_trail = Idstring("effects/particles/weapons/trail_dv_sniper")
+			local money_muzzle = Idstring("effects/particles/weapons/money_muzzle_fps")
+			
+			self._trail_effect_table = {
+				effect = money_trail,
+				position = Vector3(),
+				normal = Vector3()
+			}
+			
+			self._muzzle_effect_table = {
+				force_synch = true,
+				effect = money_muzzle,
+				parent = self._obj_fire
+			}
+			
+--			self:play_sound("c4_explode_metal")
+		else
+			self._money_shot_ready = false
+			self._money_shot_pierce = false
+			
+			self._trail_effect_table = {
+				effect = self._trail_effect or self.TRAIL_EFFECT,
+				position = Vector3(),
+				normal = Vector3()
+			}
+			
+			self._muzzle_effect_table = {
+				force_synch = true,
+				effect = self._muzzle_effect,
+				parent = self._obj_fire
+			}
+			
+		end
+	end
+	
+	if alive(self._obj_fire) then
+		self:_spawn_muzzle_effect(from_pos, direction)
+	end
 
-	--if consume_ammo and (is_player or Network:is_server()) then
-	if consume_ammo then
+	self:_spawn_shell_eject_effect()
 
+	local ray_res = self:_fire_raycast(user_unit, from_pos, direction, dmg_mul, shoot_player, spread_mul, autohit_mul, suppr_mul, target_unit, ammo_usage)
+	
+	if is_player then
+		if self:is_weapon_class("class_precision") then
+			local magic_bullet_level = pm:upgrade_level("weapon","magic_bullet",0)
+			if magic_bullet_level > 0 then
+				if ray_res then
+					local rays = ray_res.rays
+					local ray = rays and rays[1]
+					local damage_result = ray and ray.damage_result
+					if damage_result then
+						if damage_result.type == "death" then
+							local attack_data = damage_result.attack_data
+							if attack_data and attack_data.headshot then
+								if magic_bullet_level >= 2 then -- aced version, restore 1 bullet to mag
+									if consume_ammo then
+										if ammo_usage == 1 then
+											-- just skip ammo consumption
+											consume_ammo = false
+										elseif ammo_usage > 1 then
+											ammo_usage = ammo_usage - 1
+										end
+									else
+										local clip_current = self:get_ammo_remaining_in_clip()
+										local clip_max = self:get_ammo_max_per_clip()
+										if clip_current < clip_max then
+											-- if mag is not full, and infinite ammo effect is active, restore 1 bullet to the mag
+											self:set_ammo_remaining_in_clip(math.min(clip_max,clip_current + pm:upgrade_value("weapon","magic_bullet",0)))
+										else
+											-- if mag is full, however, restore the bullet to your reserves, so that it's not wasted,
+											-- because i'm NICE like that.
+											local use_index = self._use_data and self._use_data.selection_index or 1
+											self:add_ammo_to_pool(pm:upgrade_value("weapon","magic_bullet"),use_index)
+										end
+									end
+								else -- basic version, restore 1 bullet to reserve
+									local use_index = self._use_data and self._use_data.selection_index or 1
+									self:add_ammo_to_pool(pm:upgrade_value("weapon","magic_bullet"),use_index)
+									--pm:local_player:sound():play("pickup_ammo")
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+	
+	
+	-- moved ammo related code to after raycast result so that magic bullet won't proc it
+	self:_check_ammo_total(user_unit)
+	if consume_ammo then -- and (is_player or Network:is_server()) then
 		if base:get_ammo_remaining_in_clip() == 0 then
 			return
 		end
@@ -447,57 +541,6 @@ function RaycastWeaponBase:fire(from_pos, direction, dmg_mul, shoot_player, spre
 		base:set_ammo_remaining_in_clip(base:get_ammo_remaining_in_clip() - ammo_usage)
 		self:use_ammo(base, ammo_usage)
 	end
-	
-	local do_money_shot
-	if is_player and pm:has_category_upgrade(self:get_weapon_class(),"money_shot") then
-		if mag == 1 then
-			self._money_shot_ready = true
-			self._money_shot_pierce = pm:has_category_upgrade(self:get_weapon_class(),"money_shot_pierce")
-			
-			local money_trail = Idstring("effects/particles/weapons/trail_dv_sniper")
-			local money_muzzle = Idstring("effects/particles/weapons/money_muzzle_fps")
-			
-			self._trail_effect_table = {
-				effect = money_trail,
-				position = Vector3(),
-				normal = Vector3()
-			}
-			
-			self._muzzle_effect_table = {
-				force_synch = true,
-				effect = money_muzzle,
-				parent = self._obj_fire
-			}
-			
---			self:play_sound("c4_explode_metal")
-		else
-			self._money_shot_ready = false
-			self._money_shot_pierce = false
-			
-			self._trail_effect_table = {
-				effect = self._trail_effect or self.TRAIL_EFFECT,
-				position = Vector3(),
-				normal = Vector3()
-			}
-			
-			self._muzzle_effect_table = {
-				force_synch = true,
-				effect = self._muzzle_effect,
-				parent = self._obj_fire
-			}
-			
-		end
-	end
-
-	self:_check_ammo_total(user_unit)
-
-	if alive(self._obj_fire) then
-		self:_spawn_muzzle_effect(from_pos, direction)
-	end
-
-	self:_spawn_shell_eject_effect()
-
-	local ray_res = self:_fire_raycast(user_unit, from_pos, direction, dmg_mul, shoot_player, spread_mul, autohit_mul, suppr_mul, target_unit, ammo_usage)
 	
 	if self._alert_events and ray_res.rays then
 		self:_check_alert(ray_res.rays, from_pos, direction, user_unit)
@@ -1405,8 +1448,10 @@ function RaycastWeaponBase:fire_rate_multiplier(rof_mul)
 --the addition of the optional rof_mul argument is from tcd, not from vanilla
 	rof_mul = rof_mul or 1
 	if self:is_weapon_class("class_precision") then
-		local tap_the_trigger_data = managers.player:upgrade_value("weapon","point_and_click_rof_bonus",{0,0})
-		rof_mul = rof_mul * (1 + math.min(tap_the_trigger_data[1] * managers.player:get_property("current_point_and_click_stacks",0),tap_the_trigger_data[2]))
+		if managers.player:has_category_upgrade("weapon","point_and_click_rof_bonus") then
+			local tap_the_trigger_data = managers.player:upgrade_value("weapon","point_and_click_rof_bonus")
+			rof_mul = rof_mul * (1 + math.min(tap_the_trigger_data[1] * managers.player:get_property("current_point_and_click_stacks",0),tap_the_trigger_data[2]))
+		end
 	elseif self:is_weapon_class("class_shotgun") and self:fire_mode() == "single" then 
 		rof_mul = rof_mul + managers.player:upgrade_value("class_shotgun","shell_games_rof_bonus",0)
 	end
@@ -1437,12 +1482,16 @@ function RaycastWeaponBase:reload_speed_multiplier(multiplier)
 	end
 	
 	if self:is_weapon_class("class_precision") then
-		local this_machine_data = pm:upgrade_value("weapon","point_and_click_bonus_reload_speed",{0,0})
-		multiplier = multiplier * (1 + math.min(this_machine_data[1] * pm:get_property("current_point_and_click_stacks",0),this_machine_data[2]))
+		if pm:has_category_upgrade("weapon","point_and_click_bonus_reload_speed") then
+			local this_machine_data = pm:upgrade_value("weapon","point_and_click_bonus_reload_speed",{0,0})
+			multiplier = multiplier * (1 + math.min(this_machine_data[1] * pm:get_property("current_point_and_click_stacks",0),this_machine_data[2]))
+		end
 	elseif self:is_weapon_class("class_heavy") then
-		local lead_farmer_data = pm:upgrade_value("class_heavy","lead_farmer",{0,0})
-		local lead_farmer_bonus = math.min(pm:get_property("current_lead_farmer_stacks",0) * lead_farmer_data[1],lead_farmer_data[2])
-		multiplier = multiplier + lead_farmer_bonus
+		if pm:has_category_upgrade("class_heavy","lead_farmer") then
+			local lead_farmer_data = pm:upgrade_value("class_heavy","lead_farmer",{0,0})
+			local lead_farmer_bonus = math.min(pm:get_property("current_lead_farmer_stacks",0) * lead_farmer_data[1],lead_farmer_data[2])
+			multiplier = multiplier + lead_farmer_bonus
+		end
 	end
 	
 	multiplier = managers.modifiers:modify_value("WeaponBase:GetReloadSpeedMultiplier", multiplier)
@@ -1451,28 +1500,29 @@ function RaycastWeaponBase:reload_speed_multiplier(multiplier)
 end
 
 function RaycastWeaponBase:_get_current_damage(dmg_mul)
-	local point_and_click_data = managers.player:upgrade_value("weapon","point_and_click_damage_bonus",{0,0})
 	local damage = self._damage
 	damage = damage * (dmg_mul or 1)
-	damage = damage * managers.player:temporary_upgrade_value("temporary", "combat_medic_damage_multiplier", 1)
+	local pm = managers.player
+	damage = damage * pm:temporary_upgrade_value("temporary", "combat_medic_damage_multiplier", 1)
 	if self:is_weapon_class("class_precision") then 
-		local mul = math.max(1, math.min(point_and_click_data[1] * managers.player:get_property("current_point_and_click_stacks",0), point_and_click_data[2]))
-		
-		damage = damage * mul
+		if pm:has_category_upgrade("weapon","point_and_click_damage_bonus") then
+			local point_and_click_data = pm:upgrade_value("weapon","point_and_click_damage_bonus")
+			damage = damage * math.max(1, math.min(point_and_click_data[1] * pm:get_property("current_point_and_click_stacks",0), point_and_click_data[2]))
+		end
 	elseif self:is_weapon_class("class_shotgun") then 
 		if self:fire_mode() == "auto" and self:clip_full() then 
-			damage = damage * (1 + managers.player:upgrade_value("class_shotgun","heartbreaker_damage",0))
+			damage = damage * (1 + pm:upgrade_value("class_shotgun","heartbreaker_damage",0))
 		end
 	elseif self:is_weapon_class("class_saw") then 
-		local rolling_cutter_data = managers.player:upgrade_value("saw","consecutive_damage_bonus",{0,0})
-		
-		local rolling_cutter_stacks = managers.player:get_property("rolling_cutter_aced_stacks",0)
-		damage = damage * (1 + math.min(rolling_cutter_stacks * rolling_cutter_data[1],rolling_cutter_data[2]))
+		if pm:has_category_upgrade("saw","consecutive_damage_bonus") then
+			local rolling_cutter_data = pm:upgrade_value("saw","consecutive_damage_bonus")
+			damage = damage * (1 + math.min(pm:get_property("rolling_cutter_aced_stacks",0) * rolling_cutter_data[1],rolling_cutter_data[2]))
+		end
 	end
 	for _,subclass in pairs(self:get_weapon_subclasses()) do 
-		damage = damage * managers.player:upgrade_value(subclass,"weapon_subclass_damage_mul",1)
+		damage = damage * pm:upgrade_value(subclass,"weapon_subclass_damage_mul",1)
 	end
-	damage = damage * managers.player:upgrade_value(self:get_weapon_class() or "NO_WEAPON_CLASS","weapon_class_damage_mul",1)
+	damage = damage * pm:upgrade_value(self:get_weapon_class() or "NO_WEAPON_CLASS","weapon_class_damage_mul",1)
 	return damage
 end
 

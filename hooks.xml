@@ -3,6 +3,7 @@
 <hooks directory="lua">
 	
 	<hook post="true" file="lib/setups/gamesetup.lua" source_file="lib/setups/gamesetup"/>
+	<hook post="true" file="lib/setups/setup.lua" source_file="lib/setups/setup"/>
 	
 	<hook post="true" file="lib/tweak_data/tweakdata.lua" source_file="lib/tweak_data/tweakdata"/>
 	
