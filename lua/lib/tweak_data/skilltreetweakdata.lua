@@ -770,18 +770,17 @@ Hooks:PostHook(SkillTreeTweakData, "init", "tcd_skilltreetd_init", function(self
 			6,
 			2
 		}
-	})	
-	--Lead Farmer, neo indicates revision as asked by Kith, old version is still stored in upgradestweakdata and checked in multiple files. Clean up later.
+	})
 	replace_skill(tree_indices.heavy,4,{ 
 		{
 			upgrades = {
-				"class_heavy_lead_farmer_neo_basic"
+				"class_heavy_lead_farmer_basic"
 			},
 			cost = self.costs.hightier
 		},
 		{
 			upgrades = {
-				"class_heavy_lead_farmer_neo_aced"
+				"class_heavy_lead_farmer_aced"
 			},
 			cost = self.costs.hightierpro
 		},

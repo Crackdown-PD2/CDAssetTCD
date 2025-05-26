@@ -155,9 +155,65 @@ Hooks:PostHook(PlayerManager,"check_skills","tcd_playermanager_checkskills",func
 	end
 	
 	
+	if self:has_category_upgrade("class_heavy","lead_farmer_basic") then 
+		local upgrade_data = self:upgrade_value("class_heavy","lead_farmer_basic")
+		self._leadfarmer_alh_percent = upgrade_data[1]
+		self._leadfarmer_alh_interval = upgrade_data[2]
+		self._leadfarmer_alh_timer = 0
+	else
+		self._leadfarmer_alh_percent = nil
+		self._leadfarmer_alh_interval = nil
+		self._leadfarmer_alh_timer = nil
+	end
 end)
 
-
+Hooks:PostHook(PlayerManager,"update","tcd_playermanager_update",function(self,t,dt)
+	local player = self:local_player()
+	if player then
+		local current_state = self:get_current_state()
+		local inventory_ext = player:inventory()
+		if inventory_ext then
+			if self._leadfarmer_alh_timer then
+				self._leadfarmer_alh_timer = self._leadfarmer_alh_timer - dt
+				if self._leadfarmer_alh_timer < 0 then
+					self._leadfarmer_alh_timer = self._leadfarmer_alh_timer + self._leadfarmer_alh_interval
+					local current_equipped_selection = inventory_ext._equipped_selection
+					local can_reload_from_bipod = current_state == "bipod" and self:has_category_upgrade("class_heavy", "lead_farmer_aced")
+					
+					local available_selections = inventory_ext:available_selections()
+					local done_reload
+					for selection_index, selection_data in pairs(available_selections) do
+						if selection_index ~= current_equipped_selection or can_reload_from_bipod then
+							local weapon_base = selection_data.unit and selection_data.unit:base()
+							if weapon_base and weapon_base:is_weapon_class("class_heavy") then
+								local ammo_total = weapon_base:get_ammo_total()
+								local ammo_in_clip = weapon_base:get_ammo_remaining_in_clip()
+								if ammo_total > ammo_in_clip then
+									local ammo_max_per_clip = weapon_base:get_ammo_max_per_clip()
+									if ammo_in_clip < ammo_max_per_clip then
+										local add_ammo = math.floor(self._leadfarmer_alh_percent * ammo_max_per_clip)
+										local new_amount = math.min(math.min(ammo_max_per_clip, ammo_in_clip + add_ammo), ammo_total)
+										weapon_base:set_ammo_remaining_in_clip(new_amount)
+										done_reload = true
+									end
+								
+								end
+							end
+						end
+					end
+					if done_reload then
+						for id, weapon in pairs(available_selections) do
+							local weapon_base = weapon.unit:base()
+							managers.hud:set_ammo_amount(id, weapon_base:ammo_info())
+						end
+					end
+				end
+			end
+		end
+	end
+	
+	
+end)
 
 
 
