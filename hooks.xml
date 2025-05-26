@@ -27,6 +27,8 @@
 	<hook post="true" file="lib/managers/menu/skilltreeguinew.lua" source_file="lib/managers/menu/skilltreeguinew"/>
 	<hook post="true" file="lib/managers/menu/specializationguinew.lua" source_file="lib/managers/menu/specializationguinew"/>
 	
+	<hook post="true" file="lib/network/matchmaking/networkmatchmakingsteam.lua" source_file="lib/network/matchmaking/networkmatchmakingsteam"/>
+	<hook post="true" file="lib/network/matchmaking/networkmatchmakingepic.lua" source_file="lib/network/matchmaking/networkmatchmakingepic"/>
 	
 	
 	<hook post="true" file="lib/units/beings/player/states/playerstandard.lua" source_file="lib/units/beings/player/states/playerstandard"/>

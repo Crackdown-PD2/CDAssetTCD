@@ -3,6 +3,7 @@
 -- some core functions and data that needs to be available asap (at entry);
 -- beardlib's ModCore init is too late, so here we are
 DeathvoxOverhaulCore = DeathvoxOverhaulCore or {}
+DeathvoxOverhaulCore.MATCHMAKING_KEY = "totalcrackdown_phoenixv1_pd2_" .. string.gsub(Application:version(),"%.","_")
 
 DeathvoxOverhaulCore._require_libs = DeathvoxOverhaulCore._require_libs or {}
 function DeathvoxOverhaulCore:require(_path)
