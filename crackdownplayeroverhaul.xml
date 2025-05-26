@@ -13,6 +13,8 @@
 		<class file="sentrycontrolmenu.lua"/>
 		<class file="tcdoverlay.lua"/>
 		<class file="tripminecontrolmenu.lua"/>
+		<class file="hudtcdbuff.lua"/>
+		<class file="hudtcdsociopath.lua"/>
 	</Classes>
 	-->
 	
