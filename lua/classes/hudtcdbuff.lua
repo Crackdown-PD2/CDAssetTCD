@@ -152,11 +152,11 @@ HUDTCDBuff._buff_data = {
 	
 }
 
-local format_time = function(t)
+function HUDTCDBuff.format_time(t)
 	local m = math.min(math.floor(t / 60),99)
 	local s = t % 60
 	
-	return string.format("%02i:%02i",m,s)
+	return string.format("%01i:%02i",m,s)
 end
 
 function HUDTCDBuff:add_buff(id,data,skip_align)
@@ -210,20 +210,23 @@ function HUDTCDBuff:add_buff(id,data,skip_align)
 		layer = 1
 	})
 	
-	local tag_bg_size = icon_w / 2
 	local tag_bg = icon_frame:bitmap({
 		name = "tag_bg",
-		color = Color.white,
+		color = Color.black,
+		--blend_mode = "multiply",
 		texture = "guis/textures/pd2/equip_count",
-		w = tag_bg_size,
-		h = tag_bg_size,
-		valign = "bottom",
-		halign = "right",
-		visible = false,
+		w = icon_w,
+		h = icon_h,
+		alpha = 0.5,
+		render_template = "VertexColorTexturedRadial",
+		valign = "grow",
+		halign = "grow",
 		layer = 2
 	})
-	tag_bg:set_right(icon_frame:w())
-	tag_bg:set_bottom(icon_frame:h())
+	tag_bg:set_center(icon_frame:w()/2,icon_frame:h()/2)
+	
+	--tag_bg:set_right(icon_frame:w())
+	--tag_bg:set_bottom(icon_frame:h())
 	local tag_text = icon_frame:text({
 		name = "tag",
 		text = "", --string.format("%i",math.random(1,9)),
@@ -244,7 +247,7 @@ function HUDTCDBuff:add_buff(id,data,skip_align)
 	--]]
 	local label_text = container:text({
 		name = "label",
-		text = format_time(math.random(99)),
+		text = self.format_time(math.random(99)),
 		font = tweak_data.hud_players.ammo_font,
 		font_size = 18,
 		x = 0,
@@ -576,6 +579,13 @@ function HUDTCDBuff:set_tag_text(id,text)
 	local buff = self._container_frame:child(id)
 	if buff then
 		buff:child("icon_frame"):child("tag"):set_text(text)
+	end
+end
+
+function HUDTCDBuff:set_progress(id,current,total)
+	local buff = self._container_frame:child(id)
+	if buff then
+		buff:child("icon_frame"):child("tag_bg"):set_color(Color(current/total,1,0))
 	end
 end
 
