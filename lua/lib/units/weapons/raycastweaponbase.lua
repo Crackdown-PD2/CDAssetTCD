@@ -405,7 +405,7 @@ function RaycastWeaponBase:fire(from_pos, direction, dmg_mul, shoot_player, spre
 	
 	if is_player and pm:has_category_upgrade(self:get_weapon_class(),"money_shot") then
 		if mag == 1 and self._reloaded_to_full then
-			self._money_shot_ready = true -- this flag doesn't appear to be used anywhere
+			self._money_shot_ready = true
 			self._money_shot_pierce = pm:has_category_upgrade(self:get_weapon_class(),"money_shot_pierce")
 			
 			local money_trail = Idstring("effects/particles/weapons/trail_dv_sniper")
@@ -1553,21 +1553,27 @@ function InstantBulletBase:calculate_crit(weapon_unit, user_unit)
 	if not user_unit or user_unit ~= managers.player:player_unit() then
 		return nil
 	end
-
+	local weapon_base = weapon_unit and alive(weapon_unit) and weapon_unit:base()
+	if weapon_base and weapon_base._money_shot_ready then
+		return true
+	end
+	
 	local crit_value = managers.player:critical_hit_chance()
 	
-	local has_category = weapon_unit and alive(weapon_unit) and not weapon_unit:base().thrower_unit and weapon_unit:base().is_category
+	local has_category = weapon_base and not weapon_base.thrower_unit and weapon_base.is_category
 	
 	if has_category then
-		local primary_class = weapon_unit:base():get_weapon_class()
+		local primary_class = weapon_base:get_weapon_class()
 		
 		crit_value = crit_value + managers.player:upgrade_value(primary_class, "primary_class_critical_hit_chance_increase", 0)
 		
-		local making_miracles_stacks = managers.player:get_temporary_property("shotgrouping_aced_stacks",0) --num stacks
-		if making_miracles_stacks > 0 then 
-			local making_miracles_crit_chance = managers.player:upgrade_value(primary_class,"critical_hit_chance_on_headshot",{0,0})[1] --chance per stack
-			local making_miracles_crit_bonus = making_miracles_stacks * making_miracles_crit_chance --total applied bonus
-			crit_value = crit_value + making_miracles_crit_bonus
+		if managers.player:has_category_upgrade(primary_class,"critical_hit_chance_on_headshot") then
+			local shotgrouping_stacks = managers.player:get_temporary_property("shotgrouping_aced_stacks",0) --num stacks
+			if shotgrouping_stacks > 0 then 
+				local shotgrouping_crit_chance = managers.player:upgrade_value(primary_class,"critical_hit_chance_on_headshot")[1] --chance per stack
+				local shotgrouping_crit_bonus = shotgrouping_stacks * shotgrouping_crit_chance --total applied bonus
+				crit_value = crit_value + shotgrouping_crit_bonus
+			end
 		end
 	end
 

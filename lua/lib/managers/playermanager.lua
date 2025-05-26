@@ -129,7 +129,30 @@ Hooks:PostHook(PlayerManager,"check_skills","tcd_playermanager_checkskills",func
 	
 	
 	
+	if self:has_category_upgrade("class_rapidfire","critical_hit_chance_on_headshot") then 
+		local skill_data = self:upgrade_value("class_rapidfire","critical_hit_chance_on_headshot")
 	
+		local duration = skill_data[2]
+		local max_stacks = skill_data[3]
+		
+		self._message_system:register(Message.OnHeadShot,"proc_shotgrouping_aced",
+			function()
+				local player = self:local_player()
+				if not alive(player) then 
+					return
+				end
+				local weapon = player:inventory():equipped_unit():base()
+				if not weapon:is_weapon_class("class_rapidfire") then 
+					return
+				end
+				
+				local stacks = math.min(self:get_temporary_property("shotgrouping_aced_stacks",0) + 1,max_stacks)
+				self:activate_temporary_property("shotgrouping_aced_stacks",duration,stacks)
+			end
+		)
+	else
+		self._message_system:unregister(Message.OnHeadShot,"proc_shotgrouping_aced")
+	end
 	
 	
 end)
