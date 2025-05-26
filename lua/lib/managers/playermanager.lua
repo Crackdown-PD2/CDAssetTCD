@@ -94,6 +94,7 @@ Hooks:PostHook(PlayerManager,"check_skills","tcd_playermanager_checkskills",func
 			)
 		else
 			self._message_system:unregister(Message.OnEnemyShot,"point_and_click_stack_on_kill")
+			managers.tcdbuff:remove_listener("pointclick_stacks_changed","upd_pointclick_stacks")
 		end
 		
 		-- Investment Returns basic (headshots grant 1 additional pointclick stack)
