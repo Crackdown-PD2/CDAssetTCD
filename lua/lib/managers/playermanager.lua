@@ -128,8 +128,7 @@ Hooks:PostHook(PlayerManager,"check_skills","tcd_playermanager_checkskills",func
 		
 	end
 	
-	
-	
+	-- Shot Grouping
 	if self:has_category_upgrade("class_rapidfire","critical_hit_chance_on_headshot") then 
 		local skill_data = self:upgrade_value("class_rapidfire","critical_hit_chance_on_headshot")
 	
@@ -155,7 +154,7 @@ Hooks:PostHook(PlayerManager,"check_skills","tcd_playermanager_checkskills",func
 		self._message_system:unregister(Message.OnHeadShot,"proc_shotgrouping_aced")
 	end
 	
-	
+	-- Lead Farmer
 	if self:has_category_upgrade("class_heavy","lead_farmer_basic") then 
 		local upgrade_data = self:upgrade_value("class_heavy","lead_farmer_basic")
 		self._leadfarmer_alh_percent = upgrade_data[1]
@@ -166,6 +165,161 @@ Hooks:PostHook(PlayerManager,"check_skills","tcd_playermanager_checkskills",func
 		self._leadfarmer_alh_interval = nil
 		self._leadfarmer_alh_timer = nil
 	end
+	
+	-- Death Grips
+	if self:has_category_upgrade("class_heavy","death_grips_stacks") then
+		local death_grips_data = self:upgrade_value("class_heavy","death_grips_stacks",{0,0})
+		local death_grips_stack_reset_timer = death_grips_data[1]
+		local death_grips_max_stacks = death_grips_data[2]
+		
+		managers.tcdbuff:add_listener("deathgrips_stacks_changed","on_deathgrips_stacks_changed",function(prev_stacks,new_stacks)
+			-- temporary values have their own timer so just check it every frame
+			managers.tcdbuff:add_updater("upd_deathgrips_stacks",function(t,dt)
+				local hudbuff = managers.hud._hud_tcdbuff
+				
+				if not hudbuff:has_buff("deathgrips") then
+					hudbuff:add_buff("deathgrips")
+				end
+				
+				-- this check is actually technically destructive, temp property timers aren't checked until observed by a caller
+				if self._temporary_properties:has_active_property("current_death_grips_stacks") then
+					local property = self._temporary_properties._properties.current_death_grips_stacks
+					local rem = property[2] - Application:time()
+					local value = property[1]
+					
+					--hudbuff:set_tag_text("deathgrips",string.format("%i",new_stacks))
+					hudbuff:set_label_text("deathgrips",string.format("%i",value))
+					hudbuff:set_progress("deathgrips",rem,death_grips_stack_reset_timer)
+				else
+					hudbuff:remove_buff("deathgrips")
+					managers.tcdbuff:remove_updater("upd_deathgrips_stacks")
+				end
+				
+				
+			end)
+		end)
+		
+		self._message_system:register(Message.OnEnemyKilled,"proc_death_grips",
+			function(weapon_unit,variant,killed_unit)
+				local player = self:local_player()
+				if not alive(player) then 
+					return
+				end
+				local weapon_base = alive(weapon_unit) and weapon_unit:base()
+				if weapon_base and weapon_base._setup and weapon_base._setup.user_unit and weapon_base:is_weapon_class("class_heavy") then 
+					if weapon_base._setup.user_unit ~= player then 
+						return
+					end
+				else
+					return
+				end
+				
+				local prev_stacks = self:get_temporary_property("current_death_grips_stacks",0)
+				local death_grips_stacks = math.min(prev_stacks + 1,death_grips_max_stacks)
+				self:activate_temporary_property("current_death_grips_stacks",death_grips_stack_reset_timer,death_grips_stacks)
+				
+				managers.tcdbuff:call_listeners("deathgrips_stacks_changed",prev_stacks,death_grips_stacks)
+			end
+		)
+	else
+		self._message_system:unregister(Message.OnEnemyKilled,"proc_death_grips")
+		managers.tcdbuff:remove_listener("deathgrips_stacks_changed","on_deathgrips_stacks_changed")
+		managers.tcdbuff:remove_updater("upd_deathgrips_stacks")
+	end
+	
+	-- Collateral Damage
+	if self:has_category_upgrade("class_heavy","collateral_damage") then 
+		local slot_mask = managers.slot:get_mask("enemies")
+		
+		local collateral_damage_data = self:upgrade_value("class_heavy","collateral_damage",{0,0})
+		local damage_mul = collateral_damage_data[1]
+		local radius = collateral_damage_data[2]
+		
+		self._message_system:register(Message.OnWeaponFired,"proc_collateral_damage",
+			function(weapon_unit,result)
+				local player = self:local_player()
+				if not alive(player) then 
+					return
+				end
+				local weapon_base = weapon_unit and weapon_unit:base()
+				if weapon_base and weapon_base._setup and weapon_base._setup.user_unit and weapon_base:is_weapon_class("class_heavy") then 
+					if weapon_base._setup.user_unit ~= player then 
+						return
+					end
+				else
+					return
+				end
+				if #result.rays == 0 then 
+					return
+				end
+				
+				local first_ray = result.rays[1] 
+				local from = player:movement():current_state():get_fire_weapon_position()
+				--sort of cheating here by assuming the origin of the ray is the current fire position
+				local dir = mvec3_copy(first_ray.ray)
+				local to
+				local hits = {}
+				for n,ray in ipairs(result.rays) do 
+					local damage = weapon_base:_get_current_damage()
+					local dir = ray.ray or Vector3()
+					if ray.damage_result then 
+						local attack_data = ray.damage_result.attack_data or {}
+						damage = attack_data and attack_data.damage_raw or damage
+					end
+					damage = damage * damage_mul
+					if ray.unit then
+						hits[ray.unit:key()] = {
+							disabled = true
+						}
+					end
+					to = mvec3_copy(ray.hit_position or ray.position or Vector3())
+--						Draw:brush(Color.red:with_alpha(0.1),5):sphere(from,50)
+--						Draw:brush(Color.blue:with_alpha(0.1),5):sphere(to,50)
+--						Draw:brush(Color(1,n / #result.rays,1):with_alpha(0.1),5):cylinder(from,to,radius)
+					local grazed_enemies = world_g:raycast_all("ray", from, to, "sphere_cast_radius", radius, "disable_inner_ray", "slot_mask", slot_mask)
+					for _,hit in pairs(grazed_enemies) do 
+						local hit_data = hits[hit.unit:key()]
+						local add_hit = not (hit_data and hit_data.disabled)
+						if add_hit and hit_data and hit_data.damage < damage then 
+							add_hit = false
+						end
+						if add_hit and hit.unit then 
+							hits[hit.unit:key()] = {
+								unit = hit.unit,
+								damage = damage,
+								attacker_unit = player,
+								pos = mvec3_copy(to),
+								attack_dir = mvec3_copy(dir)
+							}
+						end
+						--collect hits here to prevent the same enemy from being hit by multiple rays, in the case of penetrating or ricochet shots
+					end
+					
+					from = mvec3_copy(to)
+				end
+
+				
+				for _,hit_data in pairs(hits) do 
+					if not hit_data.disabled then 
+						local enemy = hit_data.unit
+						if enemy and enemy.character_damage and enemy:character_damage() then 
+							enemy:character_damage():damage_simple({
+								variant = "graze",
+								damage = hit_data.damage,
+								attacker_unit = hit_data.attacker_unit,
+								pos = hit_data.pos,
+								attack_dir = hit_data.attack_dir
+							})
+						end
+					end
+				end
+				
+			end
+		)
+	else
+		self._message_system:unregister(Message.OnWeaponFired,"proc_collateral_damage")
+	end
+	
 end)
 
 Hooks:PostHook(PlayerManager,"update","tcd_playermanager_update",function(self,t,dt)
