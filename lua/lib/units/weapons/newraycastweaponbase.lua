@@ -460,6 +460,18 @@ function NewRaycastWeaponBase:get_damage_falloff(damage, col_ray, user_unit)
 	return damage * damage_mul
 end
 
+function NewRaycastWeaponBase:can_shoot_through_shield()
+	local fire_mode_data = self._fire_mode_data[self._fire_mode:key()]
+
+	return fire_mode_data and fire_mode_data.can_shoot_through_shield or self._can_shoot_through_shield or self._money_shot_pierce
+end
+
+function NewRaycastWeaponBase:can_shoot_through_enemy()
+	local fire_mode_data = self._fire_mode_data[self._fire_mode:key()]
+
+	return fire_mode_data and fire_mode_data.can_shoot_through_enemy or self._can_shoot_through_enemy or self._money_shot_pierce
+end
+
 Hooks:PostHook(NewRaycastWeaponBase,"_update_stats_values","tcd_newraycastweaponbase_update_custom_stats",function(self,disallow_replenish,ammo_data)
 	local factory_id = self._factory_id
 	local wftd = tweak_data.weapon.factory.parts

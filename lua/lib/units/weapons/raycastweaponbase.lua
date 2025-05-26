@@ -29,6 +29,8 @@ Hooks:PostHook(RaycastWeaponBase,"init","deathvox_init_weapon_classes",function(
 	local name_id = self._name_id
 	self._subclasses = tweak_data.weapon[self._name_id].subclasses and table.deep_map_copy(tweak_data.weapon[name_id].subclasses) or {}
 	--init; reset elsewhere
+	
+	self._reloaded_to_full = true --currently only used for Money Shot; start out true
 end)
 
 function RaycastWeaponBase:get_weapon_class()
@@ -104,14 +106,13 @@ function RaycastWeaponBase:can_shoot_through_wall() --return true if raycasts ca
 	
 	return can_shoot_through,penetration_distance
 end
+
 function RaycastWeaponBase:can_shoot_through_shield() --return true if raycasts can overpenetrate shields
-	local can_shoot_through = self._can_shoot_through_shield or self._money_shot_pierce
-	return can_shoot_through
+	return self._can_shoot_through_shield or self._money_shot_pierce
 end
 
 function RaycastWeaponBase:can_shoot_through_enemy() --return true if raycasts can overpenetrate enemies
-	local can_shoot_through = self._can_shoot_through_enemy or self._money_shot_pierce
-	return can_shoot_through
+	return self._can_shoot_through_enemy or self._money_shot_pierce
 end
 
 function RaycastWeaponBase:check_autoaim(from_pos, direction, max_dist, use_aim_assist, autohit_override_data)
@@ -396,10 +397,15 @@ function RaycastWeaponBase:fire(from_pos, direction, dmg_mul, shoot_player, spre
 		ammo_usage = 0
 	end
 	
-	local do_money_shot
+	if alive(self._obj_fire) then
+		self:_spawn_muzzle_effect(from_pos, direction)
+	end
+
+	self:_spawn_shell_eject_effect()
+	
 	if is_player and pm:has_category_upgrade(self:get_weapon_class(),"money_shot") then
-		if mag == 1 then
-			self._money_shot_ready = true
+		if mag == 1 and self._reloaded_to_full then
+			self._money_shot_ready = true -- this flag doesn't appear to be used anywhere
 			self._money_shot_pierce = pm:has_category_upgrade(self:get_weapon_class(),"money_shot_pierce")
 			
 			local money_trail = Idstring("effects/particles/weapons/trail_dv_sniper")
@@ -437,12 +443,6 @@ function RaycastWeaponBase:fire(from_pos, direction, dmg_mul, shoot_player, spre
 		end
 	end
 	
-	if alive(self._obj_fire) then
-		self:_spawn_muzzle_effect(from_pos, direction)
-	end
-
-	self:_spawn_shell_eject_effect()
-
 	local ray_res = self:_fire_raycast(user_unit, from_pos, direction, dmg_mul, shoot_player, spread_mul, autohit_mul, suppr_mul, target_unit, ammo_usage)
 	
 	if is_player then
