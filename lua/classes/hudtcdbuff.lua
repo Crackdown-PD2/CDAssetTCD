@@ -105,11 +105,6 @@ HUDTCDBuff._buff_data = {
 		icon_xy = {2,11},
 		aced = false
 	},
-	shellgames = { -- [shotgunner]
-		source = "skill",
-		icon_xy = {5,2},
-		aced = false
-	},
 	rollingcutter = { -- [fixer]
 		source = "skill",
 		icon_xy = {3,6},
@@ -150,7 +145,6 @@ HUDTCDBuff._buff_data = {
 		icon_xy = {11,0},
 		aced = false
 	}
-	
 	-- sentryinfo [engineer]
 	-- joker states, protect and serve (this should be its own hud)
 	-- tunedout = {}, -- [thief] camera status
@@ -252,7 +246,7 @@ function HUDTCDBuff:add_buff(id,data,skip_align)
 		name = "label",
 		text = format_time(math.random(99)),
 		font = tweak_data.hud_players.ammo_font,
-		font_size = 24,
+		font_size = 18,
 		x = 0,
 		y = 0,
 		valign = "grow",
@@ -285,7 +279,7 @@ function HUDTCDBuff:add_buff(id,data,skip_align)
 		end
 		divider:set_valign("center")
 		
-		icon_frame:set_position(0,DIV_WIDTH)
+		--icon_frame:set_position(0,DIV_WIDTH)
 		
 		label_text:set_x(icon_frame:right())
 		label_text:set_align("left") -- even if right-align, keep text left-aligned
@@ -309,7 +303,7 @@ function HUDTCDBuff:add_buff(id,data,skip_align)
 		then
 		
 		
-		icon_frame:set_position(DIV_WIDTH,0)
+		--icon_frame:set_position(DIV_WIDTH,0)
 		
 		label_text:set_y(icon_frame:bottom())
 		label_text:set_align("center")
@@ -589,7 +583,7 @@ function HUDTCDBuff:has_buff(id)
 	return self._container_frame:child(id) and true or false
 end
 
-function HUDTCDBuff:remove_buff(id,instant)
+function HUDTCDBuff:remove_buff(id,skip_sort)
 	
 	local child = self._container_frame:child(id)
 	if child then
@@ -597,6 +591,9 @@ function HUDTCDBuff:remove_buff(id,instant)
 			threads[child] = nil
 		end
 		self._container_frame:remove(child)
+		if not skip_sort then
+			self:sort_buffs()
+		end
 	end
 	
 end
