@@ -100,9 +100,14 @@ HUDTCDBuff._buff_data = {
 		icon_xy = {6,1},
 		aced = false
 	},
-	shufflecut = { -- [dealer] shuffle and cut
+	shufflecut_melee = { -- [dealer] shuffle and cut (stacks of boosted melee damage)
 		source = "skill",
 		icon_xy = {2,11},
+		aced = false
+	},
+	shufflecut_throwing = { -- [dealer] shuffle and cut (stacks of boosted throwing damage)
+		source = "skill",
+		icon_xy = {2,10}, -- use Stacking the Deck icon temporarily
 		aced = false
 	},
 	rollingcutter = { -- [fixer]
