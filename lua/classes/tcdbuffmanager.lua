@@ -37,8 +37,10 @@ function TCDBuffManager:remove_listener(event,listener_id)
 end
 
 function TCDBuffManager:call_listeners(event,...)
-	for _,cb in pairs(self._listeners[event]) do 
-		cb(...)
+	if self._listeners[event] then
+		for _,cb in pairs(self._listeners[event]) do 
+			cb(...)
+		end
 	end
 end
 
