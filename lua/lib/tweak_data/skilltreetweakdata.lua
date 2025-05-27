@@ -1681,7 +1681,7 @@ Hooks:PostHook(SkillTreeTweakData, "init", "tcd_skilltreetd_init", function(self
 		{
 			upgrades = {
 				--Headshot kills with Throwing Weapons inflict Panic on most enemies within 6 meters of the target, causing them to go into short bursts of uncontrollable fear.
-				"class_throwing_deckstacker_HS_panic"
+				"class_throwing_deckstacker_headshotkill_panic"
 			},
 			cost = self.costs.hightierpro
 		},

@@ -1243,11 +1243,6 @@ function ElectricBulletBase:give_impact_damage(col_ray, weapon_unit, user_unit, 
 	return defense_data
 end
 
-function RaycastWeaponBase:is_heavy_weapon() --deprecated, do not use
-	log("function RaycastWeaponBase:is_heavy_weapon() is deprecated! Please use RaycastWeaponBase:is_weapon_class(\"class_heavy\") instead!")
-	return false
-end
-
 function RaycastWeaponBase:update_next_shooting_time()
 	if self:is_weapon_class("class_shotgun") and self:fire_mode() == "auto" then 
 		if tweak_data.weapon[self._name_id].CLIP_AMMO_MAX == 2 then 

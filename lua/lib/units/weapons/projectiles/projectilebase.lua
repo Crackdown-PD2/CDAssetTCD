@@ -269,8 +269,9 @@ function ProjectileBase:throw(params)
 			self._homing = World:play_physic_effect(anti_gravitate_idstr, self._unit)
 		end
 		
-		if managers.player:has_category_upgrade(class, "deckstacker_HS_panic") then
-			self._HS_panic = true
+		-- Stacking the Deck Aced
+		if managers.player:has_category_upgrade(class, "deckstacker_headshotkill_panic") then
+			self._headshotkill_panic = true
 		end
 	end
 

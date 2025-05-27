@@ -2059,13 +2059,13 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 		}
 	}
 	
-	self.values.class_throwing.deckstacker_HS_panic = {true}
-	self.definitions.class_throwing_deckstacker_HS_panic = {
+	self.values.class_throwing.deckstacker_headshotkill_panic = { 600 }
+	self.definitions.class_throwing_deckstacker_headshotkill_panic = {
 		name_id = "menu_stacking_deck",
 		category = "feature",
 		upgrade = {
 			value = 1,
-			upgrade = "deckstacker_HS_panic",
+			upgrade = "deckstacker_headshotkill_panic",
 			category = "class_throwing"
 		}
 	}

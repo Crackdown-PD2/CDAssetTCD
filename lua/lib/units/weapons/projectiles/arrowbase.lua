@@ -8,6 +8,7 @@ local tmp_vec2 = Vector3()
 local tmp_vel = Vector3()
 
 local world_g = World
+local alive_g = alive
 
 local mvec3_dir = mvector3.direction
 local mvec3_dot = mvector3.dot
@@ -94,7 +95,7 @@ function ArrowBase:update(unit, t, dt)
 		if self._drop_in_sync_data.f < 0 then
 			local parent_unit = self._drop_in_sync_data.parent_unit
 
-			if alive(parent_unit) then
+			if alive_g(parent_unit) then
 				local state = self._drop_in_sync_data.state
 				local parent_body = parent_unit:body(state.sync_attach_data.parent_body_index)
 				local parent_obj = parent_body:root_object()
@@ -215,8 +216,10 @@ function ArrowBase:_on_collision(col_ray)
 	local loose_shoot = self._weapon_charge_fail
 	local result = nil
 	
-	if not loose_shoot and alive(col_ray.unit) then
-		local client_damage = self._damage_class.is_explosive_bullet or alive(col_ray.unit) and col_ray.unit:id() ~= -1
+	local hit_unit = col_ray.unit
+	local is_hit_unit_alive = alive_g(hit_unit)
+	if not loose_shoot and is_hit_unit_alive then
+		local client_damage = self._damage_class.is_explosive_bullet or is_hit_unit_alive and hit_unit:id() ~= -1
 
 		if Network:is_server() or client_damage then
 			result = self._damage_class:on_collision(col_ray, self._weapon_unit or self._unit, self._thrower_unit, self._damage * damage_mult, false, false)
@@ -225,33 +228,47 @@ function ArrowBase:_on_collision(col_ray)
 
 	if not loose_shoot and tweak_data.projectiles[self._tweak_projectile_entry].remove_on_impact then
 		self._unit:set_slot(0)
-
 		return
 	end
 	
+	-- Stacking the Deck Aced
+	if self._headshotkill_panic then
+		if result and result.type == "death" then
+			if result.attack_data and result.attack_data.headshot and is_hit_unit_alive then 
+				local pos = hit_unit:position()
+				local area = managers.player:upgrade_value("class_throwing", "deckstacker_headshotkill_panic",600)
+				for _,enemy_unit in pairs(world_g:find_units_quick("sphere", pos, area, 12, 21)) do 
+					local dmg_ext = enemy_unit:character_damage()
+					if dmg_ext then
+						dmg_ext:build_suppression("panic")
+					end
+				end
+			end
+		end
+	end
+	
+	
 	if self._piercer and result and result.type == "death" then
-		if col_ray.unit then
-			if alive(col_ray.unit) then
-				self._ignore_units = self._ignore_units or {}
-			
-				has_destroy_listener = false
-				listener_class = col_ray.unit:base()
+		if is_hit_unit_alive then
+			self._ignore_units = self._ignore_units or {}
+		
+			has_destroy_listener = false
+			listener_class = hit_unit:base()
+
+			if listener_class and listener_class.add_destroy_listener then
+				has_destroy_listener = true
+			else
+				listener_class = hit_unit:unit_data()
 
 				if listener_class and listener_class.add_destroy_listener then
 					has_destroy_listener = true
-				else
-					listener_class = col_ray.unit:unit_data()
-
-					if listener_class and listener_class.add_destroy_listener then
-						has_destroy_listener = true
-					end
 				end
+			end
 
-				if has_destroy_listener then
-					self._ignore_destroy_listener_key = self._ignore_destroy_listener_key or ("ArrowBase" .. tostring(self._unit:key()))
-					listener_class:add_destroy_listener(self._ignore_destroy_listener_key, callback(self, self, "_clbk_ignore_unit_destroyed"))
-					table.insert(self._ignore_units, col_ray.unit)
-				end
+			if has_destroy_listener then
+				self._ignore_destroy_listener_key = self._ignore_destroy_listener_key or ("ArrowBase" .. tostring(self._unit:key()))
+				listener_class:add_destroy_listener(self._ignore_destroy_listener_key, callback(self, self, "_clbk_ignore_unit_destroyed"))
+				table.insert(self._ignore_units, hit_unit)
 			end
 		end
 	else
