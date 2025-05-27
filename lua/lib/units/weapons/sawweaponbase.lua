@@ -24,66 +24,60 @@ for _,body_name in pairs(tweak_data.upgrades.values.saw.dozer_instant_armor_peel
 	INSTAPEEL_BODIES[Idstring(body_name)] = true
 end
 
-local sawhit_collision_orig = SawHit.on_collision
-function SawHit:on_collision(col_ray, weapon_unit, user_unit, damage, ...)
-	if TCD_ENABLED then
-		
-		local hit_unit = col_ray.unit
-		local base_ext = hit_unit:base()
-		local is_crit, is_breachable_object = nil
-		local unit_dmg_ext = hit_unit:character_damage()
-		
-		if unit_base_ext and self._bonus_dozer_damage and unit_base_ext.has_tag and unit_base_ext:has_tag("tank") then
-			damage = damage * self._bonus_dozer_damage
-		end
-		if managers.groupai:state():is_enemy_special(hit_unit) then
-			damage = damage * managers.player:upgrade_value("saw","damage_multiplier_to_specials",1)
-		end
-		if unit_dmg_ext then 
-			
-			if managers.player:has_category_upgrade("saw","crit_first_strike") then
-
-				if unit_dmg_ext and not unit_dmg_ext._INTO_THE_PIT_PROC then
-					unit_dmg_ext._INTO_THE_PIT_PROC = true
-					is_crit = true
-				end
-			end
-			
-			if managers.player:has_category_upgrade("saw","panic_on_hit") and unit_dmg_ext.build_suppression then
-				unit_dmg_ext:build_suppression("panic")
-			end
-
-			if unit_dmg_ext.build_suppression then
-				unit_dmg_ext:build_suppression("panic")
-			end
-		end
-		
-		-- tcd skip dozer flat damage bonus;
-		-- saws in tcd do plenty already
-		
-		local result = InstantBulletBase.on_collision(self, col_ray, weapon_unit, user_unit, damage, nil, nil, nil, is_crit)
-		local col_body = col_ray.body
-		local body_dmg_ext = hit_unit:damage() and col_body:extension() and col_body:extension().damage 
-		if body_dmg_ext then
-			is_breachable_object = true
-			
-			if managers.player:has_category_upgrade("saw","destroys_dozer_armor") and INSTAPEEL_BODIES[col_body:name()] then
-				damage = 200 --max out damage to the plate body
-			end
-			
-			damage = math_clamp(damage * managers.player:upgrade_value("saw", "lock_damage_multiplier", 1) * 4, 0, 200)
-
-			body_dmg_ext:damage_lock(user_unit, col_ray.normal, col_ray.position, col_ray.direction, damage)
-			
-			if hit_unit:id() ~= -1 then
-				managers.network:session():send_to_peers_synched("sync_body_damage_lock", col_body, damage)
-			end
-		end
-		
-		return result,is_breachable_object
-	else
-		return sawhit_collision_orig(self, col_ray, weapon_unit, user_unit, damage, ...)
+function SawHit:on_collision(col_ray, weapon_unit, user_unit, damage)
+	local hit_unit = col_ray.unit
+	local base_ext = hit_unit:base()
+	local is_crit, is_breachable_object = nil
+	local unit_dmg_ext = hit_unit:character_damage()
+	
+	if unit_base_ext and self._bonus_dozer_damage and unit_base_ext.has_tag and unit_base_ext:has_tag("tank") then
+		damage = damage * self._bonus_dozer_damage
 	end
+	if managers.groupai:state():is_enemy_special(hit_unit) then
+		damage = damage * managers.player:upgrade_value("saw","damage_multiplier_to_specials",1)
+	end
+	if unit_dmg_ext then 
+		
+		if managers.player:has_category_upgrade("saw","crit_first_strike") then
+
+			if unit_dmg_ext and not unit_dmg_ext._INTO_THE_PIT_PROC then
+				unit_dmg_ext._INTO_THE_PIT_PROC = true
+				is_crit = true
+			end
+		end
+		
+		if managers.player:has_category_upgrade("saw","panic_on_hit") and unit_dmg_ext.build_suppression then
+			unit_dmg_ext:build_suppression("panic")
+		end
+
+		if unit_dmg_ext.build_suppression then
+			unit_dmg_ext:build_suppression("panic")
+		end
+	end
+	
+	-- tcd skip dozer flat damage bonus;
+	-- saws in tcd do plenty already
+	
+	local result = InstantBulletBase.on_collision(self, col_ray, weapon_unit, user_unit, damage, nil, nil, nil, is_crit)
+	local col_body = col_ray.body
+	local body_dmg_ext = hit_unit:damage() and col_body:extension() and col_body:extension().damage 
+	if body_dmg_ext then
+		is_breachable_object = true
+		
+		if managers.player:has_category_upgrade("saw","destroys_dozer_armor") and INSTAPEEL_BODIES[col_body:name()] then
+			damage = 200 --max out damage to the plate body
+		end
+		
+		damage = math_clamp(damage * managers.player:upgrade_value("saw", "lock_damage_multiplier", 1) * 4, 0, 200)
+
+		body_dmg_ext:damage_lock(user_unit, col_ray.normal, col_ray.position, col_ray.direction, damage)
+		
+		if hit_unit:id() ~= -1 then
+			managers.network:session():send_to_peers_synched("sync_body_damage_lock", col_body, damage)
+		end
+	end
+	
+	return result,is_breachable_object
 end
 
 
@@ -99,49 +93,40 @@ function SawWeaponBase:init(unit)
 	self._shield_knock = false --knocking shields with a saw ends up being worse
 	self._use_armor_piercing = true --this not being a thing normally is just silly
 
-	if TCD_ENABLED then
-		self._saw_enemies_free = managers.player:has_category_upgrade("saw", "enemy_cutter") --no ammo consumed on enemy hit
-		self._extra_saw_range_mul = managers.player:upgrade_value("saw","range_mul",1) --basically what it says on the tin
-		self._saw_through_shields = managers.player:has_category_upgrade("saw", "ignore_shields") --also what it says on the tin + don't spend ammo when hitting shields
-		self._bonus_dozer_damage = managers.player:upgrade_value("saw","dozer_bonus_damage_mul",1) --fig a. tin label
-		self._bloody_mess_radius = managers.player:upgrade_value("saw","killing_blow_radius") --saw kills damage nearby enemies)
-		self._bloody_mess_do_extra_proc = managers.player:has_category_upgrade("saw","killing_blow_chain") --enemies killed by bloody mess basic can proc bloody mess one more time
-		self._reduced_ammo_usage = math_floor(self._HIT_DEFAULT_AMMO_USAGE * managers.player:upgrade_value("saw", "durability_increase", 10))
-		
-		if managers.player:has_category_upgrade("saw","consecutive_damage_bonus") then
-			self._has_consecutive_damage_bonus = true
-			local consecutive_damage_bonus_data = managers.player:upgrade_value("saw","consecutive_damage_bonus",{0,0})
-			self._consecutive_damage_bonus_rate = consecutive_damage_bonus_data[1]
-			self._max_consecutive_damage_stacks = consecutive_damage_bonus_data[2]
-		end
-		self._enemy_damage_multiplier = managers.player:upgrade_value("saw","enemy_damage_multiplier",1)
-					
-					
-		local stagger_radius,stagger_severity
-		
-		if managers.player:has_category_upgrade("saw","stagger_on_kill") then
-			local stagger_data = managers.player:upgrade_value("saw","stagger_on_kill",{})
-			stagger_radius = stagger_data.range
-			stagger_severity = stagger_data.severity
-		end
-		
-		self._stagger_on_kill_radius = stagger_radius
-		self._stagger_on_kill_severity = stagger_severity
-		
-		if self._extra_saw_range_mul == 1 then
-			self._extra_saw_range_mul = nil
-		end
+	self._saw_enemies_free = managers.player:has_category_upgrade("saw", "enemy_cutter") --no ammo consumed on enemy hit
+	self._extra_saw_range_mul = managers.player:upgrade_value("saw","range_mul",1) --basically what it says on the tin
+	self._saw_through_shields = managers.player:has_category_upgrade("saw", "ignore_shields") --also what it says on the tin + don't spend ammo when hitting shields
+	self._bonus_dozer_damage = managers.player:upgrade_value("saw","dozer_bonus_damage_mul",1) --fig a. tin label
+	self._bloody_mess_radius = managers.player:upgrade_value("saw","killing_blow_radius") --saw kills damage nearby enemies)
+	self._bloody_mess_do_extra_proc = managers.player:has_category_upgrade("saw","killing_blow_chain") --enemies killed by bloody mess basic can proc bloody mess one more time
+	self._reduced_ammo_usage = math_floor(self._HIT_DEFAULT_AMMO_USAGE * managers.player:upgrade_value("saw", "durability_increase", 10))
+	
+	if managers.player:has_category_upgrade("saw","consecutive_damage_bonus") then
+		self._has_consecutive_damage_bonus = true
+		local consecutive_damage_bonus_data = managers.player:upgrade_value("saw","consecutive_damage_bonus",{0,0})
+		self._consecutive_damage_bonus_rate = consecutive_damage_bonus_data[1]
+		self._max_consecutive_damage_stacks = consecutive_damage_bonus_data[2]
+	end
+	self._enemy_damage_multiplier = managers.player:upgrade_value("saw","enemy_damage_multiplier",1)
+				
+				
+	local stagger_radius,stagger_severity
+	
+	if managers.player:has_category_upgrade("saw","stagger_on_kill") then
+		local stagger_data = managers.player:upgrade_value("saw","stagger_on_kill",{})
+		stagger_radius = stagger_data.range
+		stagger_severity = stagger_data.severity
+	end
+	
+	self._stagger_on_kill_radius = stagger_radius
+	self._stagger_on_kill_severity = stagger_severity
+	
+	if self._extra_saw_range_mul == 1 then
+		self._extra_saw_range_mul = nil
+	end
 
-		if self._bonus_dozer_damage == 1 then
-			self._bonus_dozer_damage = nil
-		end
-	else
-		self._consume_no_ammo_chance = managers.player:has_category_upgrade("saw", "consume_no_ammo_chance") and managers.player:upgrade_value("saw", "consume_no_ammo_chance", 0)
-		self._reduced_ammo_usage = managers.player:has_category_upgrade("saw", "enemy_slicer") and managers.player:upgrade_value("saw", "enemy_slicer", 10) --vanilla
-
-		if self._consume_no_ammo_chance == 0 then
-			self._consume_no_ammo_chance = nil
-		end
+	if self._bonus_dozer_damage == 1 then
+		self._bonus_dozer_damage = nil
 	end
 
 	--define slotmasks to use once for better performance
@@ -230,23 +215,12 @@ function SawWeaponBase:fire(from_pos, direction, dmg_mul, shoot_player, spread_m
 end
 
 function SawWeaponBase:_fire_raycast(user_unit, from_pos, direction, dmg_mul, shoot_player, spread_mul, autohit_mul, suppr_mul)
-	if TCD_ENABLED then
-		--use usual firing position for other weapons (center of the camera for players)
-		local range = self:weapon_range()
+	--use usual firing position for other weapons (center of the camera for players)
+	local range = self:weapon_range()
 
-		mvec3_set(mvec_to, direction)
-		mvec3_mul(mvec_to, range)
-		mvec3_add(mvec_to, from_pos)
-	else
-		--vanilla, use the "barrel" object of the saw (30 cm back based on the way it's facing) as the point of origin then extend the range to 1 meter forward
-		from_pos = self._obj_fire:position()
-		direction = self._obj_fire:rotation():y()
-
-		mvec3_add(from_pos, direction * -30)
-		mvec3_set(mvec_to, direction)
-		mvec3_mul(mvec_to, 100)
-		mvec3_add(mvec_to, from_pos)
-	end
+	mvec3_set(mvec_to, direction)
+	mvec3_mul(mvec_to, range)
+	mvec3_add(mvec_to, from_pos)
 
 	
 	--raycast_all allows proper penetration by just using 1 ray, use it consistently instead of only when the player has the shield penetration upgrade
@@ -270,8 +244,6 @@ function SawWeaponBase:_fire_raycast(user_unit, from_pos, direction, dmg_mul, sh
 				if not self._saw_through_shields then --stop hitting stuff past shields + drain ammo if the player lacks the shield piercing skill
 					drain_ammo = true
 					should_stop = true
-				elseif not TCD_ENABLED then --drain ammo even with the skill only outside of TCD
-					drain_ammo = true
 				end
 			elseif hit_in_slot_func(unit, self._enemy_slotmask) then
 				hit_an_enemy = true
@@ -284,7 +256,7 @@ function SawWeaponBase:_fire_raycast(user_unit, from_pos, direction, dmg_mul, sh
 				drain_ammo = true
 			end
 			
-			if TCD_ENABLED and hit_an_enemy then
+			if hit_an_enemy then
 				--damage mul should only apply to enemies, not saw-able objects like deposit boxes
 				local enemy_damage_multiplier = self._enemy_damage_multiplier
 				if self._has_consecutive_damage_bonus then
@@ -299,7 +271,7 @@ function SawWeaponBase:_fire_raycast(user_unit, from_pos, direction, dmg_mul, sh
 			if self._saw_enemies_free and not is_breachable_object then 
 				drain_ammo = false
 			end
-			if TCD_ENABLED and hit_result and hit_an_enemy and hit_result.attack_data then
+			if hit_result and hit_an_enemy and hit_result.attack_data then
 				
 				--give rolling cutter basic damage bonus stacks here
 				if self._has_consecutive_damage_bonus then 
