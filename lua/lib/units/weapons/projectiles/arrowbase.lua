@@ -153,7 +153,7 @@ function ArrowBase:update(unit, t, dt)
 		end
 	end
 	
-	--Nescessary to move all this crap here to prevent issues
+	--Necessary to move all this crap here to prevent issues
 
 	if not self._simulated and not self._collided then
 		self._unit:m_position(mvec1)
@@ -251,8 +251,6 @@ function ArrowBase:_on_collision(col_ray)
 					self._ignore_destroy_listener_key = self._ignore_destroy_listener_key or ("ArrowBase" .. tostring(self._unit:key()))
 					listener_class:add_destroy_listener(self._ignore_destroy_listener_key, callback(self, self, "_clbk_ignore_unit_destroyed"))
 					table.insert(self._ignore_units, col_ray.unit)
-				else
---					log("i am inside your home :)")
 				end
 			end
 		end
