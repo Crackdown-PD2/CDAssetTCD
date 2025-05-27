@@ -320,6 +320,45 @@ Hooks:PostHook(PlayerManager,"check_skills","tcd_playermanager_checkskills",func
 		self._message_system:unregister(Message.OnWeaponFired,"proc_collateral_damage")
 	end
 	
+	-- Shuffle and Cut (buff checker only)
+	do
+		if self:has_category_upgrade("class_melee","melee_boosts_throwing_loop") then
+			managers.tcdbuff:add_listener("shufflecut_throwing_stacks_changed","on_shufflecut_throwing_stacks_changed",function(prev_stacks,new_stacks)
+				local hudbuff = managers.hud._hud_tcdbuff
+				if prev_stacks ~= new_stacks then
+					if new_stacks == 0 then
+						hudbuff:remove_buff("shufflecut_throwing")
+					else
+						if not hudbuff:has_buff("shufflecut_throwing") then
+							hudbuff:add_buff("shufflecut_throwing",new_stacks)
+						end
+						hudbuff:set_label_text("shufflecut_throwing",string.format("x%i",new_stacks))
+					end
+				end
+			end)
+		else
+			managers.tcdbuff:remove_listener("shufflecut_throwing_stacks_changed","on_shufflecut_throwing_stacks_changed")
+		end	
+		
+		if self:has_category_upgrade("class_throwing","throwing_boosts_melee_loop") then
+			managers.tcdbuff:add_listener("shufflecut_melee_stacks_changed","on_shufflecut_melee_stacks_changed",function(prev_stacks,new_stacks)
+				local hudbuff = managers.hud._hud_tcdbuff
+				if prev_stacks ~= new_stacks then
+					if new_stacks == 0 then
+						hudbuff:remove_buff("shufflecut_melee")
+					else
+						if not hudbuff:has_buff("shufflecut_melee") then
+							hudbuff:add_buff("shufflecut_melee",new_stacks)
+						end
+						hudbuff:set_label_text("shufflecut_melee",string.format("x%i",new_stacks))
+					end
+				end
+			end)
+		else
+			managers.tcdbuff:remove_listener("shufflecut_melee_stacks_changed","on_shufflecut_melee_stacks_changed")
+		end
+	end
+	
 end)
 
 Hooks:PostHook(PlayerManager,"update","tcd_playermanager_update",function(self,t,dt)
@@ -374,6 +413,15 @@ Hooks:PostHook(PlayerManager,"update","tcd_playermanager_update",function(self,t
 end)
 
 
+function PlayerManager:_deduct_local_cocaine_stacks()
+	-- todo!
+end
+
+
+function PlayerManager:consume_damage_overshield(damage)
+	-- todo!
+	return damage
+end
 
 
 

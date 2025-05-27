@@ -29,8 +29,8 @@
 	
 	<hook post="true" file="lib/network/matchmaking/networkmatchmakingsteam.lua" source_file="lib/network/matchmaking/networkmatchmakingsteam"/>
 	<hook post="true" file="lib/network/matchmaking/networkmatchmakingepic.lua" source_file="lib/network/matchmaking/networkmatchmakingepic"/>
-	
-	
+
+	<hook post="true" file="lib/units/beings/player/playerdamage.lua" source_file="lib/units/beings/player/playerdamage"/>
 	<hook post="true" file="lib/units/beings/player/states/playerstandard.lua" source_file="lib/units/beings/player/states/playerstandard"/>
 	
 		

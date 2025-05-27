@@ -892,7 +892,9 @@ function InstantBulletBase:on_collision(col_ray, weapon_unit, user_unit, damage,
 					if managers.player:has_category_upgrade("class_throwing","throwing_boosts_melee_loop") then 
 						local stacks = managers.player:get_property("shuffle_cut_melee_bonus_damage",0)
 						local max_stacks = managers.player:upgrade_value("class_throwing","throwing_boosts_melee_loop",0)[1]
-						managers.player:set_property("shuffle_cut_melee_bonus_damage",math.min(stacks+1,max_stacks))
+						local new_stacks = math.min(stacks+1,max_stacks)
+						managers.player:set_property("shuffle_cut_melee_bonus_damage",new_stacks)
+						managers.tcdbuff:call_listeners("shufflecut_melee_stacks_changed",stacks,new_stacks)
 					end
 
 					local throwing_weapon_add_mul = 1
@@ -926,7 +928,10 @@ function InstantBulletBase:on_collision(col_ray, weapon_unit, user_unit, damage,
 				--on throwing weapon kill with shuffle and cut aced, do not consume a throwing damage bonus stack
 			else
 				--if the hit was not lethal or shuffle and cut is not aced, then consume a stack
-				managers.player:set_property("shuffle_cut_throwing_bonus_damage",math.max(shuffle_cut_stacks - 1,0))
+				
+				local new_stacks = math.max(shuffle_cut_stacks - 1,0)
+				managers.player:set_property("shuffle_cut_throwing_bonus_damage",new_stacks)
+				managers.tcdbuff:call_listeners("shufflecut_throwing_stacks_changed",shuffle_cut_stacks,new_stacks)
 			end
 		end
 
