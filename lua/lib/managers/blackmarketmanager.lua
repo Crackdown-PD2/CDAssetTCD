@@ -55,11 +55,14 @@ function BlackMarketManager:on_aquired_grenade(upgrade, id, loading)
 	end
 end
 
+-- causes perf issues if used constantly!
 function BlackMarketManager:recoil_addend(name, categories, recoil_index, silencer, blueprint, current_state, is_single_shot)
 	local addend = 0
 	local wfm = managers.weapon_factory
 	local factory_id = wfm:get_factory_id_by_weapon_id(name)
 	
+	local primary_class,subclasses = wfm:get_weapon_class_subclasses_from_blueprint(name,blueprint,nil)
+		
 	if recoil_index and recoil_index >= 1 and recoil_index <= #tweak_data.weapon.stats.recoil then
 		local index = recoil_index
 		index = index + managers.player:upgrade_value("weapon", "recoil_index_addend", 0)
@@ -95,7 +98,13 @@ function BlackMarketManager:recoil_addend(name, categories, recoil_index, silenc
 				index = index + managers.player:team_upgrade_value("weapon", "recoil_index_addend", 0)
 			end
 		end
-
+		
+		-- class/subclass check
+		index = index + managers.player:upgrade_value(primary_class,"recoil_index_addend",0)
+		for _,subclass in pairs(subclasses) do 
+			index = index + managers.player:upgrade_value(subclass,"subclass_stability_addend",0)
+		end
+		
 		if silencer then
 			index = index + managers.player:upgrade_value("weapon", "silencer_recoil_index_addend", 0)
 
@@ -130,8 +139,7 @@ function BlackMarketManager:recoil_addend_menu(name, categories, recoil_index, s
 	local wfm = managers.weapon_factory
 	local factory_id = wfm:get_factory_id_by_weapon_id(name)
 	
-	--local primary_class = wfm:get_primary_weapon_class_from_blueprint(name,blueprint)
-	local subclasses = wfm:get_weapon_subclasses_from_blueprint(name,blueprint)
+	local primary_class,subclasses = wfm:get_weapon_class_subclasses_from_blueprint(name,blueprint,nil)
 	
 	if recoil_index and recoil_index >= 1 and recoil_index <= #tweak_data.weapon.stats.recoil then
 		local index = recoil_index
@@ -169,6 +177,8 @@ function BlackMarketManager:recoil_addend_menu(name, categories, recoil_index, s
 			end
 		end
 		
+		-- class/subclass check
+		index = index + managers.player:upgrade_value(primary_class,"recoil_index_addend",0)
 		for _,subclass in pairs(subclasses) do 
 			index = index + managers.player:upgrade_value(subclass,"subclass_stability_addend",0)
 		end

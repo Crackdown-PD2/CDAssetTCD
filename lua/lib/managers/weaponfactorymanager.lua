@@ -1,3 +1,7 @@
+
+-- these three are tcd functions; don't call them every frame, call them once and cache the result
+-- DEAR OFFY PLEASE LEARN FROM YOUR PAST MISTAKES OFFY
+-- love, offy
 function WeaponFactoryManager:get_primary_weapon_class_from_blueprint(weapon_id,blueprint,fallback)
 	if fallback == nil then 
 		fallback = "NO_WEAPON_CLASS"
@@ -48,9 +52,45 @@ function WeaponFactoryManager:get_weapon_subclasses_from_blueprint(weapon_id,blu
 	return subclasses
 end
 
+function WeaponFactoryManager:get_weapon_class_subclasses_from_blueprint(weapon_id,blueprint,fallback)
+	if fallback == nil then 
+		fallback = "NO_WEAPON_CLASS"
+	end
+	local wpntd = tweak_data.weapon
+	local primary_class = fallback
+	local subclasses = {}
+	local weapondata = weapon_id and wpntd[weapon_id]
+	if weapondata then
+		if weapondata.primary_class then
+			primary_class = weapondata.primary_class
+		end
+		if weapondata.subclasses then
+			subclasses = table.deep_map_copy(weapondata.subclasses)
+		end
+	end
+	
+	local factory_id = self:get_factory_id_by_weapon_id(weapon_id)
+	if type(blueprint) == "table" then 
+		for _,part_id in pairs(blueprint) do 
+			local part_data = self:get_part_data_by_part_id_from_weapon(part_id,factory_id,blueprint)
+			if part_data then 
+				if part_data.class_modifier then 
+					primary_class = part_data.class_modifier
+				end
+				if part_data.subclass_modifiers then 
+					for _,subclass in pairs(part_data.subclass_modifiers) do 
+						table.insert(subclasses,subclass)
+					end
+				end
+			end
+		end
+	end
+	return primary_class,subclasses
+end
 
 --not very efficient; try not to call this too much
 --it is suggested to call once on weapon assembled and cache whatever you need to into the weapon base instance
+-- (also goes for the above functions)
 function WeaponFactoryManager:_part_data(part_id, factory_id, override)
 	local factory = tweak_data.weapon.factory
 
