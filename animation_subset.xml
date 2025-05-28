@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<tweak version="2" name="anims/fps/fps_spawn" extension="animation_subset">
+	<!-- 
+		add a new recoil subset for the claire 12g
+		to fix the issue where claire 12g cannot use auto-fire without crashing
+		due to trying to use autofire anims
+	-->
+	<search>
+		<xml/>
+		<anim name="coach_recoil_exit"/>
+	</search>
+	<target mode="append">
+	<anim name="coach_recoil_enter" file="anims/fps/coach/coach_recoil" blend_set="all"/>
+	</target>
+</tweak>
