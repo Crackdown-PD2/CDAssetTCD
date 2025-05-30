@@ -10,6 +10,6 @@
 		<anim name="coach_recoil_exit"/>
 	</search>
 	<target mode="append">
-	<anim name="coach_recoil_enter" file="anims/fps/coach/coach_recoil" blend_set="all"/>
+		<anim name="coach_recoil_enter" file="anims/fps/coach/coach_recoil" blend_set="all"/>
 	</target>
 </tweak>

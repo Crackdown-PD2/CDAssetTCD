@@ -969,7 +969,7 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 	}
 	
 	self.values.class_shotgun.point_blank_basic = {
-		300 --2.5m
+		300 --3m
 	}
 	self.values.class_shotgun.point_blank_aced = {
 		1
