@@ -150,16 +150,22 @@ function IntimitateInteractionExt:interact(player)
 	end
 end
 
--- tweak looped cam count check
+-- removed looped cam count check,
+-- check camera loop duration against your own loop duration skill
 function SecurityCameraInteractionExt:_interact_blocked(player)
-	local peer_id = managers.network:session():local_peer():id()
-	local peer_looped_cam = SecurityCamera.get_tape_loop_camera_by_peer_id(peer_id) 
-	if peer_looped_cam and peer_looped_cam ~= self._unit:base() then
-		-- if this player has already looped a different camera,
-		-- don't allow them to loop another
-		return true, nil, "tape_loop_limit_reached"
-	end
+	local cam_base = self._unit:base()
+	--local peer_id = cam_base:get_loop_owner_peer_id()
+	--if peer_id and peer_id ~= managers.network:session():local_peer():id() then -- prevent you from overwriting other players' tape loops
+		local loop_duration = managers.player:upgrade_value("player", "tape_loop_duration", 0)
+		if cam_base._tape_loop_end_t and cam_base._tape_loop_end_t >= loop_duration then
+			-- don't allow looping if the camera's remaining duration is greater than your max
+			-- (incl. infinite)
+			return true,nil,"camera_already_looping"
+		end
+	--end
 	
+	-- allowed regardless;
+	-- if attempting to loop a second cam, send the first one into restart time and unregister it, then loop the second
 	return false
 end
 

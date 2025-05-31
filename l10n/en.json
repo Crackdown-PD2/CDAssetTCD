@@ -46,6 +46,7 @@
 	"hud_interact_pickup_sentry_gun" : "Hold $BTN_INTERACT to pick up sentry gun",
 	"debug_interact_armor_plates_take" : "Hold $BTN_INTERACT to take Armor Plates",
 	"hud_equipment_equipping_armor_kit" : "Deploying Armor Plates...",
+	"hud_hint_camera_already_looped" : "This camera is already being looped!",
 	"hud_hint_already_has_armor_plates" : "You already have Armor Plates!",
 	"hud_action_taking_armor_plates" : "Taking Armor Plates...",
 	"hud_deploying_friendship_collar" : "Converting $TARGET_UNIT...",
