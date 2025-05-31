@@ -1746,20 +1746,8 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 	}
 	
 	self.values.player.tape_loop_duration = {
-		15,
-		25
-	}
-	self.values.team.player.tape_loop_amount_unlimited = {
-		true
-	}
-	self.definitions.team_player_tape_loop_amount_unlimited = {
-		name_id = "menu_player_tape_loop_amount_unlimited",
-		category = "team",
-		upgrade = {
-			value = 1,
-			upgrade = "tape_loop_amount_unlimited",
-			category = "player"
-		}
+		30,
+		math.huge
 	}
 	
 	--Assassin

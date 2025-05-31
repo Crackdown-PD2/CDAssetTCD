@@ -1212,7 +1212,7 @@ Hooks:PostHook(SkillTreeTweakData, "init", "tcd_skilltreetd_init", function(self
 	replace_skill(tree_indices.thief,1,{ --Classic Thievery
 		{
 			upgrades = {
-				"player_pick_lock_easy_speed_multiplier"
+				"player_pick_lock_hard"
 			},
 			cost = self.costs.hightier
 		},
@@ -1274,14 +1274,13 @@ Hooks:PostHook(SkillTreeTweakData, "init", "tcd_skilltreetd_init", function(self
 	replace_skill(tree_indices.thief,4,{ --Tuned Out (aced not fully implemented)
 		{
 			upgrades = {
-				"player_tape_loop_duration_1"
+				"player_tape_loop_duration_1" -- loop lasts 30s (one per player)
 			},
 			cost = self.costs.hightier
 		},
 		{
 			upgrades = {
-				"team_player_tape_loop_amount_unlimited", --unlimited not yet functional
-				"player_tape_loop_duration_2"
+				"player_tape_loop_duration_2" -- loop lasts forever
 			},
 			cost = self.costs.hightierpro
 		},
@@ -1315,15 +1314,16 @@ Hooks:PostHook(SkillTreeTweakData, "init", "tcd_skilltreetd_init", function(self
 	replace_skill(tree_indices.thief,6,{ --Skeleton Key
 		{
 			upgrades = {
-				"player_pick_lock_easy_speed_multiplier_2",
-				"player_pick_lock_hard"
+				"player_can_hack_electronic_locks",
 			},
 			cost = self.costs.hightier
 		},
 		{
 			upgrades = {
-				"player_pick_lock_hard_speed_multiplier",
-				"player_can_hack_electronic_locks"
+				"player_pick_lock_easy",
+				"player_pick_lock_easy_speed_multiplier",
+				"player_pick_lock_easy_speed_multiplier_2",
+				"player_pick_lock_hard_speed_multiplier"
 			},
 			cost = self.costs.hightierpro
 		},
