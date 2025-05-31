@@ -43,6 +43,8 @@
 	
 	<hook post="true" file="lib/units/interactions/interactionext.lua" source_file="lib/units/interactions/interactionext"/>
 	
+	<hook post="true" file="lib/units/props/securitycamera.lua" source_file="lib/units/props/securitycamera"/>
+	
 	<hook post="true" file="lib/units/weapons/bowweaponbase.lua" source_file="lib/units/weapons/bowweaponbase"/>
 	<hook post="true" file="lib/units/weapons/newraycastweaponbase.lua" source_file="lib/units/weapons/newraycastweaponbase"/>
 	<hook post="true" file="lib/units/weapons/raycastweaponbase.lua" source_file="lib/units/weapons/raycastweaponbase"/>

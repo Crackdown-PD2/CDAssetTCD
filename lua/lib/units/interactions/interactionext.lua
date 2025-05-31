@@ -149,3 +149,22 @@ function IntimitateInteractionExt:interact(player)
 		self._unit:brain():on_tied(player, false, not managers.player:has_team_category_upgrade("player","civilian_hostage_no_fleeing"))
 	end
 end
+
+-- tweak looped cam count check
+function SecurityCameraInteractionExt:_interact_blocked(player)
+	local peer_id = managers.network:session():local_peer():id()
+	local peer_looped_cam = SecurityCamera.get_tape_loop_camera_by_peer_id(peer_id) 
+	if peer_looped_cam and peer_looped_cam ~= self._unit:base() then
+		-- if this player has already looped a different camera,
+		-- don't allow them to loop another
+		return true, nil, "tape_loop_limit_reached"
+	end
+	
+	return false
+end
+
+function SecurityCameraInteractionExt:interact(player)
+	SecurityCameraInteractionExt.super.super.interact(self, player)
+	local peer_id = managers.network:session():local_peer():id()
+	self._unit:base():start_tape_loop(peer_id)
+end
