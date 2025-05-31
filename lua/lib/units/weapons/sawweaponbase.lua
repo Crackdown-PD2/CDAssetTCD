@@ -275,12 +275,13 @@ function SawWeaponBase:_fire_raycast(user_unit, from_pos, direction, dmg_mul, sh
 				
 				--give rolling cutter basic damage bonus stacks here
 				if self._has_consecutive_damage_bonus then 
-					local consecutive_damage_stacks = math.clamp(managers.player:get_property("saw_consecutive_damage_stacks",0) + 1,0,self._max_consecutive_damage_stacks)
+					local prev_stacks = managers.player:get_property("saw_consecutive_damage_stacks",0)
+					local consecutive_damage_stacks = math.clamp(prev_stacks + 1,0,self._max_consecutive_damage_stacks)
 					managers.player:set_property("saw_consecutive_damage_stacks",consecutive_damage_stacks)
+					managers.tcdbuff:call_listeners("rollingcutter_stacks_changed",prev_stacks,consecutive_damage_stacks)
 				end
 				
 				if hit_result.type and hit_result.type == "death" then 
-				
 					if self._stagger_on_kill_radius then
 						do_stagger_on_kill = true
 					end

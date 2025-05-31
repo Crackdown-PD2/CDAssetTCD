@@ -359,6 +359,31 @@ Hooks:PostHook(PlayerManager,"check_skills","tcd_playermanager_checkskills",func
 		end
 	end
 	
+	-- Rolling Cutter (buff checker only)
+	if self:has_category_upgrade("saw","consecutive_damage_bonus") then
+		local upgrade_data = self:upgrade_value("saw","consecutive_damage_bonus")
+		local max_stacks = upgrade_data[2]
+		
+		managers.tcdbuff:add_listener("rollingcutter_stacks_changed","on_rollingcutter_stacks_changed",function(prev_stacks,new_stacks)
+			local hudbuff = managers.hud._hud_tcdbuff
+			if prev_stacks ~= new_stacks then
+				if new_stacks == 0 then
+					hudbuff:remove_buff("rollingcutter")
+				else
+					if not hudbuff:has_buff("rollingcutter") then
+						hudbuff:add_buff("rollingcutter",new_stacks)
+					end
+					if new_stacks >= max_stacks then
+						hudbuff:set_label_color("rollingcutter",Color.yellow)
+					end
+					hudbuff:set_label_text("rollingcutter",string.format("x%i",new_stacks))
+				end
+			end
+		end)
+	else
+		managers.tcdbuff:remove_listener("rollingcutter_stacks_changed","on_rollingcutter_stacks_changed")
+	end
+	
 end)
 
 Hooks:PostHook(PlayerManager,"update","tcd_playermanager_update",function(self,t,dt)
