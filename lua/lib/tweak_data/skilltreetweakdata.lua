@@ -1787,7 +1787,6 @@ Hooks:PostHook(SkillTreeTweakData, "init", "tcd_skilltreetd_init", function(self
 		{
 			upgrades = {
 				"saw_stagger_on_kill"
---					"saw_killing_blow_chain"
 			},
 			cost = self.costs.hightierpro
 		},
