@@ -22,7 +22,6 @@ function SecurityCamera.unregister_tape_loop_by_ext(ext)
 			SecurityCamera.all_active_tape_loop_cameras[peer_id] = nil
 			ext:_unregister_tape_loop()
 			return true
-			break
 		end
 	end
 end
