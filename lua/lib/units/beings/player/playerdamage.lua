@@ -618,6 +618,43 @@ function PlayerDamage:damage_melee(attack_data)
 end
 
 --tcd function
+function PlayerDamage:clbk_kill_taunt(taunt_data)
+	local attacker = taunt_data.attacker_unit
+
+	if not alive(attacker) or attacker:character_damage():dead() then
+		return
+	end
+	
+	if taunt_data.taunt_line then
+		attacker:sound():say(taunt_data.taunt_line, true)
+	end
+end
+
+--tcd function
+function PlayerDamage:clbk_kill_taunt_common(attack_data)
+	local attacker = attack_data.attacker_unit
+
+	if attacker and alive(attacker) and attacker:character_damage() and attacker:character_damage().dead and not attacker:character_damage():dead() then
+		attacker:sound():say("i03")
+	end
+
+	self._kill_taunt_clbk_id = nil
+end
+
+--tcd function
+function PlayerDamage:clbk_kill_taunt_tase(attack_data)
+--[[
+	local attacker = attack_data.attacker_unit
+
+	if attacker and alive(attacker) and attacker:character_damage() and attacker:character_damage().dead and not attacker:character_damage():dead() then
+		attacker:sound():say("tsr_post_tasing_taunt")
+	end
+--]]
+	self._kill_taunt_clbk_id = nil
+end
+
+
+--tcd function
 function PlayerDamage:do_thorns(damage)
 	local pm = managers.player
 	
