@@ -411,6 +411,18 @@ end
 function Drill:set_autorepair(chance)
 end
 
+Hooks:OverrideFunction(Drill,"compare_skill_upgrades",function(self,skill_upgrades)
+	if self._disable_upgrades then
+		return false
+	end
+	
+	return	(skill_upgrades.shocktrap_level or 0) > (self._skill_upgrades.shocktrap_level or 0)
+		or	(skill_upgrades.auto_repair_level or 0) > (self._skill_upgrades.auto_repair_level or 0)
+		or	(skill_upgrades.speed_upgrade_level or 0) > (self._skill_upgrades.speed_upgrade_level or 0)
+		or	(skill_upgrades.silent_drill and not self._skill_upgrades.silent_drill)
+		or	(skill_upgrades.shocktrap_alert and not self._skill_upgrades.shocktrap_alert)
+end)
+
 Hooks:PostHook(Drill,"destroy","tcd_drill_destroy",function(self,...)
 	local nav_tracker = self._nav_tracker
 
