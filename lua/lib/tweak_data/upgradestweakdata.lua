@@ -1930,7 +1930,7 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 		}
 	}
 	
-	self.values.player.drill_fix_interaction_speed_multiplier = { 0.5 } --vanilla value tweaked
+	self.values.player.drill_fix_interaction_speed_multiplier = { 0.5 } -- 50% faster; vanilla value tweaked
 	
 	self.values.player.drill_upgrade_interaction_speed_multiplier = { 0.25 } --75% faster
 	self.definitions.player_drill_upgrade_interaction_speed_multiplier = {
@@ -1945,15 +1945,25 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 	
 	self.values.player.drill_auto_repair_guaranteed = { 30,5 } --referenced directly by drill instead of changing autorepair chance values
 	
-	self.values.shape_charge.quantity = { 2, 4 } --vanilla value tweaked
+	self.values.shape_charge.quantity = { 2, 6 } --vanilla value tweaked
 	
-	self.values.player.drill_shock_trap = {60,30} --cooldown
+	self.values.player.drill_shock_trap_cooldown = {
+		{
+			30, -- 30s cooldown
+			0 -- no shock aoe
+		},
+		{
+			30, -- 30s cooldown
+			500 -- 5m radius shock aoe
+		}
+	}
+	self.values.player.drill_shock_trap_alert = {true}
 	self.definitions.player_drill_shock_trap_1 = {
 		name_id = "menu_static_defense",
 		category = "feature",
 		upgrade = {
 			value = 1,
-			upgrade = "drill_shock_trap",
+			upgrade = "drill_shock_trap_cooldown",
 			category = "player"
 		}
 	}
@@ -1962,7 +1972,16 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 		category = "feature",
 		upgrade = {
 			value = 2,
-			upgrade = "drill_shock_trap",
+			upgrade = "drill_shock_trap_cooldown",
+			category = "player"
+		}
+	}
+	self.definitions.player_drill_shock_trap_alert = {
+		name_id = "menu_static_defense",
+		category = "feature",
+		upgrade = {
+			value = 1,
+			upgrade = "drill_shock_trap_alert",
 			category = "player"
 		}
 	}

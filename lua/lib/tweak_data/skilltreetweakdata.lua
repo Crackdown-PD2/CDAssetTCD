@@ -1462,17 +1462,16 @@ Hooks:PostHook(SkillTreeTweakData, "init", "tcd_skilltreetd_init", function(self
 	
 
 	--Sapper
-	replace_skill(tree_indices.sapper,1,{ --Home Improvements
+	replace_skill(tree_indices.sapper,1,{ --Elbow Grease
 		{
 			upgrades = {
-				"player_drill_upgrade_interaction_speed_multiplier",
-				"player_drill_alert",
-				"player_silent_drill"
+				"player_drill_melee_hit_restart_chance_1"
 			},
 			cost = self.costs.hightier
 		},
 		{
 			upgrades = {
+				"player_drill_upgrade_interaction_speed_multiplier"
 			},
 			cost = self.costs.hightierpro
 		},
@@ -1486,14 +1485,13 @@ Hooks:PostHook(SkillTreeTweakData, "init", "tcd_skilltreetd_init", function(self
 	replace_skill(tree_indices.sapper,2,{ --Perfect Alignment
 		{
 			upgrades = {
-				"player_drill_place_interaction_speed_multiplier"
+				"player_silent_drill"
 			},
 			cost = self.costs.hightier
 		},
 		{
 			upgrades = {
-				"player_drill_speed_multiplier1",
-				"player_drill_speed_multiplier2"
+				"player_drill_place_interaction_speed_multiplier"
 			},
 			cost = self.costs.hightierpro
 		},
@@ -1507,7 +1505,8 @@ Hooks:PostHook(SkillTreeTweakData, "init", "tcd_skilltreetd_init", function(self
 	replace_skill(tree_indices.sapper,3,{ --Static Defense
 		{
 			upgrades = {
-				"player_drill_shock_trap_1"
+				"player_drill_shock_trap_1",
+				"player_drill_shock_trap_alert"
 			},
 			cost = self.costs.hightier
 		},
@@ -1524,16 +1523,17 @@ Hooks:PostHook(SkillTreeTweakData, "init", "tcd_skilltreetd_init", function(self
 			8
 		}
 	})
-	replace_skill(tree_indices.sapper,4,{ --Routine Maintenance
+	replace_skill(tree_indices.sapper,4,{ --Investing In Better Equipment
 		{
 			upgrades = {
-				"player_drill_fix_interaction_speed_multiplier"
+				"player_drill_speed_multiplier1",
+				"player_drill_speed_multiplier2"
 			},
 			cost = self.costs.hightier
 		},
 		{
 			upgrades = {
-				"player_drill_melee_hit_restart_chance_1"
+				"player_drill_fix_interaction_speed_multiplier"
 			},
 			cost = self.costs.hightierpro
 		},
