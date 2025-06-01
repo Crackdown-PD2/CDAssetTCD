@@ -1,4 +1,5 @@
 <?xml version="1.0"?>
 <mod>
 	<tweak definition="animation_subset.xml" />
+	<tweak definition="network.xml" />
 </mod>

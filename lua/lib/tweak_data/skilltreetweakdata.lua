@@ -1547,13 +1547,13 @@ Hooks:PostHook(SkillTreeTweakData, "init", "tcd_skilltreetd_init", function(self
 	replace_skill(tree_indices.sapper,5,{ --Automatic Reboot
 		{
 			upgrades = {
-				"player_drill_autorepair_1"
+				"player_drill_auto_repair_guaranteed_1"
 			},
 			cost = self.costs.hightier
 		},
 		{
 			upgrades = {
-				"player_drill_autorepair_2"
+				"player_drill_auto_repair_guaranteed_2"
 			},
 			cost = self.costs.hightierpro
 		},

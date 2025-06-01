@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<tweaks>
+    <tweak name="settings/network" extension="network_settings">
+        <search>
+            <network/>
+            <rpc/>
+            <message name="sync_drill_upgrades"/>
+        </search>
+        <target mode="replace">
+			<message name="sync_drill_upgrades" delivery="ordered" receiver="unit">
+				<param type="unit" />	<!-- unit -->
+				<param type="int" min="0" max ="2" /> <!-- static defense -->
+				<param type="int" min="0" max ="2" /> <!-- automatic repair -->
+				<param type="int" min="0" max ="2" /> <!-- drill speed level (Investing IBE) -->
+				<param type="bool" /> <!-- silent (Perfect Alignment) -->
+				<param type="bool" /> <!-- static alert (Static Defense) -->
+			</message>
+		</target>
+	</tweak>
+	
+	<tweak name="settings/network" extension="network_settings">
+	<search>
+		<network/>
+		<rpc/>
+		<message name="damage_tase"/>
+		<param type="int" min="0" max="1" />
+	</search>
+	<target mode="attributes">
+		<attr name="max" value="4"/>
+	</target>
+	
+</tweak>
+</tweaks>

@@ -1943,11 +1943,31 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 		}
 	}
 	
-	self.values.player.drill_auto_repair_guaranteed = { 30,5 } --referenced directly by drill instead of changing autorepair chance values
 	
 	self.values.shape_charge.quantity = { 2, 6 } --vanilla value tweaked
 	
-	self.values.player.drill_shock_trap_cooldown = {
+	
+	self.values.player.drill_auto_repair_guaranteed = { 30,5 }  -- tcd upgrade (delay in seconds)
+	self.definitions.player_drill_auto_repair_guaranteed_1 = {
+		name_id = "menu_automatic_reboot",
+		category = "feature",
+		upgrade = {
+			value = 1,
+			upgrade = "drill_auto_repair_guaranteed",
+			category = "player"
+		}
+	}
+	self.definitions.player_drill_auto_repair_guaranteed_2 = {
+		name_id = "menu_automatic_reboot",
+		category = "feature",
+		upgrade = {
+			value = 2,
+			upgrade = "drill_auto_repair_guaranteed",
+			category = "player"
+		}
+	}
+	
+	self.values.player.drill_shock_trap_zap = {
 		{
 			30, -- 30s cooldown
 			0 -- no shock aoe
@@ -1963,7 +1983,7 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 		category = "feature",
 		upgrade = {
 			value = 1,
-			upgrade = "drill_shock_trap_cooldown",
+			upgrade = "drill_shock_trap_zap",
 			category = "player"
 		}
 	}
@@ -1972,7 +1992,7 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 		category = "feature",
 		upgrade = {
 			value = 2,
-			upgrade = "drill_shock_trap_cooldown",
+			upgrade = "drill_shock_trap_zap",
 			category = "player"
 		}
 	}

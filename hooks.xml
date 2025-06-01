@@ -28,6 +28,7 @@
 	<hook post="true" file="lib/managers/menu/skilltreeguinew.lua" source_file="lib/managers/menu/skilltreeguinew"/>
 	<hook post="true" file="lib/managers/menu/specializationguinew.lua" source_file="lib/managers/menu/specializationguinew"/>
 	
+	<hook post="true" file="lib/network/handlers/unitnetworkhandler.lua" source_file="lib/network/handlers/unitnetworkhandler"/>
 	<hook post="true" file="lib/network/matchmaking/networkmatchmakingsteam.lua" source_file="lib/network/matchmaking/networkmatchmakingsteam"/>
 	<hook post="true" file="lib/network/matchmaking/networkmatchmakingepic.lua" source_file="lib/network/matchmaking/networkmatchmakingepic"/>
 
@@ -45,6 +46,7 @@
 	
 	<hook post="true" file="lib/units/interactions/interactionext.lua" source_file="lib/units/interactions/interactionext"/>
 	
+	<hook post="true" file="lib/units/props/drill.lua" source_file="lib/units/props/drill"/>
 	<hook post="true" file="lib/units/props/securitycamera.lua" source_file="lib/units/props/securitycamera"/>
 	
 	<hook post="true" file="lib/units/weapons/bowweaponbase.lua" source_file="lib/units/weapons/bowweaponbase"/>
