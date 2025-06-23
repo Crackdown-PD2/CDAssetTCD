@@ -77,34 +77,65 @@ Hooks:PostHook(InteractionTweakData, "init", "tcd_interactiontweakdata_init", fu
 	end
 	
 	local hack_list = {
+		"corp_hack_lead_email",
+		"corp_hack_email",
 		"hack_ipad",
 		"hack_ipad_bp1",
 		"hack_ipad_jammed",
-		"corp_hack_lead_email",
-		"corp_hack_email",
 		"hack_trai_outline",
 		"trai_hold_disable_alarm",
+		"trai_hold_access_console",
+		"ranc_press_log_into_laptop",
 		"chca_start_hacking",
+		"chca_hold_disable_firewall",
 		"chas_prop_hack_box",
 		"pex_armory_hack",
 		"start_hacking_axis",
 		"start_hacking",
-		"hacking_barrier",
+		"bypass_the_firewall",  --likely white house
+		"hacking_barrier",  --breaking fed
 		"hold_new_hack_tag",
+		"hold_new_hack",  --likely brooklyn bank deposits
 		"tag_laptop",
 		"hack_dah_jammed_x",
-		"hold_hack_server_room",
+		"hold_hack_server_room",  --yacht
 		"drk_hold_hack_computer",
-		"hack_skylight_barrier", --ggc?
 		"timelock_hack",
-		"rewire_electric_box",
 		"hack_electric_box",
-		"hack_ship_control",
-		"hold_hack_comp",
+		"hack_ship_control",	--likely bomb harbor
+		"keyboard_no_time",
+		"hold_search_computer",  --likely stealing xmas mall comp
 		"hack_numpad",
+		"laptop_objective",
+		"security_station_keyboard",
+		"security_station_jammed",
+		"hold_override_pc", --likely deep
+		
+		--election day
+		"votingmachine2",
+		"votingmachine2_jammed",
+		"keyboard_eday_1",
+		"keyboard_eday_2",
+		"uload_database",
+		"uload_database_jammed",
+
+		-- hox candidates
+		"keyboard_hox_1",
+		"hold_hack_comp",  -- likely Hox2 director comp
+
+		--dummied out potential candidates, vaults, beneath the mountain
+		--"hold_unlock_display_ares",
+
+		-- big bank
 		"big_computer_not_hackable",
 		"big_computer_hackable_axis",
 		"big_computer_hackable",
+		"big_computer_server",
+
+		--ggc or likely ggc
+		"hack_skylight_barrier",
+		"cas_skylight_panel",
+		"disable_lasers",
 		
 		-- counterfeit
 		"hack_suburbia",
