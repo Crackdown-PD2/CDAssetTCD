@@ -2,7 +2,7 @@ function UnitNetworkHandler:sync_drill_upgrades(unit, shocktrap_level, auto_repa
 	if not self._verify_gamestate(self._gamestate_filter.any_ingame) or not self._verify_sender(sender_rpc) then
 		return
 	end
-	--log("Incoming sync drill upgrades: shocktrap",shocktrap_level,"autorepair",auto_repair_level,"speed",speed_upgrade_level, "silent",silent_drill,"shockalert",shocktrap_alert)
+	log("Incoming sync drill upgrades: shocktrap",shocktrap_level,"autorepair",auto_repair_level,"speed",speed_upgrade_level, "silent",silent_drill,"shockalert",shocktrap_alert)
 
 	local base_ext = alive(unit) and unit:base()
 

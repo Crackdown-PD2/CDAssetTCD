@@ -1,5 +1,4 @@
--- local
-HUDTCDBuff = blt_class()
+local HUDTCDBuff = blt_class()
 
 -- enums for alignment index readability
 HUDTCDBuff.ALIGNMENT = {

@@ -19,7 +19,7 @@ function Drill.get_upgrades(drill_unit, player)
 		local player_skill = PlayerSkill
 		upgrades = {
 			shocktrap_level = player_skill.skill_level("player","drill_shock_trap_zap",0,player),
-			auto_repair_level = player_skill.skill_level("player", "drill_auto_repair_guaranteed", 0, player) + player_skill.skill_level("player", "drill_autorepair_2", 0, player),
+			auto_repair_level = player_skill.skill_level("player", "drill_auto_repair_guaranteed", 0, player),
 			speed_upgrade_level = player_skill.skill_level("player", "drill_speed_multiplier", 0, player),
 			silent_drill = player_skill.has_skill("player", "silent_drill", player),
 			shocktrap_alert = player_skill.has_skill("player","drill_shock_trap_alert",player)
