@@ -384,6 +384,7 @@ Hooks:PostHook(PlayerManager,"check_skills","tcd_playermanager_checkskills",func
 		managers.tcdbuff:remove_listener("rollingcutter_stacks_changed","on_rollingcutter_stacks_changed")
 	end
 	
+	-- Wave Dash
 	if self:has_category_upgrade("player","bungielungie") then
 		self:remove_temporary_property("runner_bungielungie_cooldown")
 		self:register_message(Message.OnEnemyKilled, "runner_float_butterfly_meleekill_refund", function(weapon_unit, variant, killed_unit)
@@ -396,15 +397,72 @@ Hooks:PostHook(PlayerManager,"check_skills","tcd_playermanager_checkskills",func
 		self:remove_temporary_property("runner_bungielungie_cooldown")
 		self._message_system:unregister(Message.OnEnemyKilled,"runner_float_butterfly_meleekill_refund")
 	end
+		
+	-- Killer's Notebook 
+	if self:has_category_upgrade("subclass_quiet","detection_risk_amp_damage_base") then
+		local base_data = self:upgrade_value("subclass_quiet","detection_risk_amp_damage_base")
+		local max_stacks = self:upgrade_value("subclass_quiet","detection_risk_amp_damage_stacks",0)
+		
+		local base_cooldown = base_data.cooldown
+		local det_risk_threshold = base_data.threshold
+		
+		self._quiet_amp_t = 0
+		self._QUIET_AMP_STACKS_MAX = max_stacks
+		local detection_risk = math.max(math.round(managers.blackmarket:get_suspicion_offset_from_custom_data({},tweak_data.player.SUSPICION_OFFSET_LERP or 0.75) * 100),3)
+		self._QUIET_AMP_COOLDOWN_MAX = base_cooldown - (det_risk_threshold - detection_risk)
+		
+		self:set_property("subclass_quiet_amp_stacks",0)
+		
+		if self:has_category_upgrade("subclass_quiet","detection_risk_amp_damage_kill_cooldown") then
+			local cooldown_reduction_data = self:upgrade_value("subclass_quiet","detection_risk_amp_damage_kill_cooldown")
+			
+			self:register_message(Message.OnEnemyKilled, "subclass_quiet_amp_damage_onkill", function(weapon_unit, variant, killed_unit)
+				local wpn_base = alive(weapon_unit) and weapon_unit:base()
+				if wpn_base and wpn_base.is_weapon_subclass then
+					if wpn_base:is_weapon_subclass("subclass_quiet") then
+						self._quiet_amp_t = self._quiet_amp_t + cooldown_reduction_data.subclass_quiet
+					else
+						self._quiet_amp_t = self._quiet_amp_t + cooldown_reduction_data.standard
+					end
+				end
+			end)
+		end
+	else
+		self:remove_property("subclass_quiet_amp_stacks")
+		self._message_system:unregister(Message.OnEnemyKilled,"subclass_quiet_amp_damage_onkill")
+		self._quiet_amp_t = nil
+		self._QUIET_AMP_STACKS_MAX = nil
+		self._QUIET_AMP_COOLDOWN_MAX = nil
+	end
+	
 	
 end)
 
+-- Lead Farmer
+-- Killer's Notebook
 Hooks:PostHook(PlayerManager,"update","tcd_playermanager_update",function(self,t,dt)
 	
 	managers.tcdbuff:update(t,dt)
 	
 	local player = self:local_player()
-	if player then
+	if alive(player) then
+		
+		-- killer's notebook
+		local quiet_amp_t = self._quiet_amp_t
+		if quiet_amp_t then
+			local num_stacks = self:get_property("subclass_quiet_amp_stacks",0)
+			if num_stacks < self._QUIET_AMP_STACKS_MAX then
+				quiet_amp_t = quiet_amp_t + dt
+				if quiet_amp_t >= self._QUIET_AMP_COOLDOWN_MAX then
+					local stacks_awarded = math.floor(quiet_amp_t / self._QUIET_AMP_COOLDOWN_MAX)
+					self:set_property("subclass_quiet_amp_stacks",math.min(num_stacks + stacks_awarded,self._QUIET_AMP_STACKS_MAX))
+					quiet_amp_t = quiet_amp_t % self._QUIET_AMP_COOLDOWN_MAX
+				end
+				self._quiet_amp_t = quiet_amp_t
+			end
+		end
+		
+		-- lead farmer
 		local current_state = self:get_current_state()
 		local inventory_ext = player:inventory()
 		if inventory_ext then

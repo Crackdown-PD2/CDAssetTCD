@@ -1336,17 +1336,19 @@ Hooks:PostHook(SkillTreeTweakData, "init", "tcd_skilltreetd_init", function(self
 	})
 	
 
-	--Assassin (not fully implemented)
+	--Assassin
 	replace_skill(tree_indices.assassin,1,{ --Killer's Notebook
 		{
 			upgrades = {
-				"subclass_quiet_steelsight_speed_multiplier"
+				"subclass_quiet_detection_risk_amp_damage_base",
+				"subclass_quiet_detection_risk_amp_damage_stacks_1"
 			},
 			cost = self.costs.hightier
 		},
 		{
 			upgrades = {
-				"subclass_quiet_stability_addend"
+				"subclass_quiet_steelsight_speed_multiplier"
+				--"subclass_quiet_stability_addend"
 			},
 			cost = self.costs.hightierpro
 		},
@@ -1442,13 +1444,15 @@ Hooks:PostHook(SkillTreeTweakData, "init", "tcd_skilltreetd_init", function(self
 	replace_skill(tree_indices.assassin,6,{ --Quiet as the Grave
 		{
 			upgrades = {
-				"subclass_quiet_backstab_bullets"
+				"detection_risk_amp_damage_kill_cooldown"
+				--"subclass_quiet_backstab_bullets"
 			},
 			cost = self.costs.hightier
 		},
 		{
 			upgrades = {
-				"subclass_quiet_unnoticed_damage_bonus"
+				"subclass_quiet_detection_risk_amp_damage_stacks_2"
+				--"subclass_quiet_unnoticed_damage_bonus"
 			},
 			cost = self.costs.hightierpro
 		},

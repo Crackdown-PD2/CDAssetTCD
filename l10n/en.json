@@ -242,7 +242,7 @@
 	"menu_skeleton_key_desc" : "BASIC: ##$basic##\nIncreases Lockpick Speed by ##+100%## and gain the ability to Lockpick Safes.\n\nACE: ##$pro##\nYou now Lockpick Safes ##100%## faster and you gain the ability to open Electronic Locks.",
 	
 	"menu_killers_notebook" : "Killer's Notebook",
-	"menu_killers_notebook_desc" : "BASIC: ##$basic##\n$ICN_QUT Quiet Weapons ADS ##90%## faster.\n\nACE: ##$pro##\n$ICN_QUT Quiet Weapons gain ##+20## Stability.",
+	"menu_killers_notebook_desc" : "BASIC: ##$basic##\nEvery ##75## seconds, $ICN_QUT Quiet Weapons deal an additional ##10## damage with the next shot, multiplied by that weapon's Concealment and divided among projectiles fired. Every point of Detection Risk under ##75## reduces the base cooldown by ##1## second.\n\nACE: ##$pro##\n$ICN_QUT Quiet Weapons ADS ##90%## faster.",
 	"menu_good_hunting" : "Good Hunting",
 	"menu_good_hunting_desc" : "BASIC: ##$basic##\nBows have all of their Arrows readied instead of in reserve. Arrows will curve towards enemies, angling to strike them in the head.\n\nACE: ##$pro##\nCrossbows instantly Reload themselves after a Headshot. Bolts that kill an enemy gain ##Body Piercing##, punching through the target and through any other enemies in its path.",
 	"menu_comfortable_silence" : "Comfortable Silence",
@@ -252,7 +252,7 @@
 	"menu_professionals_choice" : "Professional's Choice",
 	"menu_professionals_choice_desc" : "BASIC: ##$basic##\n$ICN_QUT Quiet Weapons gain a ##+2% Fire Rate bonus## for every ##3## points of Detection Risk under ##35##, up to ##+10%##.\n\nACE: ##$pro##\nThe Fire Rate bonus is increased to ##+4%## and the maximum bonus is increased to ##+20%##.",
 	"menu_quiet_grave" : "Quiet as the Grave",
-	"menu_quiet_grave_desc" : "BASIC: ##$basic##\n$ICN_QUT Quiet Weapons deal ##+25%## Damage when attacking an enemy from behind.\n\nACE: ##$pro##\n$ICN_QUT Quiet Weapons also deal ##+25%## Damage when attacking an enemy that is not currently targeting you.",
+	"menu_quiet_grave_desc" : "BASIC: ##$basic##\n$ICN_QUT Killing an enemy reduces the active cooldown of Killer's Notebook by ##1## second, increased to ##5## seconds when killing an enemy with a $ICN_QUT Quiet Weapon.\n\nACE: ##$pro##\nKiller's Notebook can stack up to ##5## times. All stacks are expended on activation.",
 	
 	"menu_home_improvements" : "Elbow Grease",
 	"menu_home_improvements_desc" : "BASIC: ##$basic##\nYou can $ICN_MEL Melee Attack a jammed Drill or Saw to fix it instantly, but only once per Drill or Saw.\n\nACE: ##$pro##\nYou upgrade Drills and Saws placed by other players ##75%## faster.",

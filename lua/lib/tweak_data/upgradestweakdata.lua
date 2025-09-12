@@ -1756,6 +1756,56 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 	
 	--Assassin
 	
+	-- Killer's Notebook
+	self.definitions.subclass_quiet_detection_risk_amp_damage_base = { 
+		name_id = "menu_professionals_choice",
+		category = "feature",
+		upgrade = {
+			value = 1,
+			upgrade = "detection_risk_amp_damage_base",
+			category = "subclass_quiet"
+		}
+	}
+	self.definitions.subclass_quiet_detection_risk_amp_damage_stacks_1 = { 
+		name_id = "menu_professionals_choice",
+		category = "feature",
+		upgrade = {
+			value = 1,
+			upgrade = "detection_risk_amp_damage_stacks",
+			category = "subclass_quiet"
+		}
+	}
+	self.definitions.subclass_quiet_detection_risk_amp_damage_stacks_2 = { 
+		name_id = "menu_professionals_choice",
+		category = "feature",
+		upgrade = {
+			value = 2,
+			upgrade = "detection_risk_amp_damage_stacks",
+			category = "subclass_quiet"
+		}
+	}
+	self.values.subclass_quiet.detection_risk_amp_damage_kill_cooldown = {
+		{
+			standard = 1, -- reduce cooldown by 1 second 
+			subclass_quiet = 5 -- increase cooldown reduction to 5 if killed with a quiet subclass weapon
+		}
+	}
+	self.values.subclass_quiet.detection_risk_amp_damage_stacks = {
+		1, -- can hold a max of one stack (activation) 
+		5 -- increased to five stacks (all consumed on activation)
+	}
+	
+	self.values.subclass_quiet.detection_risk_amp_damage_base = {
+		{
+			cooldown = 75, -- base cooldown (seconds)
+			threshold = 75, -- every point of detection risk under this value reduces cooldown by 1s (from base)
+			damage = 10 -- bonus damage, multiplied by weapon concealment, divided among projectiles (since cd has per-pellet shotgun damage)
+		}
+	}
+	
+	
+	
+	
 	self.values.subclass_quiet.subclass_detection_risk_rof_bonus = {
 		{
 			0.02,

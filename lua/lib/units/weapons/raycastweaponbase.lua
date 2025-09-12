@@ -1501,8 +1501,24 @@ end
 
 function RaycastWeaponBase:_get_current_damage(dmg_mul)
 	local damage = self._damage
-	damage = damage * (dmg_mul or 1)
 	local pm = managers.player
+	
+	-- Killer's Notebook
+	-- do additive bonus first. because i'm nice like that
+	local amp_stacks = managers.player:get_property("subclass_quiet_amp_stacks",0)
+	if amp_stacks > 0 then
+		local num_rays = type(self._rays) == "number" and self._rays or 1 -- should only apply to shotguns
+		if num_rays > 0 then
+			local concealment = self._concealment or 0
+			local amp_data = managers.player:upgrade_value("subclass_quiet","detection_risk_amp_damage_base")
+			if amp_data then
+				damage = damage + (amp_data.damage * concealment * amp_stacks / num_rays)
+			end
+		end
+	end
+	-- ^
+	
+	damage = damage * (dmg_mul or 1)
 	damage = damage * pm:temporary_upgrade_value("temporary", "combat_medic_damage_multiplier", 1)
 	if self:is_weapon_class("class_precision") then 
 		if pm:has_category_upgrade("weapon","point_and_click_damage_bonus") then
@@ -1574,3 +1590,9 @@ function InstantBulletBase:calculate_crit(weapon_unit, user_unit)
 
 	return crit_value > math.random()
 end
+
+Hooks:PostHook(RaycastWeaponBase,"_fire_raycast","tcd_raycastweaponbase_fireraycast",function(self, user_unit, from_pos, direction, dmg_mul, shoot_player, spread_mul, autohit_mul, suppr_mul)
+	if self:is_weapon_subclass("subclass_quiet") then
+		managers.player:set_property("subclass_quiet_amp_stacks",0)
+	end
+end)
