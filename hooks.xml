@@ -34,6 +34,7 @@
 
 	<hook post="true" file="lib/units/beings/player/playerdamage.lua" source_file="lib/units/beings/player/playerdamage"/>
 	<hook post="true" file="lib/units/beings/player/states/playerstandard.lua" source_file="lib/units/beings/player/states/playerstandard"/>
+	<hook post="true" file="lib/units/beings/player/states/playercarry.lua" source_file="lib/units/beings/player/states/playercarry"/>
 	
 		
 	<hook post="true" file="lib/units/civilians/civilianbase.lua" source_file="lib/units/civilians/civilianbase"/>
