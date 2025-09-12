@@ -1591,8 +1591,10 @@ function InstantBulletBase:calculate_crit(weapon_unit, user_unit)
 	return crit_value > math.random()
 end
 
+-- clear Killer's Notebook stacks
 Hooks:PostHook(RaycastWeaponBase,"_fire_raycast","tcd_raycastweaponbase_fireraycast",function(self, user_unit, from_pos, direction, dmg_mul, shoot_player, spread_mul, autohit_mul, suppr_mul)
 	if self:is_weapon_subclass("subclass_quiet") then
+		managers.tcdbuff:call_listeners("killersnotebook_stacks_changed",managers.player:get_property("subclass_quiet_amp_stacks",0),0)
 		managers.player:set_property("subclass_quiet_amp_stacks",0)
 	end
 end)

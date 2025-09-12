@@ -424,10 +424,49 @@ Hooks:PostHook(PlayerManager,"check_skills","tcd_playermanager_checkskills",func
 					else
 						self._quiet_amp_t = self._quiet_amp_t + cooldown_reduction_data.standard
 					end
+					
+					-- don't bother visually updating stacks/timer here since it'll be done in the updater
 				end
 			end)
 		end
+		local STACK_FULL_COLOR = Color("1F85DE")
+		local STACK_EMPTY_COLOR = Color("de1f1f")
+		local STACK_NORMAL_COLOR = Color("ffffff")
+		
+		-- visually update stacks
+		managers.tcdbuff:add_listener("killersnotebook_stacks_changed","upd_killersnotebook_stacks_changed",function(prev_stacks,new_stacks)
+			local hudbuff = managers.hud._hud_tcdbuff
+			if prev_stacks ~= new_stacks then
+				if not hudbuff:has_buff("killersnotebook") then
+					hudbuff:add_buff("killersnotebook",new_stacks)
+				end
+				if new_stacks == max_stacks then
+					hudbuff:set_tag_color("killersnotebook",STACK_FULL_COLOR)
+				elseif new_stacks == 0 then
+					hudbuff:set_tag_color("killersnotebook",STACK_EMPTY_COLOR)
+				else
+					hudbuff:set_tag_color("killersnotebook",STACK_NORMAL_COLOR)
+				end
+				hudbuff:set_label_text("killersnotebook",string.format("%i",new_stacks))
+			end
+		end)
+		
+		managers.tcdbuff:add_listener("killersnotebook_timer","upd_killersnotebook_stack_timer",function(current,total)
+			local hudbuff = managers.hud._hud_tcdbuff
+			if hudbuff:has_buff("killersnotebook") then
+				hudbuff:set_progress("killersnotebook",current,total)
+			end
+		end)
+		
+		if managers.hud and managers.hud._hud_tcdbuff then
+			managers.hud._hud_tcdbuff:add_buff("killersnotebook",0)
+		end
 	else
+		managers.tcdbuff:remove_listener("killersnotebook_stacks_changed","upd_killersnotebook_stacks_changed")
+		managers.tcdbuff:remove_listener("killersnotebook_timer","upd_killersnotebook_stack_timer")
+		if managers.hud and managers.hud._hud_tcdbuff then
+			managers.hud._hud_tcdbuff:remove_buff("killersnotebook")
+		end
 		self:remove_property("subclass_quiet_amp_stacks")
 		self._message_system:unregister(Message.OnEnemyKilled,"subclass_quiet_amp_damage_onkill")
 		self._quiet_amp_t = nil
@@ -455,9 +494,12 @@ Hooks:PostHook(PlayerManager,"update","tcd_playermanager_update",function(self,t
 				quiet_amp_t = quiet_amp_t + dt
 				if quiet_amp_t >= self._QUIET_AMP_COOLDOWN_MAX then
 					local stacks_awarded = math.floor(quiet_amp_t / self._QUIET_AMP_COOLDOWN_MAX)
-					self:set_property("subclass_quiet_amp_stacks",math.min(num_stacks + stacks_awarded,self._QUIET_AMP_STACKS_MAX))
+					local new_stacks = math.min(num_stacks + stacks_awarded,self._QUIET_AMP_STACKS_MAX)
+					self:set_property("subclass_quiet_amp_stacks",new_stacks)
 					quiet_amp_t = quiet_amp_t % self._QUIET_AMP_COOLDOWN_MAX
+					managers.tcdbuff:call_listeners("killersnotebook_stacks_changed",num_stacks,new_stacks)
 				end
+				managers.tcdbuff:call_listeners("killersnotebook_timer",quiet_amp_t,self._QUIET_AMP_COOLDOWN_MAX)
 				self._quiet_amp_t = quiet_amp_t
 			end
 		end
