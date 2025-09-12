@@ -1,6 +1,11 @@
 local mvec3_norm = mvector3.normalize
 local mvec1 = Vector3()
 
+Hooks:PostHook(PlayerDamage,"init","tcd_playerdmg_init",function(self)
+	self._lives_max = 0 -- tcd var
+	self:recalculate_max_revives()
+end)
+
 function PlayerDamage:damage_melee(attack_data)
 	if not self:_chk_can_take_dmg() then
 		return
@@ -615,6 +620,46 @@ function PlayerDamage:damage_melee(attack_data)
 	self:_call_listeners(damage_info)
 
 	return
+end
+
+--tcd function
+--- directly sets the amount of lives for the local player
+function PlayerDamage:set_revives(amount,ignore_max)
+	amount = math.max(amount,0)
+	local max_revives = self:get_max_revives()
+	if not ignore_max then
+		amount = math.min(amount,max_revives)
+	end
+	self._revives = Application:digest_value(amount,true)
+	self:_send_set_revives(amount >= max_revives)
+end
+
+--tcd function
+--- adds or removes lives for the local player
+function PlayerDamage:change_revives(amount,ignore_max)
+	return self:set_revives(amount + Application:digest_value(self._revives,false),ignore_max)
+end
+
+--- returns the maximum number of lives for the local player
+function PlayerDamage:get_max_revives()
+	return self._lives_max,self._lives_init 
+	-- _lives_max is separate from _lives_init; the latter is vanilla and does not account for player bonuses such as nine lives
+end
+
+--tcd function
+--- 
+function PlayerDamage:recalculate_max_revives(chk_lives_init)
+	if chk_lives_init then
+		self._lives_init = tweak_data.player.damage.LIVES_INIT
+
+		if Global.game_settings.one_down then
+			self._lives_init = 2
+		end
+
+		self._lives_init = managers.modifiers:modify_value("PlayerDamage:GetMaximumLives", self._lives_init)
+	end
+	self._lives_max = self._lives_init + managers.player:upgrade_value("player", "additional_lives", 0)
+	return self._lives_max,self._lives_init
 end
 
 --tcd function
