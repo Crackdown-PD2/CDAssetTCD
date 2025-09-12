@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <tweaks>
-    <tweak name="settings/network" extension="network_settings">
+    <tweak version="2" name="settings/network" extension="network_settings">
         <search>
             <network/>
             <rpc/>
@@ -17,17 +17,17 @@
 			</message>
 		</target>
 	</tweak>
-	
+	<!--
 	<tweak name="settings/network" extension="network_settings">
-	<search>
-		<network/>
-		<rpc/>
-		<message name="damage_tase"/>
-		<param type="int" min="0" max="1" />
-	</search>
-	<target mode="attributes">
-		<attr name="max" value="4"/>
-	</target>
-	
-</tweak>
+		<search>
+			<network/>
+			<rpc/>
+			<message name="damage_tase"/>
+			<param type="int" min="0" max="1" />
+		</search>
+		<target mode="attributes">
+			<attr name="max" value="4"/>
+		</target>
+	</tweak>
+	-->
 </tweaks>
