@@ -79,7 +79,7 @@ function RaycastWeaponBase:is_weapon_class(class)
 end
 
 function RaycastWeaponBase:is_weapon_subclass(...)
-	local subclasses = self._weapon_subclasses
+	local subclasses = self._subclasses
 	
 	local gadget_override = self:gadget_overrides_weapon_functions()
 	if gadget_override then 
