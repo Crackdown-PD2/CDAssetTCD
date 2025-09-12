@@ -1277,8 +1277,9 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 		}
 	}
 	
-	self.values.player.wave_dash_basic = {true}
-	self.values.player.wave_dash_aced = {true}
+	self.WAVE_DASH_INPUT_HOLD_THRESHOLD = 0.2 -- must be holding crouch for this many seconds to activate wave dash
+	self.values.player.wave_dash_basic = { 0.05 } -- consumes 5% of max stamina
+	self.values.player.wave_dash_aced = { 1 } -- 100% dodge while dashing or diving
 	
 	self.definitions.player_wave_dash_basic = {
 		name_id = "menu_air_dash_basic",

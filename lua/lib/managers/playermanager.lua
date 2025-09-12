@@ -463,7 +463,17 @@ end
 
 
 
-
+-- eventually should be an override for proper calculations
+Hooks:PostHook(PlayerManager,"skill_dodge_chance","tcd_playermanager_dodge_chance",function(self, running, crouching, on_zipline, override_armor, detection_risk)
+	local player = self:local_player()
+	if alive(player) then
+		local mov_ext = player:movement()
+		local state = mov_ext and mov_ext:current_state()
+		if state and state._state_data.diving then
+			return Hooks:GetReturn() + self:upgrade_value("player","wave_dash_aced",0)
+		end
+	end
+end)
 
 
 

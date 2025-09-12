@@ -31,7 +31,12 @@ local melee_vars = {
 	"player_melee_var2"
 }
 
+-- init some vars
+-- [Runner] Float Like a Butterfly
+-- [Runner] Wave Dash
 Hooks:PostHook(PlayerStandard,"init","tcd_playerstandard_init",function(self,unit)
+	
+	-- Float like a Butterfly
 	if managers.player:has_category_upgrade("player", "bungielungie") then
 		-- (tbl) cache upgrade vars for melee lunge
 		self._tcd_bungielungie_data = table.deep_map_copy(managers.player:upgrade_value("player", "bungielungie"))
@@ -45,6 +50,13 @@ Hooks:PostHook(PlayerStandard,"init","tcd_playerstandard_init",function(self,uni
 		self._tcd_bungielungie_data = nil
 		self._has_lunge_target = nil
 	end
+	
+	-- Wave Dash
+	if managers.player:has_category_upgrade("player", "wave_dash_basic") then
+		-- (some of these "declarations" are more for organization than function)
+		self._has_wave_dashed = nil
+	end
+	
 end)
 
 -- Zip It Aced- AOE intimidation shout
@@ -1193,6 +1205,203 @@ Hooks:OverrideFunction(PlayerStandard,"_calc_melee_hit_ray",function(self,t,sphe
 		slot_mask = slot_mask - managers.slot:get_mask("enemy_shield_check")
 	end
 	return self._unit:raycast("ray", from, to, "slot_mask", slot_mask, "sphere_cast_radius", sphere_cast_radius, "ray_type", "body melee")
+end)
+
+-- Runner's Wave Dash (dolphin dive)
+Hooks:OverrideFunction(PlayerStandard,"_check_action_duck",function(self,t, input)
+	if self:_is_using_bipod() then
+		return
+	end
+	
+	if input.btn_duck_release then
+		self._t_holding_duck = nil
+	elseif input.btn_duck_press then
+		self._t_holding_duck = t + tweak_data.upgrades.WAVE_DASH_INPUT_HOLD_THRESHOLD
+	end
+
+	if self._setting_hold_to_duck and input.btn_duck_release then
+		if self._state_data.ducking then
+			self:_end_action_ducking(t)
+		end
+	elseif input.btn_duck_press and not self._unit:base():stats_screen_visible() then
+		if not self._state_data.ducking then
+			self:_start_action_ducking(t)
+		elseif self._state_data.ducking then
+			self:_end_action_ducking(t)
+		end
+	end
+	
+	if self._state_data.in_air then
+		-- wave dash check
+		if managers.player:has_category_upgrade("player", "wave_dash_basic") then
+			if self._t_holding_duck and t > self._t_holding_duck then
+				local mov_ext = self._unit:movement()
+				local stamina_cost = managers.player:upgrade_value("player","wave_dash_basic",math.huge) * mov_ext:_max_stamina()
+				if mov_ext._stamina >= stamina_cost then
+					self._unit:mover():set_velocity(Vector3(0, 0, -1400))
+					mvector3.set_static(self._last_velocity_xy, 0, 0, 0)
+					self._state_data.diving = true
+					
+					mov_ext:subtract_stamina(stamina_cost, true)
+				end
+			end
+		end
+	end
+end)
+
+-- Runner's Wave Dash (dolphin dive)
+Hooks:OverrideFunction(PlayerStandard,"_check_action_jump",function(self,t, input)
+	local new_action = nil
+	local action_wanted = input.btn_jump_press
+
+	if action_wanted then
+		local action_forbidden = self._jump_t and t < self._jump_t + 0.55
+		
+		-- wave dash changes 
+		local cant_mid_air_jump = nil
+		local wave_dashing = nil
+		local skill = managers.player:has_category_upgrade("player", "wave_dash_basic")
+		local skill2 = managers.player:has_category_upgrade("player", "wave_dash_aced")
+		
+		if self._state_data.in_air then
+			cant_mid_air_jump = true
+			
+			if skill and self._unit:movement():is_above_stamina_threshold() then			
+				if not self._has_wave_dashed then
+					cant_mid_air_jump = nil
+					action_forbidden = nil
+					self._has_wave_dashed = true
+					wave_dashing = true
+				end
+			end
+		end
+		-- ^ changes
+			
+		
+		action_forbidden = action_forbidden or self._unit:base():stats_screen_visible() or cant_mid_air_jump or self:_interacting() or self:_on_zipline() or self:_does_deploying_limit_movement() or self:_is_using_bipod()
+
+		if not action_forbidden then
+			if self._state_data.ducking then
+				self:_interupt_action_ducking(t)
+			else
+				if self._state_data.on_ladder then
+					self:_interupt_action_ladder(t)
+				end
+
+				local action_start_data = {}
+				local jump_vel_z = tweak_data.player.movement_state.standard.movement.jump_velocity.z
+				
+				if wave_dashing then
+					if not self._move_dir or not skill2 then
+						if not self._move_dir then
+							self._move_dir = Vector3()
+						end
+						
+						if skill2 or not self._jump_vel_xy then
+							mvec3_set(self._move_dir, self._unit:movement()._m_head_rot:y())
+						else
+							mvec3_set(self._move_dir, self._jump_vel_xy)
+						end
+					end	
+					
+					jump_vel_z = 200
+				end
+				
+				action_start_data.jump_vel_z = jump_vel_z
+				
+				if self._move_dir then
+					local is_running = self._running and self._unit:movement():is_above_stamina_threshold() and t - self._start_running_t > 0.4
+					local jump_vel_xy = wave_dashing and 1000 or tweak_data.player.movement_state.standard.movement.jump_velocity.xy[is_running and "run" or "walk"]
+					
+					action_start_data.jump_vel_xy = jump_vel_xy
+
+					if is_running then
+						self._unit:movement():subtract_stamina(tweak_data.player.movement_state.stamina.JUMP_STAMINA_DRAIN)
+					end
+					
+					if wave_dashing then
+						self._unit:movement():subtract_stamina(0.05, true) --5% of stamina consumed on dash
+					end
+				end
+
+				new_action = self:_start_action_jump(t, action_start_data)
+			end
+		end
+	end
+
+	return new_action
+end)
+
+-- Runner's Wave Dash (dolphin dive)
+Hooks:OverrideFunction(PlayerStandard,"_update_foley",function(self,t, input)
+	if self._state_data.on_zipline or self._lunge_data then
+		return
+	end
+
+	if not self._gnd_ray and not self._state_data.on_ladder then
+		if not self._state_data.in_air then
+			self._state_data.in_air = true
+			self._state_data.enter_air_pos_z = self._pos.z
+
+			self:_interupt_action_running(t)
+			self._unit:set_driving("orientation_object")
+		end
+	elseif self._state_data.in_air then
+		self._unit:set_driving("script")
+
+		self._state_data.in_air = false
+		self._has_wave_dashed = nil
+		
+		local from = self._pos + math.UP * 10
+		local to = self._pos - math.UP * 60
+		local material_name, pos, norm = World:pick_decal_material(from, to, self._slotmask_foley_ray)
+
+		self._unit:sound():play_land(material_name)
+		
+		local check_fall_damage = not self._state_data.diving
+		local height = self._state_data.enter_air_pos_z - self._pos.z
+		
+		if not check_fall_damage and height > 631 then
+			check_fall_damage = true
+		end
+		
+		if check_fall_damage and self._unit:character_damage():damage_fall({
+			height = height
+		}) then
+			self._running_wanted = false
+
+			managers.rumble:play("hard_land")
+			self._ext_camera:play_shaker("player_fall_damage")
+			self:_start_action_ducking(t)
+		else
+			if self._state_data.diving then					
+				--self._fall_damage_slow_t = t + 0.4
+				managers.rumble:play("hard_land")
+				self._ext_camera:play_shaker("player_fall_damage", 1)
+				self._ext_camera:play_shaker("player_land", 1)
+				
+				self._state_data.diving = nil
+			end
+			
+			if input.btn_run_state then
+				self._running_wanted = true
+			end
+		end
+
+		self._jump_t = nil
+		self._jump_vel_xy = nil
+
+		self._ext_camera:play_shaker("player_land", 0.5)
+		managers.rumble:play("land")
+	elseif self._jump_vel_xy and t - self._jump_t > 0.3 then
+		self._jump_vel_xy = nil
+
+		if input.btn_run_state then
+			self._running_wanted = true
+		end
+	end
+
+	self:_check_step(t)
 end)
 
 
