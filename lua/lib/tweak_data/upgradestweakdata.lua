@@ -1851,7 +1851,7 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 		}
 	}
 	
-	self.definitions.subclass_poison_damage_mul = { --not implemented
+	self.definitions.subclass_poison_damage_mul = {
 		name_id = "menu_toxic_shock",
 		category = "feature",
 		upgrade = {
@@ -1860,7 +1860,7 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 			category = "subclass_poison"
 		}
 	}
-	self.values.subclass_poison.weapon_subclass_damage_mul = {2} --this should actually be a dot-specific damage bonus
+	self.values.subclass_poison.weapon_subclass_damage_mul = { 2 } --this should actually be a dot-specific damage bonus
 	
 	self.definitions.subclass_poison_dot_aoe = { --not implemented
 		name_id = "menu_toxic_shock",

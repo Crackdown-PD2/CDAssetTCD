@@ -18,6 +18,7 @@
 	<hook post="true" file="lib/tweak_data/weaponfactorytweakdata.lua" source_file="lib/tweak_data/weaponfactorytweakdata"/>
 
 	<hook post="true" file="lib/managers/blackmarketmanager.lua" source_file="lib/managers/blackmarketmanager"/>
+	<hook post="true" file="lib/managers/dotmanager.lua" source_file="lib/managers/dotmanager"/>
 	<hook post="true" file="lib/managers/hintmanager.lua" source_file="lib/managers/hintmanager"/>
 	<hook post="true" file="lib/managers/hudmanagerpd2.lua" source_file="lib/managers/hudmanagerpd2"/>
 	<hook post="true" file="lib/managers/playermanager.lua" source_file="lib/managers/playermanager"/>
