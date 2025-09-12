@@ -21,7 +21,7 @@ function TCDBuffManager:has_updater(id)
 	return self._updaters[id] and true or false
 end
 
-function TCDBuffManager:remove_updater(id,cb)
+function TCDBuffManager:remove_updater(id)
 	self._updaters[id] = nil
 end
 
