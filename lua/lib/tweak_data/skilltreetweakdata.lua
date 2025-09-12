@@ -1444,7 +1444,7 @@ Hooks:PostHook(SkillTreeTweakData, "init", "tcd_skilltreetd_init", function(self
 	replace_skill(tree_indices.assassin,6,{ --Quiet as the Grave
 		{
 			upgrades = {
-				"detection_risk_amp_damage_kill_cooldown"
+				"subclass_quiet_detection_risk_amp_damage_kill_cooldown"
 				--"subclass_quiet_backstab_bullets"
 			},
 			cost = self.costs.hightier

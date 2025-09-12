@@ -1766,6 +1766,15 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 			category = "subclass_quiet"
 		}
 	}
+	self.definitions.subclass_quiet_detection_risk_amp_damage_kill_cooldown = { 
+		name_id = "menu_professionals_choice",
+		category = "feature",
+		upgrade = {
+			value = 1,
+			upgrade = "detection_risk_amp_damage_kill_cooldown",
+			category = "subclass_quiet"
+		}
+	}
 	self.definitions.subclass_quiet_detection_risk_amp_damage_stacks_1 = { 
 		name_id = "menu_professionals_choice",
 		category = "feature",
