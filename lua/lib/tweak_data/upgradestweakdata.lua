@@ -2015,6 +2015,7 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 		name_id = "menu_automatic_reboot",
 		category = "feature",
 		upgrade = {
+			synced = true,
 			value = 1,
 			upgrade = "drill_auto_repair_guaranteed",
 			category = "player"
@@ -2024,6 +2025,7 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 		name_id = "menu_automatic_reboot",
 		category = "feature",
 		upgrade = {
+			synced = true,
 			value = 2,
 			upgrade = "drill_auto_repair_guaranteed",
 			category = "player"
@@ -2045,6 +2047,7 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 		name_id = "menu_static_defense",
 		category = "feature",
 		upgrade = {
+			synced = true,
 			value = 1,
 			upgrade = "drill_shock_trap_zap",
 			category = "player"
@@ -2054,6 +2057,7 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 		name_id = "menu_static_defense",
 		category = "feature",
 		upgrade = {
+			synced = true,
 			value = 2,
 			upgrade = "drill_shock_trap_zap",
 			category = "player"
@@ -2063,6 +2067,7 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 		name_id = "menu_static_defense",
 		category = "feature",
 		upgrade = {
+			synced = true,
 			value = 1,
 			upgrade = "drill_shock_trap_alert",
 			category = "player"
