@@ -384,6 +384,19 @@ Hooks:PostHook(PlayerManager,"check_skills","tcd_playermanager_checkskills",func
 		managers.tcdbuff:remove_listener("rollingcutter_stacks_changed","on_rollingcutter_stacks_changed")
 	end
 	
+	if self:has_category_upgrade("player","bungielungie") then
+		self:remove_temporary_property("runner_bungielungie_cooldown")
+		self:register_message(Message.OnEnemyKilled, "runner_float_butterfly_meleekill_refund", function(weapon_unit, variant, killed_unit)
+			if variant == "melee" then
+				-- on melee kill, remove cooldown for "float like a butterfly" melee lunge
+				self:remove_temporary_property("runner_bungielungie_cooldown")
+			end
+		end)
+	else
+		self:remove_temporary_property("runner_bungielungie_cooldown")
+		self._message_system:unregister(Message.OnEnemyKilled,"runner_float_butterfly_meleekill_refund")
+	end
+	
 end)
 
 Hooks:PostHook(PlayerManager,"update","tcd_playermanager_update",function(self,t,dt)

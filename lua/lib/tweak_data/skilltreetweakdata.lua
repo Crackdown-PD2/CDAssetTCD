@@ -917,7 +917,7 @@ Hooks:PostHook(SkillTreeTweakData, "init", "tcd_skilltreetd_init", function(self
 			3
 		}
 	})
-	replace_skill(tree_indices.runner,5,{ --Escape Plan
+	replace_skill(tree_indices.runner,5,{ --Leg Day Enthusiast
 		{
 			upgrades = {
 				"player_run_speed_multiplier"
@@ -937,7 +937,7 @@ Hooks:PostHook(SkillTreeTweakData, "init", "tcd_skilltreetd_init", function(self
 			4
 		}
 	})
-	replace_skill(tree_indices.runner,6,{ --Leg Day Enthusiast
+	replace_skill(tree_indices.runner,6,{ --Wave Dash
 		{
 			upgrades = {
 				"player_wave_dash_basic"

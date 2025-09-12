@@ -1203,7 +1203,10 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 	}
 	
 	self.values.player.bungielungie = {
-		true
+		{
+			range = 500, -- 5m range
+			cooldown = 5 -- 5s cooldown
+		}
 	}
 	self.definitions.player_bungielungie = {
 		name_id = "menu_butterfly_bee_aced",
