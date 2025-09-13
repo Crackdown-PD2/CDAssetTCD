@@ -62,8 +62,11 @@
 	"hud_enemy_generic" : "Enemy",
 	"hud_deploying_revive_fak" : "Reviving $TARGET_UNIT...",
 	"hud_teammate_generic" : "Teammate",
-	"hud_tcd_early_trade_fail_reason_pendingtrade" : "The police are still negotiating a trade!",
+	"hud_tcd_early_trade_fail_reason_playerpendingtrade" : "You are already negotiating a trade!",
+	"hud_tcd_early_trade_fail_reason_unitpendingtrade" : "The police are already negotiating for this hostage!",
 	"hud_tcd_early_trade_fail_reason_invalidunit" : "The police won't accept this hostage!",
+	"hud_tcd_early_trade_fail_reason_playermaxlives" : "You are already at max revives!",
+	"hud_tcd_early_trade_pending" : "Hostage negotiations are now underway!",
 	"hud_tcd_early_trade_success" : "You traded a hostage for one additional revive!",
 	
 	"menu_equipment_armor_kit" : "Armor Plates",

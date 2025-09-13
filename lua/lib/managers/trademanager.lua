@@ -4,7 +4,10 @@ TradeManager._EARLY_TRADE_TIMEOUT = 10 -- after this many seconds, the request w
 TradeManager._EARLY_TRADE_RESULTS = {
 	[0] = "hud_tcd_early_trade_success",
 	[1] = "hud_tcd_early_trade_fail_reason_invalidunit",
-	[2] = "hud_tcd_early_trade_fail_reason_pendingtrade"
+	[2] = "hud_tcd_early_trade_fail_reason_unitpendingtrade",
+	[3] = "hud_tcd_early_trade_fail_reason_playerpendingtrade", -- local check only
+	[4] = "hud_tcd_early_trade_fail_reason_playermaxlives", -- local check only
+	[5] = "hud_tcd_early_trade_pending" -- local check only
 }
 
 Hooks:PostHook(TradeManager,"init","tcd_trademanager_init",function(self)
@@ -21,6 +24,41 @@ Hooks:PostHook(TradeManager,"init","tcd_trademanager_init",function(self)
 	--]]
 	}
 end)
+
+-- tcd function
+-- externally visible/universal entry point to early trades, from client or host
+function TradeManager:attempt_early_trade(unit)
+	-- check if unit is valid
+	if not self:is_tradable_civilian(trade_unit) then
+		return false,TradeManager._EARLY_TRADE_RESULTS[1]
+	elseif not self:is_unit_pending_trade(trade_unit) then
+		return false,TradeManager._EARLY_TRADE_RESULTS[2]
+	else
+		local player = managers.player:local_player()
+		local player_char_dmg = player:character_damage()
+		local current_revives = player_char_dmg:get_revives()
+		local max_revives = player_char_dmg:get_max_revives()
+		if current_revives < max_revives then
+			local session = managers.network:session()
+			local local_peer_id = session:local_peer():id()
+			if self:peer_has_pending_trade(local_peer_id) then
+				-- already has pending trade
+				return false,TradeManager._EARLY_TRADE_RESULTS[3]
+			end
+			
+			if Network:is_server() then
+				managers.trade:start_early_trade(unit)
+				player_char_dmg:change_revives(1,false)
+				return true,TradeManager._EARLY_TRADE_RESULTS[0]
+			else
+				self:send_early_trade_request()
+				return true,TradeManager._EARLY_TRADE_RESULTS[5]
+			end
+		else
+			return false,TradeManager._EARLY_TRADE_RESULTS[4]
+		end
+	end
+end
 
 -- tcd function
 -- used as client and host
@@ -108,13 +146,17 @@ end
 --- also used by hosts to track requests from all clients
 function TradeManager:register_pending_request(unit,peer_id)
 	local u_key = unit:key()
-	local clbk_id = "trademanager_early_trade_timeout_" .. tostring(u_key)
 	
-	managers.enemy:add_delayed_clbk(
-		clbk_id,
-		callback(self,self,"_unregister_pending_request",u_key),
-		TimerManager:game():time() + TradeManager._EARLY_TRADE_TIMEOUT
-	)
+	local clbk_id
+	if not Network:is_server() then
+		clbk_id = "trademanager_early_trade_timeout_" .. tostring(u_key)
+		
+		managers.enemy:add_delayed_clbk(
+			clbk_id,
+			callback(self,self,"_unregister_pending_request",u_key),
+			TimerManager:game():time() + TradeManager._EARLY_TRADE_TIMEOUT
+		)
+	end
 	
 	self._pending_trades[u_key] = {
 		peer_id = peer_id,
@@ -145,17 +187,8 @@ function TradeManager:send_early_trade_request(unit)
 		log("TradeManager:send_early_trade_request() Can't send trade request as host!",tostring(unit))
 		return
 	end
-	local session = managers.network:session()
-	local local_peer_id = session:local_peer():id()
-	if self:peer_has_pending_trade(local_peer_id) then
-		-- already has pending trade
-		managers.hud:show_hint({text = managers.localization:text("hud_tcd_early_trade_fail_reason_pendingtrade")})
-		return
-	end
-	
 	log("Sending message","request_early_hostage_trade",unit)
-	session:send_to_host("request_early_hostage_trade",unit)
-	self:register_pending_request(unit,local_peer_id)
+	managers.network:session():send_to_host("request_early_hostage_trade",unit)
 end
 
 -- tcd function
@@ -258,14 +291,16 @@ function TradeManager:start_early_trade(unit)
 	brain:set_logic("trade", {
 		skip_hint = true
 	})
-	--[[
-	local clbk_key = "TradeManager"
-	local death_clbk_key = clbk_key
-	local destroyed_clbk_key = clbk_key
-	unit:character_damage():add_listener(clbk_key, {
-		"death"
-	}, callback(self, self, "unregister_pending_request"))
-	unit:base():add_destroy_listener(clbk_key, callback(self, self, "unregister_pending_request"))
-	--]]
+	
+	if Network:is_server() then
+		local u_key = unit:key()
+		local destroyed_clbk_key = "trademanager_early_trade_on_destroyed_" .. tostring(u_key)
+		local death_clbk_key = "trademanager_early_trade_on_death_" .. tostring(u_key)
+		self:register_pending_request(unit,managers.network:session():local_peer():id())
+		unit:base():add_destroy_listener(destroyed_clbk_key, callback(self, self, "_unregister_pending_request",u_key))
+		unit:character_damage():add_listener(death_clbk_key, {
+			"death"
+		}, callback(self, self, "_unregister_pending_request",u_key))
+	end
 	brain:on_trade(unit:position(), unit:rotation(), false)
 end
