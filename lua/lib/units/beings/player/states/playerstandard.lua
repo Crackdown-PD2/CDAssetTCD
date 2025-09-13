@@ -282,9 +282,11 @@ Hooks:OverrideFunction(PlayerStandard,"_do_melee_damage",function(self, t, bayon
 	self._lunge_data = nil
 	
 	if col_ray and alive(col_ray.unit) then
-		local success,hint = managers.trade:attempt_early_trade(col_ray.unit)
-		if hint then
-			managers.hud:show_hint({text = managers.localization:text(hint)})
+		if managers.player:has_category_upgrade("player","civilian_early_trade_restores_down") then
+			local success,hint = managers.trade:attempt_early_trade(col_ray.unit)
+			if hint then
+				managers.hud:show_hint({text = managers.localization:text(hint)})
+			end
 		end
 		
 		local damage, damage_effect = managers.blackmarket:equipped_melee_weapon_damage_info(charge_lerp_value)

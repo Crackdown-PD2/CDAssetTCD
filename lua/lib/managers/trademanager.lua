@@ -48,7 +48,7 @@ function TradeManager:attempt_early_trade(unit)
 			
 			if Network:is_server() then
 				managers.trade:start_early_trade(unit)
-				player_char_dmg:change_revives(1,false)
+				player_char_dmg:change_revives(managers.player:upgrade_value("player","civilian_early_trade_restores_down",0),false)
 				return true,TradeManager._EARLY_TRADE_RESULTS[0]
 			else
 				self:send_early_trade_request()
