@@ -223,7 +223,7 @@ function TradeManager:receive_early_trade_request(unit,peer_id)
 	
 	
 	-- if you want a delay, put it here before the response
-	self:send_early_trade_response(unit,success,reason)
+	self:send_early_trade_response(unit,success,reason,peer_id)
 end
 
 -- tcd function
@@ -233,7 +233,7 @@ function TradeManager:send_early_trade_response(unit,success,reason,peer_id)
 	local session = managers.network:session()
 	local peer = session:peer(peer_id)
 	if peer then
-		log("TradeManager:send_early_trade_response() Sending message","from_server_early_hostage_trade_response",unit,success,reason)
+		log("TradeManager:send_early_trade_response() Sending message","from_server_early_hostage_trade_response",unit,success,reason,peer_id)
 		-- reason is only applicable if success is false
 		session:send_to_peer(peer,"from_server_early_hostage_trade_response",unit,success,reason)
 	else
@@ -246,7 +246,6 @@ end
 function TradeManager:receive_trade_response(unit,success,reason)
 	
 	local skip_hint = false
-	
 	if not self:peer_has_pending_trade(managers.network:session():local_peer():id()) then
 		skip_hint = true
 		log("TradeManager:receive_trade_response() Received trade response from server but client has no pending trades (???)")

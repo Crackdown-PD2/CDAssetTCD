@@ -15,30 +15,25 @@ end
 -- as client, received from host
 function UnitNetworkHandler:from_server_early_hostage_trade_response(unit,success,reason,sender)
 	if not self._verify_gamestate(self._gamestate_filter.any_ingame) then
-		log("FAILED 1 Received from_server_early_hostage_trade_response",tostring(unit))
 		return
 	end
 	local peer = self._verify_sender(sender)
 	if not peer then
-		log("FAILED 2 Received from_server_early_hostage_trade_response",tostring(unit))
 		return
 	end
 	local peer_id = peer:id()
 	log("Received from_server_early_hostage_trade_response",tostring(unit),"success",success,"reason",reason,"peer_id",tostring(peer_id))
---	managers.trade:receive_trade_response(unit,success,reason,peer_id)
-	
+	managers.trade:receive_trade_response(unit,success,reason,peer_id)
 end
 
 -- tcd function
 -- as host, received from client
 function UnitNetworkHandler:request_early_hostage_trade(unit,sender)
 	if not self._verify_gamestate(self._gamestate_filter.any_ingame) then
-		log("FAILED 1 Received request_early_hostage_trade",tostring(unit))
 		return
 	end
 	local peer = self._verify_sender(sender)
 	if not peer then
-		log("FAILED 2 Received request_early_hostage_trade",tostring(unit))
 		return
 	end
 	local peer_id = peer:id()
