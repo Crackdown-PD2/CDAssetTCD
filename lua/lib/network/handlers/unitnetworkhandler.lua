@@ -22,7 +22,7 @@ function UnitNetworkHandler:from_server_early_hostage_trade_response(unit,succes
 		return
 	end
 	local peer_id = peer:id()
-	log("Received from_server_early_hostage_trade_response",tostring(unit),"success",success,"reason",reason,"peer_id",tostring(peer_id))
+	--log("Received from_server_early_hostage_trade_response",tostring(unit),"success",success,"reason",reason,"peer_id",tostring(peer_id))
 	managers.trade:receive_trade_response(unit,success,reason,peer_id)
 end
 
@@ -37,7 +37,7 @@ function UnitNetworkHandler:request_early_hostage_trade(unit,sender)
 		return
 	end
 	local peer_id = peer:id()
-	log("Received request_early_hostage_trade",tostring(unit),"peer_id",tostring(peer_id))
+	--log("Received request_early_hostage_trade",tostring(unit),"peer_id",tostring(peer_id))
 	managers.trade:receive_early_trade_request(unit,peer_id)
 end
 

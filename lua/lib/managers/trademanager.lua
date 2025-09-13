@@ -52,8 +52,9 @@ function TradeManager:attempt_early_trade(unit)
 				player_char_dmg:change_revives(managers.player:upgrade_value("player","civilian_early_trade_restores_down",0),false)
 				return true,TradeManager._EARLY_TRADE_RESULTS[0]
 			else
+				self:register_pending_request(unit,local_peer_id)
 				self:send_early_trade_request(unit)
-				return true,TradeManager._EARLY_TRADE_RESULTS[5]
+				return true --,TradeManager._EARLY_TRADE_RESULTS[5]
 			end
 		else
 			return false,TradeManager._EARLY_TRADE_RESULTS[4]
@@ -187,10 +188,10 @@ end
 function TradeManager:send_early_trade_request(unit)
 	if Network:is_server() then
 		-- shouldn't ever be used as host
-		log("TradeManager:send_early_trade_request() Can't send trade request as host!",tostring(unit))
+		--log("TradeManager:send_early_trade_request() Can't send trade request as host!",tostring(unit))
 		return
 	end
-	log("Sending message","request_early_hostage_trade",unit)
+	--log("Sending message","request_early_hostage_trade",unit)
 	managers.network:session():send_to_host("request_early_hostage_trade",unit)
 end
 
@@ -218,7 +219,7 @@ function TradeManager:receive_early_trade_request(unit,peer_id)
 	if success then
 		self:start_early_trade(unit)
 	else
-		log("Check failed",reason)
+		--log("Check failed",reason)
 	end
 	
 	
@@ -233,11 +234,11 @@ function TradeManager:send_early_trade_response(unit,success,reason,peer_id)
 	local session = managers.network:session()
 	local peer = session:peer(peer_id)
 	if peer then
-		log("TradeManager:send_early_trade_response() Sending message","from_server_early_hostage_trade_response",unit,success,reason,peer_id)
+		--log("TradeManager:send_early_trade_response() Sending message","from_server_early_hostage_trade_response",unit,success,reason,peer_id)
 		-- reason is only applicable if success is false
 		session:send_to_peer(peer,"from_server_early_hostage_trade_response",unit,success,reason)
 	else
-		log("TradeManager:send_early_trade_response() No peer for this unit!")
+		--log("TradeManager:send_early_trade_response() No peer for this unit!")
 	end
 end
 
@@ -247,12 +248,13 @@ function TradeManager:receive_trade_response(unit,success,reason)
 	
 	local skip_hint = false
 	if not self:peer_has_pending_trade(managers.network:session():local_peer():id()) then
-		skip_hint = true
-		log("TradeManager:receive_trade_response() Received trade response from server but client has no pending trades (???)")
+		--skip_hint = true
+		--log("TradeManager:receive_trade_response() Received trade response from server but client has no pending trades (???)")
+		return
 	end
 	
 	if success then
-		log("TradeManager:receive_trade_response() Successful trade response:",tostring(unit),success,reason)
+		--log("TradeManager:receive_trade_response() Successful trade response:",tostring(unit),success,reason)
 		local player = managers.player:local_player()
 		if alive(player) then
 			if managers.player:has_category_upgrade("player","civilian_early_trade_restores_down") then
@@ -262,7 +264,8 @@ function TradeManager:receive_trade_response(unit,success,reason)
 			end
 		end
 	else
-		log("TradeManager:receive_trade_response() Unsuccessful trade response:",tostring(unit),success,reason)
+		self:unregister_pending_request(unit)
+		--log("TradeManager:receive_trade_response() Unsuccessful trade response:",tostring(unit),success,reason)
 	end
 	
 	if not skip_hint then
@@ -283,13 +286,9 @@ function TradeManager:start_early_trade(unit)
 		return
 	end
 	if not alive(unit) then
-		log("TradeManager:start_early_trade() Dead unit!",tostring(unit))
+		--log("TradeManager:start_early_trade() Dead unit!",tostring(unit))
 	end
 	
---	local contour_ext = unit:contour()
---	if contour_ext then
---	end
-
 	self:register_pending_request(unit,managers.network:session():local_peer():id())
 	
 	local brain = unit:brain()

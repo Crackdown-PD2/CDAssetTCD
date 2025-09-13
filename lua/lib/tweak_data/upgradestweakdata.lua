@@ -362,7 +362,7 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 		category = "feature",
 		upgrade = {
 			value = 1,
-			synced = true,
+			--synced = true, -- todo verify player first?
 			upgrade = "civilian_early_trade_restores_down",
 			category = "player"
 		}
