@@ -335,7 +335,7 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 	}
 	self.definitions.player_max_civ_hostage_followers_1 = {
 		name_id = "menu_falseidol_aced_followers",
-		category = "player",
+		category = "feature",
 		upgrade = {
 			value = 1,
 			synced = true,
@@ -345,7 +345,7 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 	}
 	self.definitions.player_max_civ_hostage_followers_2 = {
 		name_id = "menu_falseidol_aced_followers",
-		category = "player",
+		category = "feature",
 		upgrade = {
 			value = 2,
 			synced = true,
@@ -359,7 +359,7 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 	
 	self.definitions.player_civilian_early_trade_restores_down = {
 		name_id = "menu_civilian_early_trade_restores_down",
-		category = "player",
+		category = "feature",
 		upgrade = {
 			value = 1,
 			synced = true,
