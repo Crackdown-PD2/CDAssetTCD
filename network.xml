@@ -27,7 +27,7 @@
 			<message name="from_server_early_hostage_trade_response" delivery="ordered" receiver="unit"  check="server_to_client">
 				<param type="unit" />	<!-- unit -->
 				<param type="bool" /> <!-- success -->
-				<param type="int" min="0" max ="2" /> <!-- reason -->
+				<param type="int" min="0" max ="5" /> <!-- reason -->
 			</message>
 		</target>
 	</tweak>

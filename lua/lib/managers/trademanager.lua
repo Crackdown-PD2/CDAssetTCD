@@ -244,12 +244,6 @@ end
 -- tcd function
 -- used as client only
 function TradeManager:receive_trade_response(unit,success,reason)
-	--[[
-	reason: (int)
-	0: success
-	1: unit is not a civilian hostage
-	2: unit is already being traded
-	--]]
 	
 	local skip_hint = false
 	
