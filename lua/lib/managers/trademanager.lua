@@ -52,7 +52,7 @@ function TradeManager:attempt_early_trade(unit)
 				player_char_dmg:change_revives(managers.player:upgrade_value("player","civilian_early_trade_restores_down",0),false)
 				return true,TradeManager._EARLY_TRADE_RESULTS[0]
 			else
-				self:send_early_trade_request()
+				self:send_early_trade_request(unit)
 				return true,TradeManager._EARLY_TRADE_RESULTS[5]
 			end
 		else
@@ -83,7 +83,7 @@ function TradeManager:is_tradable_civilian(unit)
 	end
 	
 	-- must not have a pickup
-	if dmg_ext:pickup() then
+	if Network:is_server() and dmg_ext:pickup() then -- this is only accurate on host; clients detect the character as having ammo_pickup
 		-- don't allow trading civilians with key items
 		return false
 	end
