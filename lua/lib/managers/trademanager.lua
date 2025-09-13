@@ -198,7 +198,7 @@ end
 -- Unit unit (traded civ unit), Int peer_id
 function TradeManager:receive_early_trade_request(unit,peer_id)
 	local success = nil
-	local reason = 0
+	local reason = nil
 	
 	if self:is_tradable_civilian(unit) then
 		if self:is_unit_pending_trade(unit) then
@@ -207,6 +207,7 @@ function TradeManager:receive_early_trade_request(unit,peer_id)
 		else
 			self:register_pending_request(unit,peer_id) -- this is only reset when the civilian escapes
 			success = true
+			reason = 0
 		end
 		
 	else
@@ -214,7 +215,11 @@ function TradeManager:receive_early_trade_request(unit,peer_id)
 		reason = 1
 	end
 	
-	self:start_early_trade(unit)
+	if success then
+		self:start_early_trade(unit)
+	else
+		log("Check failed",reason)
+	end
 	
 	
 	-- if you want a delay, put it here before the response
@@ -223,14 +228,16 @@ end
 
 -- tcd function
 -- used as host only
-function TradeManager:send_early_trade_response(unit,success,reason)
-	local peer_id = self:get_peer_id_for_unit_pending_trade(unit)
+function TradeManager:send_early_trade_response(unit,success,reason,peer_id)
+	peer_id = peer_id or self:get_peer_id_for_unit_pending_trade(unit)
 	local session = managers.network:session()
 	local peer = session:peer(peer_id)
 	if peer then
-		log("Sending message","from_server_early_hostage_trade_response",unit,success,reason)
+		log("TradeManager:send_early_trade_response() Sending message","from_server_early_hostage_trade_response",unit,success,reason)
 		-- reason is only applicable if success is false
---		session:send_to_peer(peer,"from_server_early_hostage_trade_response",unit,success,reason)
+		session:send_to_peer(peer,"from_server_early_hostage_trade_response",unit,success,reason)
+	else
+		log("TradeManager:send_early_trade_response() No peer for this unit!")
 	end
 end
 
