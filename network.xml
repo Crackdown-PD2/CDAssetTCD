@@ -9,9 +9,9 @@
 		<target mode="replace">
 			<message name="sync_drill_upgrades" delivery="ordered" receiver="unit">
 				<param type="unit" />	<!-- unit -->
-				<param type="int" min="0" max ="2" /> <!-- static defense -->
-				<param type="int" min="0" max ="2" /> <!-- automatic repair -->
-				<param type="int" min="0" max ="2" /> <!-- drill speed level (Investing IBE) -->
+				<param type="int" min="0" max="2" /> <!-- static defense -->
+				<param type="int" min="0" max="2" /> <!-- automatic repair -->
+				<param type="int" min="0" max="2" /> <!-- drill speed level (Investing IBE) -->
 				<param type="bool" /> <!-- silent (Perfect Alignment) -->
 				<param type="bool" /> <!-- static alert (Static Defense) -->
 			</message>
@@ -27,7 +27,7 @@
 			<message name="from_server_early_hostage_trade_response" delivery="ordered" receiver="unit"  check="server_to_client">
 				<param type="unit" />	<!-- unit -->
 				<param type="bool" /> <!-- success -->
-				<param type="int" min="0" max ="2" /> <!-- reason -->
+				<param type="int" min="0" max="2" /> <!-- reason -->
 			</message>
 		</target>
 	</tweak>
