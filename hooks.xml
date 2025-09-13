@@ -44,6 +44,7 @@
 	<hook post="true" file="lib/units/civilians/civiliandamage.lua" source_file="lib/units/civilians/civiliandamage"/>
 	<hook post="true" file="lib/units/civilians/logics/civilianlogicsurrender.lua" source_file="lib/units/civilians/logics/civilianlogicsurrender"/>
 	
+	<hook post="true" file="lib/units/enemies/cop/logics/coplogictrade.lua" source_file="lib/units/enemies/cop/logics/coplogictrade"/>
 	<hook post="true" file="lib/units/enemies/cop/copdamage.lua" source_file="lib/units/enemies/cop/copdamage"/>
 	<hook post="true" file="lib/units/enemies/cop/huskcopdamage.lua" source_file="lib/units/enemies/cop/huskcopdamage"/>
 	

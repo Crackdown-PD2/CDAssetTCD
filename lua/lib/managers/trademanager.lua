@@ -23,6 +23,50 @@ Hooks:PostHook(TradeManager,"init","tcd_trademanager_init",function(self)
 		}
 	--]]
 	}
+	
+	self._forced_trade_hostage = nil -- unit; civ hostage that must be traded next, if that hostage fake-traded themself before
+end)
+
+-- Stay Down aced (fake trade hostage once, aka each hostage can be traded twice)
+-- force the hostage who fake traded themself to be used, if any
+Hooks:OverrideFunction(TradeManager,"clbk_begin_hostage_trade",function(self)
+	--log("clbk_begin_hostage_trade",debug.traceback())
+	self._hostage_trade_clbk = nil
+	local criminal_to_respawn = self._criminals_to_respawn[1]
+
+	if criminal_to_respawn then
+		self:_send_begin_trade(criminal_to_respawn)
+
+		local possible_criminals, is_instant_trade = self:get_possible_criminals()
+		local rescuing_criminal = possible_criminals[math.random(1, #possible_criminals)]
+		rescuing_criminal = managers.groupai:state():all_criminals()[rescuing_criminal]
+		local rescuing_criminal_pos = nil
+
+		if rescuing_criminal then
+			rescuing_criminal_pos = rescuing_criminal.unit:position()
+		else
+			managers.groupai:state():check_gameover_conditions()
+			managers.enemy:add_delayed_clbk(self._hostage_trade_clbk, callback(self, self, "clbk_begin_hostage_trade"), self._t + 5)
+
+			return
+		end
+
+		local rot = rescuing_criminal.unit:rotation()
+		local best_hostage
+		if self._forced_trade_hostage and alive(self._forced_trade_hostage.unit) then
+			best_hostage = self._forced_trade_hostage
+			-- use previous hostage, if valid
+		else
+			best_hostage = self:get_best_hostage(rescuing_criminal_pos)
+			self._forced_trade_hostage = best_hostage
+			-- check this hostage first next time
+		end
+
+		self:begin_hostage_trade(rescuing_criminal_pos, rot, best_hostage, is_instant_trade)
+	else
+		Application:error("[TradeManager:clbk_begin_hostage_trade] No criminal to respawn!")
+		Application:stack_dump()
+	end
 end)
 
 -- False Idol aced (respawn all players from single hostage trade)
@@ -48,6 +92,8 @@ Hooks:OverrideFunction(TradeManager,"on_hostage_traded",function(self, pos, rota
 	end
 end)
 
+
+-- tcd function
 function TradeManager:clbk_respawn_all_criminals(pos,rotation)
 	self._criminal_respawn_clbk = nil
 	self._trading_hostage = nil
