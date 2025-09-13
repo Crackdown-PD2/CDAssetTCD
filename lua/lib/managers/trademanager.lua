@@ -171,13 +171,15 @@ end
 function TradeManager:unregister_pending_request(unit)
 	local u_key = unit:key()
 	local data = self._pending_trades[u_key]
-	if data.timeout_callback_id then
-		managers.enemy:remove_delayed_clbk(data.timeout_callback_id)
+	if data then
+		if data.timeout_callback_id then
+			managers.enemy:remove_delayed_clbk(data.timeout_callback_id)
+		end
+		self:_unregister_pending_request(u_key)
 	end
-	self:_unregister_pending_request(u_key)
 end
-function TradeManager:_unregister_pending_request(unit_key)
-	self._pending_trades[unit_key] = nil
+function TradeManager:_unregister_pending_request(u_key)
+	self._pending_trades[u_key] = nil
 end
 
 -- tcd function
@@ -193,8 +195,8 @@ function TradeManager:send_early_trade_request(unit)
 end
 
 -- tcd function
--- Unit unit (traded civ unit), Int sender (peer_id)
-function TradeManager:receive_early_trade_request(unit,sender)
+-- Unit unit (traded civ unit), Int peer_id
+function TradeManager:receive_early_trade_request(unit,peer_id)
 	local success = nil
 	local reason = 0
 	
@@ -203,7 +205,7 @@ function TradeManager:receive_early_trade_request(unit,sender)
 			success = false
 			reason = 2
 		else
-			self:register_pending_request(unit,sender) -- this is only reset when the civilian escapes
+			self:register_pending_request(unit,peer_id) -- this is only reset when the civilian escapes
 			success = true
 		end
 		
@@ -256,7 +258,7 @@ function TradeManager:receive_trade_response(unit,success,reason)
 			if managers.player:has_category_upgrade("player","civilian_early_trade_restores_down") then
 				local downs_restored = managers.player:upgrade_value("player","civilian_early_trade_restores_down",0)
 				player:character_damage():change_revives(downs_restored,false)
-				self:unregister_pending_request(unit)
+				self:_register_early_trade_hostage_removal_callbacks(unit)
 			end
 		end
 	else
@@ -287,21 +289,27 @@ function TradeManager:start_early_trade(unit)
 --	local contour_ext = unit:contour()
 --	if contour_ext then
 --	end
+
+	self:register_pending_request(unit,managers.network:session():local_peer():id())
 	
 	local brain = unit:brain()
 	brain:set_logic("trade", {
 		skip_hint = true
 	})
 	
-	if Network:is_server() then
-		local u_key = unit:key()
-		local destroyed_clbk_key = "trademanager_early_trade_on_destroyed_" .. tostring(u_key)
-		local death_clbk_key = "trademanager_early_trade_on_death_" .. tostring(u_key)
-		self:register_pending_request(unit,managers.network:session():local_peer():id())
-		unit:base():add_destroy_listener(destroyed_clbk_key, callback(self, self, "_unregister_pending_request",u_key))
-		unit:character_damage():add_listener(death_clbk_key, {
-			"death"
-		}, callback(self, self, "_unregister_pending_request",u_key))
-	end
 	brain:on_trade(unit:position(), unit:rotation(), false)
+	
+	self:_register_early_trade_hostage_removal_callbacks(unit)
+end
+
+-- tcd function
+-- used as host or client
+function TradeManager:_register_early_trade_hostage_removal_callbacks(unit)
+	local u_key = unit:key()
+	local destroyed_clbk_key = "trademanager_early_trade_on_destroyed_" .. tostring(u_key)
+	local death_clbk_key = "trademanager_early_trade_on_death_" .. tostring(u_key)
+	unit:base():add_destroy_listener(destroyed_clbk_key, callback(self, self, "_unregister_pending_request",u_key))
+	unit:character_damage():add_listener(death_clbk_key, {
+		"death"
+	}, callback(self, self, "_unregister_pending_request",u_key))
 end

@@ -23,13 +23,13 @@ function UnitNetworkHandler:from_server_early_hostage_trade_response(unit,succes
 	end
 	local peer_id = peer:id()
 	log("Received from_server_early_hostage_trade_response",tostring(unit),"success",success,"reason",reason,"sender",tostring(sender),"[...]",a,b,c,d)
---	managers.trade:receive_early_trade_request(unit,success,reason,sender)
+--	managers.trade:receive_trade_response(unit,success,reason,sender)
 	
 end
 
 -- tcd function
 -- as host, received from client
-function UnitNetworkHandler:request_early_hostage_trade(unit,sender,a,b,c,d)
+function UnitNetworkHandler:request_early_hostage_trade(unit,sender)
 	if not self._verify_gamestate(self._gamestate_filter.any_ingame) then
 		return
 	end
@@ -38,8 +38,8 @@ function UnitNetworkHandler:request_early_hostage_trade(unit,sender,a,b,c,d)
 		return
 	end
 	local peer_id = peer:id()
-	log("Received request_early_hostage_trade",tostring(unit),"sender",tostring(sender),"[...]",a,b,c,d)
---	managers.trade:receive_trade_response(unit,peer_id)
+--	log("Received request_early_hostage_trade",tostring(unit),"sender",tostring(sender),"[...]",a,b,c,d)
+	managers.trade:receive_early_trade_request(unit,peer_id)
 end
 
 --[[
