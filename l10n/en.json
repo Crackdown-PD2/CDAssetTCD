@@ -120,7 +120,7 @@
 	"menu_zip_it" : "Zip It",
 	"menu_zip_it_desc" : "BASIC: ##$basic##\nIncreases your supply of Cable Ties to ##20##. Civilians will not immediately flee upon being untied.\n\nACE: ##$pro##\nCivilians are Intimidated by the noise you make. Shouting Intimidates all Civilians within ##10## meters of the target.",
 	"menu_stay_down" : "Stay Down",
-	"menu_stay_down_desc" : "BASIC: ##$basic##\nYour team's Hostages grant ##+25%## Damage Resistance to teammates within ##5## meters.\n\nACE: ##$pro##\nEach of your team's Hostages will fake surrendering ##once## upon being traded for a teammate, releasing the teammate from custody without turning themselves in (NOT YET IMPLEMENTED).",
+	"menu_stay_down_desc" : "BASIC: ##$basic##\nYour team's Hostages grant ##+25%## Damage Resistance to teammates within ##5## meters.\n\nACE: ##$pro##\nEach of your team's Hostages will fake surrendering ##once## upon being traded for a teammate, releasing the teammate from custody without turning themselves in.",
 	"menu_pack_mules" : "Pack Mules",
 	"menu_pack_mules_desc" : "BASIC: ##$basic##\nYour team's Civilian Hostages ##can carry Bags##.\n\nACE: ##$pro##\nYour team's Civilian Hostages move ##+50% faster##.",
 	"menu_lookout_duty" : "Lookout Duty",
