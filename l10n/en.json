@@ -114,7 +114,7 @@
 	"st_menu_hoxton_demolitionist" : "Demolitionist",
 	
 	"menu_false_idol" : "False Idol",
-	"menu_false_idol_desc" : "BASIC: ##$basic##\nYour team's Civilian Hostages are invulnerable while prone.\nAdditionally, you can now restore a lost Down by striking a prone Civilian Hostage with a $ICN_MEL Melee Attack to release them early (NOT YET IMPLEMENTED).\n\nACE: ##$pro##\nYour team's Hostages release all teammates in custody when traded.",
+	"menu_false_idol_desc" : "BASIC: ##$basic##\nYour team's Civilian Hostages are invulnerable while prone.\nAdditionally, you can now restore a lost Down by striking a prone Civilian Hostage with a $ICN_MEL Melee Attack to release them early.\n\nACE: ##$pro##\nYour team's Hostages release all teammates in custody when traded.",
 	"menu_leverage" : "Pied Piper",
 	"menu_leverage_desc" : "BASIC: ##$basic##\nYou can now have up to ##two## Hostages following you at once.\n\nACE: ##$pro##\nYou can have up to ##three## Hostages following you at once.",
 	"menu_zip_it" : "Zip It",
