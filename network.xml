@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
 <tweaks>
-    <tweak version="2" name="settings/network" extension="network_settings">
-        <search>
-            <network/>
-            <rpc/>
-            <message name="sync_drill_upgrades"/>
-        </search>
-        <target mode="replace">
+	<tweak version="2" name="settings/network" extension="network_settings">
+		<search>
+			<network/>
+			<rpc/>
+			<message name="sync_drill_upgrades"/>
+		</search>
+		<target mode="replace">
 			<message name="sync_drill_upgrades" delivery="ordered" receiver="unit">
 				<param type="unit" />	<!-- unit -->
 				<param type="int" min="0" max ="2" /> <!-- static defense -->
@@ -17,6 +17,33 @@
 			</message>
 		</target>
 	</tweak>
+
+	<tweak version="2" name="settings/network" extension="network_settings">
+		<search>
+			<network/>
+			<rpc/>
+		</search>
+		<target mode="attach">
+			<message name="from_server_early_hostage_trade_response" delivery="ordered" receiver="unit"  check="server_to_client">
+				<param type="unit" />	<!-- unit -->
+				<param type="bool" /> <!-- success -->
+				<param type="int" min="0" max ="2" /> <!-- reason -->
+			</message>
+		</target>
+	</tweak>
+	
+	<tweak version="2" name="settings/network" extension="network_settings">
+		<search>
+			<network/>
+			<rpc/>
+		</search>
+		<target mode="attach">
+			<message name="request_early_hostage_trade" delivery="ordered" receiver="unit"  check="client_to_server">
+				<param type="unit" />	<!-- unit -->
+			</message>
+		</target>
+	</tweak>
+	
 	<!--
 	<tweak name="settings/network" extension="network_settings">
 		<search>

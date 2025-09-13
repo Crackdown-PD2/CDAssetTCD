@@ -22,6 +22,7 @@
 	<hook post="true" file="lib/managers/hintmanager.lua" source_file="lib/managers/hintmanager"/>
 	<hook post="true" file="lib/managers/hudmanagerpd2.lua" source_file="lib/managers/hudmanagerpd2"/>
 	<hook post="true" file="lib/managers/playermanager.lua" source_file="lib/managers/playermanager"/>
+	<hook post="true" file="lib/managers/trademanager.lua" source_file="lib/managers/trademanager"/>
 	<hook post="true" file="lib/managers/weaponfactorymanager.lua" source_file="lib/managers/weaponfactorymanager"/>
 	
 	<hook post="true" file="lib/managers/menu/blackmarketgui.lua" source_file="lib/managers/menu/blackmarketgui"/>

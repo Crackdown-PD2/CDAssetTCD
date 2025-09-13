@@ -353,6 +353,9 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 			category = "player"
 		}
 	}
+	self.values.player.civilian_early_trade_restores_down = {
+		true
+	}
 	
 	self.definitions.player_civilian_early_trade_restores_down = {
 		name_id = "menu_civilian_early_trade_restores_down",

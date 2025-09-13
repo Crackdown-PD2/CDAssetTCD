@@ -11,6 +11,16 @@ function UnitNetworkHandler:sync_drill_upgrades(unit, shocktrap_level, auto_repa
 	end
 end
 
+function UnitNetworkHandler:from_server_early_hostage_trade_response(unit,success,reason,sender,a,b,c,d)
+	log("Received from_server_early_hostage_trade_response",tostring(unit),"success",success,"reason",reason,"sender",sender,"[...]",a,b,c,d)
+--	managers.trade:receive_early_trade_request(unit,success,reason,sender)
+	
+end
+
+function UnitNetworkHandler:request_early_hostage_trade(unit,sender,a,b,c,d)
+	log("Received request_early_hostage_trade",tostring(unit),"sender",sender,"[...]",a,b,c,d)
+--	managers.trade:receive_trade_response(unit,sender,a,b,c,d)
+end
 
 --[[
 -- from owner peer

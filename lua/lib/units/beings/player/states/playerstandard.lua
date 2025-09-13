@@ -282,6 +282,58 @@ Hooks:OverrideFunction(PlayerStandard,"_do_melee_damage",function(self, t, bayon
 	self._lunge_data = nil
 	
 	if col_ray and alive(col_ray.unit) then
+		local trade_unit = col_ray.unit
+		if managers.trade:is_tradable_civilian(trade_unit) then
+			if col_ray.unit:brain().is_tied and col_ray.unit:brain():is_tied() then
+				local player_char_dmg = self._unit:character_damage()
+				local current_revives = player_char_damage:get_revives()
+				local max_revives = player_char_dmg._lives_init + managers.player:upgrade_value("player", "additional_lives", 0)
+				if false and current_revives < max_revives then
+					if is_host then
+						if unit_is_tradable(unit) then
+							send_to_peers("make_unit_escape")
+							-- if necessary, manually mark civilian as untradable
+							
+							player_char_dmg._revives = Application:digest_value(current_revives + 1,true)
+							player_char_dmg:_send_set_revives(current_revives + 1 >= max_revives)
+						end
+					else
+						if not local_pending_req and unit_is_tradable(unit) then
+							-- todo waypoint? "bain is negotiating" or something
+							send_to_host("request_trade_replenish_down",unit)
+							
+							
+							local function callback_receive_request_replenish_trade()
+								-- as host
+								if unit_is_tradable(unit) and not unit_has_pending_req(unit) then
+									--nts check if mission critical
+									-- use default trademanager check?
+								end
+							end
+							
+							local function callback_receive_response_replenish_trade(success)
+								-- clear pending req
+								if success then
+									local player = managers.player:local_player()
+									if alive(player) then
+										local _player_char_dmg = player:character_damage()
+										local _max_revives = _player_char_dmg._lives_init + managers.player:upgrade_value("player", "additional_lives", 0)
+										local new_revives = math.min(_player_char_dmg:get_revives() + 1,_max_revives)
+										_player_char_dmg._revives = Application:digest_value(new_revives,true)
+										_player_char_dmg:_send_set_revives(new_revives >= _max_revives)
+									end
+								end
+							end
+							
+						end
+					end
+					
+					
+				end
+				
+			end
+		end
+		
 		local damage, damage_effect = managers.blackmarket:equipped_melee_weapon_damage_info(charge_lerp_value)
 		local damage_effect_mul = math.max(managers.player:upgrade_value("player", "melee_knockdown_mul", 1), managers.player:upgrade_value(self._equipped_unit:base():weapon_tweak_data().categories and self._equipped_unit:base():weapon_tweak_data().categories[1], "melee_knockdown_mul", 1))
 		damage = damage * managers.player:get_melee_dmg_multiplier()
