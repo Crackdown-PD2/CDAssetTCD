@@ -150,6 +150,41 @@ function IntimitateInteractionExt:interact(player)
 	end
 end
 
+-- Pied Piper (more hostages following you)
+function IntimitateInteractionExt:_interact_blocked(player)
+	if self.tweak_data == "corpse_dispose" then
+		if managers.player:is_carrying() then
+			return true
+		end
+
+		if managers.player:chk_body_bags_depleted() then
+			return true, nil, "body_bag_limit_reached"
+		end
+
+		local has_upgrade = managers.player:has_category_upgrade("player", "corpse_dispose")
+
+		if not has_upgrade then
+			return true
+		end
+
+		return not managers.player:can_carry("person")
+	elseif self.tweak_data == "hostage_convert" then
+		return not managers.player:has_category_upgrade("player", "convert_enemies") or managers.player:chk_minion_limit_reached() or managers.groupai:state():whisper_mode()
+	elseif self.tweak_data == "hostage_move" then
+		if not self._unit:anim_data().tied then
+			return true
+		end
+
+		local following_hostages = managers.groupai:state():get_following_hostages(player)
+
+		if following_hostages and managers.player:upgrade_value("player","max_civ_hostage_followers",tweak_data.player.max_nr_following_hostages) <= table.size(following_hostages) then -- only change is this line
+			return true, nil, "hint_hostage_follow_limit"
+		end
+	elseif self.tweak_data == "hostage_stay" then
+		return not self._unit:anim_data().stand or self._unit:anim_data().to_idle
+	end
+end
+
 -- removed looped cam count check,
 -- check camera loop duration against your own loop duration skill
 function SecurityCameraInteractionExt:_interact_blocked(player)
