@@ -25,6 +25,54 @@ Hooks:PostHook(TradeManager,"init","tcd_trademanager_init",function(self)
 	}
 end)
 
+-- False Idol aced (respawn all players from single hostage trade)
+Hooks:OverrideFunction(TradeManager,"on_hostage_traded",function(self, pos, rotation)
+	--print("RC: Traded hostage!!")
+
+	if self._criminal_respawn_clbk or self._trade_in_progress then
+		return
+	end
+
+	self._hostage_to_trade = nil
+	self._trade_in_progress = true
+	local respawn_t = self._t + 2
+	local clbk_id = "Respawn_criminal_on_trade"
+	self._criminal_respawn_clbk = clbk_id
+	
+	
+	-- this is the only change
+	if managers.player:has_team_category_upgrade("player", "civilian_hostage_vip_trade") then
+		managers.enemy:add_delayed_clbk(clbk_id, callback(self, self, "clbk_respawn_all_criminals", pos, rotation), respawn_t)
+	else
+		managers.enemy:add_delayed_clbk(clbk_id, callback(self, self, "clbk_respawn_criminal", pos, rotation), respawn_t)
+	end
+end)
+
+function TradeManager:clbk_respawn_all_criminals(pos,rotation)
+	self._criminal_respawn_clbk = nil
+	self._trading_hostage = nil
+	
+	local criminals_to_respawn = {}
+	
+	for i=#self._criminals_to_respawn,1,-1 do 
+		local crim = self._criminals_to_respawn[i]
+		if crim.respawn_penalty <= 0 then
+			-- since they're all going to be respawned at once,
+			-- no need to sort them by ai/player or prioritize them at all
+			table.remove(self._criminals_to_respawn,i)
+			table.insert(criminals_to_respawn,crim)
+		end
+	end
+	
+	if #criminals_to_respawn == 0 then
+		self._trade_in_progress = false
+		return
+	end
+	for _,crim in pairs(criminals_to_respawn) do
+		self:criminal_respawn(pos,rotation,crim)
+	end
+end
+
 -- tcd function
 -- externally visible/universal entry point to early trades, from client or host
 function TradeManager:attempt_early_trade(unit)
