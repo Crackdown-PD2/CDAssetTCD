@@ -354,7 +354,7 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 		}
 	}
 	self.values.player.civilian_early_trade_restores_down = {
-		true
+		1
 	}
 	
 	self.definitions.player_civilian_early_trade_restores_down = {

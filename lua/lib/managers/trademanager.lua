@@ -29,9 +29,10 @@ end)
 -- externally visible/universal entry point to early trades, from client or host
 function TradeManager:attempt_early_trade(unit)
 	-- check if unit is valid
-	if not self:is_tradable_civilian(trade_unit) then
-		return false,TradeManager._EARLY_TRADE_RESULTS[1]
-	elseif not self:is_unit_pending_trade(trade_unit) then
+	if not self:is_tradable_civilian(unit) then
+--		return false,TradeManager._EARLY_TRADE_RESULTS[1]
+		return false
+	elseif self:is_unit_pending_trade(unit) then
 		return false,TradeManager._EARLY_TRADE_RESULTS[2]
 	else
 		local player = managers.player:local_player()
