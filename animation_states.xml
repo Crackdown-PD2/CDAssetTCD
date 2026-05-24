@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<tweaks>
+	<!-- throw main -->
+	<tweak version="2" name="anims/fps/fps_spawn" extension="animation_states">
+		<search>
+			<xml/>
+			<state name="fps/throw_projectile"/>
+			<anim name="throw_target"/>
+		</search>
+		
+		<target mode="append">
+			<anim name="throw_tripmine_throwable" weight="projectile_tripmine_throwable"/>
+		</target>
+	</tweak>
+	
+	<!-- idle (hold) -->
+	<tweak version="2" name="anims/fps/fps_spawn" extension="animation_states">
+		<search>
+			<xml/>
+			<state name="fps/throw_projectile_idle"/>
+			<anim name="throw_target_idle"/>
+		</search>
+		
+		<target mode="append">
+			<anim name="throw_tripmine_throwable_idle" weight="projectile_tripmine_throwable"/>
+		</target>
+	</tweak>
+	
+	<!-- throw start -->
+	<tweak version="2" name="anims/fps/fps_spawn" extension="animation_states">
+		<search>
+			<xml/>
+			<state name="fps/throw_projectile_start"/>
+			<anim name="throw_target_equip"/>
+		</search>
+		
+		<target mode="append">
+			<anim name="throw_tripmine_throwable_equip" weight="projectile_tripmine_throwable"/>
+		</target>
+	</tweak>
+</tweaks>

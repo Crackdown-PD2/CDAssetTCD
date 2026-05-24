@@ -61,7 +61,17 @@
 		<model path="units/pd2_mod_armorbag/equipment/gen_equipment_armorpak_bag/gen_equipment_armorpak_bag"/>
 		<material_config path="units/pd2_mod_armorbag/equipment/gen_equipment_armorpak_bag/gen_equipment_armorpak_bag"/>
 		<sequence_manager path="units/pd2_mod_armorbag/equipment/gen_equipment_armorpak_bag/gen_equipment_armorpak_bag"/>
+	
+	
+	<!-- Tripmine Throwable -->
+		<unit_mat path="units/equipment/tripmine_throwable/tripmine_throwable_dummy"/>
+		<unit_obj path="units/equipment/tripmine_throwable/tripmine_throwable"/>
 		
+		<animation path="anims/fps/unarmed/throw_tripmine_throwable" force="true" load="true" unload="false"/>
+		<animation path="anims/fps/unarmed/throw_tripmine_throwable_idle" force="true" load="true" unload="false"/>
+		<animation path="anims/fps/unarmed/throw_tripmine_throwable_equip" force="true" load="true" unload="false"/>
+		
+	
 		
 	<!-- Large weapon class/subclass icon assets -->
 		<texture path="guis/textures/pd2/blackmarket/icons/tcd/class_grenade"  force="false"/>
