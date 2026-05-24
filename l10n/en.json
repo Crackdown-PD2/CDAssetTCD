@@ -127,7 +127,7 @@
 	"menu_lookout_duty_desc" : "BASIC: ##$basic##\nYour team's Hostages will automatically Mark any Special Enemies within ##10## meters.\n\nACE: ##$pro##\nYour team's Hostages will also automatically Mark any Standard Enemies within 10 meters and cause all enemies within range to take ##+10%## damage from all sources.",
 	
 	"menu_point_and_click" : "Point and Click",
-	"menu_point_and_click_desc" : "BASIC: ##$basic##\n$ICN_PRE Precision Weapons gain ##+0.5%## Damage per kill, up to ##250%##. All stacks are lost upon missing.\n\nACE: ##$pro##\n$ICN_PRE Precision Weapons ADS ##90%## faster.",
+	"menu_point_and_click_desc" : "BASIC: ##$basic##\n$ICN_PRE Precision Weapons gain ##+0.5%## Damage per kill, up to ##250%##.\n\nACE: ##$pro##\n$ICN_PRE Precision Weapons ADS ##90%## faster.",
 	"menu_tap_the_trigger" : "Tap the Trigger",
 	"menu_tap_the_trigger_desc" : "BASIC: ##$basic##\n$ICN_PRE Precision Weapons also gain ##+1%## Rate of Fire per stack of Point and Click, up to ##+50%##.\n\nACE: ##$pro##\nMaximum Rate of Fire Bonus increased to ##+100%##.",
 	"menu_potential_exponential" : "Potential Exponential",
