@@ -65,8 +65,8 @@
 	
 	<!-- pending rewrite of sentrygun/tripmine code, and their accompanying control menu classes
 	<hook post="true" file="lib/units/weapons/sentrygunweapon.lua" source_file="lib/units/weapons/sentrygunweapon"/>
-	<hook post="true" file="lib/units/weapons/trip_mine/tripminebase.lua" source_file="lib/units/weapons/trip_mine/tripminebase"/>
 	-->
+	<hook post="true" file="lib/units/weapons/trip_mine/tripminebase.lua" source_file="lib/units/weapons/trip_mine/tripminebase"/>
 	
 	<hook post="true" file="lib/units/weapons/projectiles/arrowbase.lua" source_file="lib/units/weapons/projectiles/arrowbase"/>
 	<hook post="true" file="lib/units/weapons/projectiles/projectilebase.lua" source_file="lib/units/weapons/projectiles/projectilebase"/>

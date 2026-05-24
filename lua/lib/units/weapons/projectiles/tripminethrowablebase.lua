@@ -1,5 +1,10 @@
 TripmineThrowableBase = class(ProjectileBase)
 
+
+
+
+
+
 local mvec1 = Vector3()
 local mvec2 = Vector3()
 local mvec3 = Vector3()
@@ -92,7 +97,7 @@ function TripmineThrowableBase:_on_collision(col_ray)
 	local global_pos, local_pos, local_rot_vec = tmp_vec1
 	mvec3_set(global_pos, position)
 	
-	PlayerEquipment._check_unit_attach_segment(stuck_enemy, global_pos)
+	--PlayerEquipment._check_unit_attach_segment(stuck_enemy, global_pos)
 	
 	local session = managers.network:session()
 

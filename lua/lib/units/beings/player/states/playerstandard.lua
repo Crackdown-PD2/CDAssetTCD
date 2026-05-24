@@ -1412,6 +1412,80 @@ Hooks:OverrideFunction(PlayerStandard,"_update_foley",function(self,t, input)
 end)
 
 
+-- for throwables that also need "deployable" behavior (Tripmines and FAKs)
+-- perform raycasts on nearby surfaces
+-- and spawn the deployable object there if valid,
+-- then cancel throwable action;
+-- perform this check BEFORE initiating a throw
+-- (todo: make this a setting for "quick placement"? eg. "on tap with valid placement ray: throw/place")
+--[[
+Hooks:OverrideFunction(PlayerStandard,"_check_action_throw_projectile",function(self,t,input)
+	local projectile_entry = managers.blackmarket:equipped_projectile()
+	local projectile_tweak = tweak_data.blackmarket.projectiles[projectile_entry]
+
+	if projectile_tweak.is_a_grenade then
+		return self:_check_action_throw_grenade(t, input)
+	elseif projectile_tweak.ability then
+		return self:_check_action_use_ability(t, input)
+	end
+
+	if self._state_data.projectile_throw_wanted then
+		if not self._state_data.projectile_throw_allowed_t then
+			self._state_data.projectile_throw_wanted = nil
+
+			self:_do_action_throw_projectile(t, input)
+		end
+
+		return
+	end
+
+	local action_wanted = input.btn_projectile_press or input.btn_projectile_release or self._state_data.projectile_idle_wanted
+
+	if not action_wanted then
+		return
+	end
+
+	if not managers.player:can_throw_grenade() then
+		self._state_data.projectile_throw_wanted = nil
+		self._state_data.projectile_idle_wanted = nil
+
+		return
+	end
+
+	if input.btn_projectile_release then
+		if self._state_data.throwing_projectile then
+			if self._state_data.projectile_throw_allowed_t then
+				self._state_data.projectile_throw_wanted = true
+
+				return
+			end
+
+			self:_do_action_throw_projectile(t, input)
+		end
+
+		return
+	end
+
+	local action_forbidden = not PlayerBase.USE_GRENADES or not self:_projectile_repeat_allowed() or self:chk_action_forbidden("interact") or self:_interacting() or self:is_deploying() or self:_changing_weapon() or self:_is_meleeing() or self:_is_using_bipod()
+
+	if action_forbidden then
+		return
+	end
+
+	self:_start_action_throw_projectile(t, input)
+
+	return true
+end)
+--]]
+
+function PlayerStandard:_check_action_throw_tripmine(t,input)
+	
+end
+
+function PlayerStandard:_check_action_throw_fak(t,input)
+end
+
+
 -- tcd function
 function PlayerStandard:calculate_melee_crit(melee_entry)
 	local crit_value = managers.player:critical_hit_chance()

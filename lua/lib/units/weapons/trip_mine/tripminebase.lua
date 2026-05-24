@@ -1,3 +1,6 @@
+
+DeathvoxOverhaulCore:require("lua/classes/tripminecontrolmenu")
+
 local mvec3_dis_sq = mvector3.distance_sq
 local mvec3_cpy = mvector3.copy
 local mvec3_not_equal = mvector3.not_equal

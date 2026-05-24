@@ -86,4 +86,27 @@ function UnitNetworkHandler:sync_tcdtripmine_pickup(unit,sender)
 	
 end
 
+
+-- tcd function
+-- similar to request_throw_projectile, except this is a purely visual physics simulation
+-- clientside projectile disappears on contact with surface,
+-- actual result is client-authoritative from projectile owner and synced independently
+function UnitNetworkHandler:sync_projectile_husk(proj_id,pos,direction,sender)
+	if not self._verify_gamestate(self._gamestate_filter.any_ingame) then
+		return
+	end
+
+	local peer = self._verify_sender(rpc)
+	if not peer then
+		return
+	end
+	local peer_id = peer:id()
+	local td = proj_id and tweak_data.blackmarket.projectiles[id]
+	
+	
+	
+	
+end
+
+
 --]]

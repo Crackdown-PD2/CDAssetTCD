@@ -319,14 +319,15 @@ function TripmineControlMenu:LoadMenuData()
 end
 
 Hooks:Add("BaseNetworkSessionOnLoadComplete","tcd_create_tripmine_control_menu",function()
-	if not deathvox:IsTotalCrackdownEnabled() then return end
+--	if not deathvox:IsTotalCrackdownEnabled() then return end
 	
 	TripmineControlMenu:LoadMenuData()
-	
+	--[[
 	RadialMouseMenu:new({
 		name = managers.localization:text("tripmine_control_menu_title"),
 		radius = 350,
 		deadzone = 50,
 		items = TripmineControlMenu:GetMenuItems()
 	},callback(TripmineControlMenu,TripmineControlMenu,"SetActionMenu"))
+	--]]
 end)
