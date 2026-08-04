@@ -73,11 +73,6 @@ function UnitNetworkHandler:sync_trip_mine_setup(unit, peer_id, upgrade_bits, pa
 	unit:base():sync_setup(upgrade_bits, payload_mode, specials_only)
 end
 
-
-function UnitNetworkHandler:sync_attach_throwable_tripmine(unit, parent_unit, parent_body, parent_object, local_pos, dir, projectile_type_index, peer_id, sender, upgrade_bits, payload_mode, specials_only)
-	
-end
-
 --used for tripmine syncing when attached to an enemy
 local orig_sync_attach_projectile = UnitNetworkHandler.sync_attach_projectile
 function UnitNetworkHandler:sync_attach_projectile(unit, instant_dynamic_pickup, parent_unit, parent_body, synced_parent_object, synced_pos, dir, projectile_type_index, peer_id, sender)
@@ -157,6 +152,21 @@ function UnitNetworkHandler:sync_attach_projectile(unit, instant_dynamic_pickup,
 	return orig_sync_attach_projectile(self, unit, instant_dynamic_pickup, parent_unit, parent_body, synced_parent_object, synced_pos, dir, projectile_type_index, peer_id, sender)
 end
 
+
+-- test these
+function UnitNetworkHandler:request_spawn_attach_trip_mine(parent_unit, parent_body, synced_parent_object, local_pos, normal, upgrade_bits, payload_mode, specials_only, rpc)
+	Print("incoming client request_spawn_attach_trip_mine:",parent_unit, parent_body, synced_parent_object, local_pos, normal, upgrade_bits, payload_mode, specials_only, rpc)
+end
+		
+function UnitNetworkHandler:sync_spawn_attach_trip_mine(parent_unit, parent_body, synced_parent_object, local_pos, normal, owner_peer_id, upgrade_bits, payload_mode, specials_only, rpc)
+	Print("incoming server sync_spawn_attach_trip_mine",parent_unit, parent_body, synced_parent_object, local_pos, normal, owner_peer_id, upgrade_bits, payload_mode, specials_only, rpc)
+end
+
+
+--function UnitNetworkHandler:sync_attach_throwable_tripmine(unit, parent_unit, parent_body, parent_object, local_pos, dir, projectile_type_index, peer_id, sender, upgrade_bits, payload_mode, specials_only)	
+--end
+
+		
 --[[
 function UnitNetworkHandler:sync_attach_projectile(unit, instant_dynamic_pickup, parent_unit, parent_body, parent_object, local_pos, dir, projectile_type_index, peer_id, sender)
 	local peer = self._verify_sender(sender)

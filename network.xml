@@ -60,6 +60,29 @@
 			<param type="bool" /> 				<!-- toggle: Special targeting only -->
 		</message>
 		
+		<message name="request_spawn_attach_trip_mine" delivery="ordered" receiver="unit" check="client_to_server">
+			<param type="unit" />		<!-- attach to unit -->
+			<param type="body" />		<!-- attach to body -->
+			<param type="object3d" />	<!-- attach object -->
+			<param type="vector3" />	<!-- local position -->
+			<param type="vector3" />	<!-- direction -->
+			<param type="int" min="0" max="15" /> <!-- Upgrade bits -->
+			<param type="int" min="0" max="4" /> <!-- Payload Mode -->
+			<param type="bool" /> 				<!-- toggle: Special targeting only -->
+		</message>
+		
+		<message name="sync_spawn_attach_trip_mine" delivery="ordered" receiver="unit" check="server_to_client">
+			<param type="unit" />		<!-- attach to unit -->
+			<param type="body" />		<!-- attach to body -->
+			<param type="object3d" />	<!-- attach object -->
+			<param type="vector3" />	<!-- local position -->
+			<param type="vector3" />	<!-- direction -->
+			<param type="int" min="0" max="15"/> <!-- Peer id -->
+			<param type="int" min="0" max="15" /> <!-- Upgrade bits -->
+			<param type="int" min="0" max="4" /> <!-- Payload Mode -->
+			<param type="bool" /> 				<!-- toggle: Special targeting only -->
+		</message>
+		
 		</target>
 	</tweak>
 
