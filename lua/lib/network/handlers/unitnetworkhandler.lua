@@ -78,6 +78,86 @@ function UnitNetworkHandler:sync_attach_throwable_tripmine(unit, parent_unit, pa
 	
 end
 
+--used for tripmine syncing when attached to an enemy
+local orig_sync_attach_projectile = UnitNetworkHandler.sync_attach_projectile
+function UnitNetworkHandler:sync_attach_projectile(unit, instant_dynamic_pickup, parent_unit, parent_body, synced_parent_object, synced_pos, dir, projectile_type_index, peer_id, sender)
+	if not self._verify_gamestate(self._gamestate_filter.any_ingame) then
+		return
+	end
+
+	local peer = self._verify_sender(sender)
+
+	if not peer then
+		return
+	end
+
+	if alive(unit) then
+		local base_ext = unit:base()
+
+		if base_ext and base_ext.NAME == "TripMineBase" then -- alt. can check getmetatable()
+			local is_server = Network:is_server()
+
+			--since this is a tripmine, and it works as a throwable/grenade, use the throwable anticheat check
+			if is_server and not managers.player:verify_grenade(peer_id) then
+				return
+			end
+
+			local bits = projectile_type_index - 1
+			local radius_upgrade_level = Bitwise:rshift(bits, TripMineBase.UPGRADE_SHIFT_RADIUS)
+			local vulnerability_upgrade_level = Bitwise:rshift(bits, TripMineBase.UPGRADE_SHIFT_VULN) % 2^TripMineBase.UPGRADE_SHIFT_VULN
+			local parent_is_alive = alive(parent_unit)
+			local local_pos = mvector3.copy(synced_pos)
+			local parent_object = nil
+
+			if parent_is_alive then
+				if alive(parent_body) then
+					parent_object = parent_body:root_object()
+				else
+					parent_object = alive(synced_parent_object) and synced_parent_object
+				end
+			end
+
+			if Network:is_server() then
+				local world_position, world_rotation = nil
+
+				if parent_object then
+					local obj_rot = parent_object:rotation()
+
+					world_position = local_pos:rotate_with(obj_rot) + parent_object:position()
+					world_rotation = Rotation(dir.x, dir.y, dir.z) * obj_rot
+				else
+					world_position = Vector3()
+					world_rotation = Rotation()
+				end
+
+				local tripmine_unit = TripMineBase.spawn(world_position, world_rotation, false, peer_id)
+
+				tripmine_unit:base():set_server_information(peer_id)
+
+				if parent_is_alive and parent_unit:id() ~= -1 then
+					managers.network:session():send_to_peers_synched("sync_attach_projectile", tripmine_unit, false, parent_unit, parent_body or nil, synced_parent_object or nil, synced_pos, dir, projectile_type_index, peer_id)
+				else
+					managers.network:session():send_to_peers_synched("sync_attach_projectile", tripmine_unit, false, nil, nil, nil, synced_pos, dir, projectile_type_index, peer_id)
+				end
+
+				tripmine_unit:base():attach_to_enemy(parent_unit, local_pos, dir, parent_object, radius_upgrade_level, vulnerability_upgrade_level)
+			elseif base_ext.get_name_id and base_ext:get_name_id() == "trip_mine" then
+				if managers.network:session():local_peer():id() == peer_id then
+					base_ext:set_active(true, managers.player:player_unit(), true)
+				end
+
+				base_ext:attach_to_enemy(parent_unit, local_pos, dir, parent_object, radius_upgrade_level, vulnerability_upgrade_level)
+			end
+
+			return
+		end
+	end
+
+	--assume that this is the spoofed function
+	return orig_sync_attach_projectile(self, unit, instant_dynamic_pickup, parent_unit, parent_body, synced_parent_object, synced_pos, dir, projectile_type_index, peer_id, sender)
+end
+
+--[[
 function UnitNetworkHandler:sync_attach_projectile(unit, instant_dynamic_pickup, parent_unit, parent_body, parent_object, local_pos, dir, projectile_type_index, peer_id, sender)
 	local peer = self._verify_sender(sender)
 
@@ -119,7 +199,7 @@ function UnitNetworkHandler:sync_attach_projectile(unit, instant_dynamic_pickup,
 		end
 	end
 end
-
+--]]
 
 
 

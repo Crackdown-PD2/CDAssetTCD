@@ -2,6 +2,8 @@
 DeathvoxOverhaulCore:require("lua/classes/tripminecontrolmenu")
 
 --tripmine overhaul
+TripMineBase.NAME = "TripMineBase" -- just to id the class
+
 TripMineBase.UPGRADE_SHIFT_VULN = 2
 TripMineBase.UPGRADE_SHIFT_RADIUS = 1
 TripMineBase.UPGRADE_SHIFT_FRIENDLYFIRE = 1
