@@ -61,8 +61,12 @@ function TripmineThrowableBase:_setup_server_data()
 end
 
 function TripmineThrowableBase:throw(params,...)
+--	Print("Throwing a projectile",params.projectile_entry)
+--	footrip = self
+--	logall(self._ignore_units or {"nul"})
+	
+	self._ignore_units = self._ignore_units or {self._unit}
 	TripmineThrowableBase.super.throw(self,params,...)
-	--Print(params.projectile_entry)
 
 	if params.projectile_entry and tweak_data.projectiles[params.projectile_entry] then
 		local push_at_body_index = tweak_data.projectiles[params.projectile_entry].push_at_body_index
