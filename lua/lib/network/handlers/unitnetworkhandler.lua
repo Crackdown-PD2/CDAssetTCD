@@ -47,7 +47,7 @@ end
 -- ==================================== TRIPMINES
 function UnitNetworkHandler:place_trip_mine(pos, normal, upgrade_bits, payload_mode, specials_only, rpc)
 
-	Print("place_trip_mine",pos, normal, upgrade_bits, payload_mode, specials_only, rpc)
+	--Print("place_trip_mine",pos, normal, upgrade_bits, payload_mode, specials_only, rpc)
 	local peer = self._verify_sender(rpc)
 
 	if not self._verify_gamestate(self._gamestate_filter.any_ingame) or not peer then
@@ -67,10 +67,12 @@ function UnitNetworkHandler:place_trip_mine(pos, normal, upgrade_bits, payload_m
 end
 
 function UnitNetworkHandler:sync_trip_mine_setup(unit, peer_id, upgrade_bits, payload_mode, specials_only)
-	Print("sync_trip_mine_setup", unit, peer_id, upgrade_bits, payload_mode, specials_only)
+--	Print("sync_trip_mine_setup", unit, peer_id, upgrade_bits, payload_mode, specials_only)
+--	do return end
 	if not alive(unit) or not self._verify_gamestate(self._gamestate_filter.any_ingame) then
 		return
 	end
+	
 
 	--managers.player:verify_grenade(peer_id)
 	unit:base():sync_setup(upgrade_bits, payload_mode, specials_only)
@@ -78,7 +80,8 @@ end
 
 -- as host, receive from client: request spawning and attaching a tripmine to the given enemy
 function UnitNetworkHandler:request_spawn_attach_trip_mine(parent_unit, parent_body, synced_parent_object, local_pos, normal, upgrade_bits, payload_mode, specials_only, sender)
-	Print("incoming client request_spawn_attach_trip_mine:",parent_unit, parent_body, synced_parent_object, local_pos, normal, upgrade_bits, payload_mode, specials_only, sender)
+--	Print("incoming client request_spawn_attach_trip_mine:",parent_unit, parent_body, synced_parent_object, local_pos, normal, upgrade_bits, payload_mode, specials_only, sender)
+--	do return end
 	if not self._verify_gamestate(self._gamestate_filter.any_ingame) then
 		return
 	end
@@ -88,6 +91,7 @@ function UnitNetworkHandler:request_spawn_attach_trip_mine(parent_unit, parent_b
 	end
 	
 	local peer_id = peer:id()
+	
 	
 	-- anticheat
 --	if not managers.player:verify_grenade(peer_id) then
@@ -136,6 +140,7 @@ end
 -- as client, receive from host: sync enemy-stuck tripmine setup details to clients
 function UnitNetworkHandler:sync_spawn_attach_trip_mine(tripmine_unit, parent_unit, parent_body, synced_parent_object, local_pos, normal, owner_peer_id, upgrade_bits, payload_mode, specials_only, sender)
 --	Print("incoming server sync_spawn_attach_trip_mine",tripmine_unit, parent_unit, parent_body, synced_parent_object, local_pos, normal, owner_peer_id, upgrade_bits, payload_mode, specials_only, sender)
+-- 	do return end
 	if not self._verify_gamestate(self._gamestate_filter.any_ingame) and not self._verify_gamestate(self._gamestate_filter.any_end_game) or not self._verify_sender(sender) then
 		return
 	end
@@ -147,61 +152,6 @@ function UnitNetworkHandler:sync_spawn_attach_trip_mine(tripmine_unit, parent_un
 	tripmine_base:attach_to_enemy(parent_unit, local_pos, normal, synced_parent_object, nil,nil)
 	
 end
-
-
---function UnitNetworkHandler:sync_attach_throwable_tripmine(unit, parent_unit, parent_body, parent_object, local_pos, dir, projectile_type_index, peer_id, sender, upgrade_bits, payload_mode, specials_only)	
---end
-
-		
---[[
-function UnitNetworkHandler:sync_attach_projectile(unit, instant_dynamic_pickup, parent_unit, parent_body, parent_object, local_pos, dir, projectile_type_index, peer_id, sender)
-	local peer = self._verify_sender(sender)
-
-	if not self._verify_gamestate(self._gamestate_filter.any_ingame) or not peer then
-		print("_verify failed!!!")
-
-		return
-	end
-
-	local projectile_type = tweak_data.blackmarket:get_projectile_name_from_index(projectile_type_index)
-
-	if not projectile_type then
-		return
-	end
-	
-	local world_position = parent_object and local_pos:rotate_with(parent_object:rotation()) + parent_object:position() or local_pos
-
-	if Network:is_server() then
-		local tweak_entry = tweak_data.blackmarket.projectiles[projectile_type]
-		local unit_name = Idstring(tweak_entry.unit)
-		local synced_unit = World:spawn_unit(unit_name, world_position, Rotation(dir, math.UP))
-
-		managers.network:session():send_to_peers_synched("sync_attach_projectile", synced_unit, instant_dynamic_pickup, alive(parent_unit) and parent_unit:id() ~= -1 and parent_unit or nil, alive(parent_unit) and parent_unit:id() ~= -1 and parent_body or nil, alive(parent_unit) and parent_unit:id() ~= -1 and parent_object or nil, local_pos, dir, projectile_type_index, peer_id)
-		synced_unit:base():set_thrower_unit_by_peer_id(peer_id)
-		synced_unit:base():set_projectile_entry(projectile_type)
-		synced_unit:base():sync_attach_to_unit(instant_dynamic_pickup, parent_unit, parent_body, parent_object, local_pos, dir)
-	elseif unit then
-		unit:set_position(world_position)
-		unit:base():set_thrower_unit_by_peer_id(peer_id)
-		unit:base():set_projectile_entry(projectile_type)
-		unit:base():sync_attach_to_unit(instant_dynamic_pickup, parent_unit, parent_body, parent_object, local_pos, dir)
-	end
-
-	if peer_id ~= 1 then
-		local dummy_unit = ArrowBase.find_nearest_arrow(peer_id, world_position)
-
-		if dummy_unit then
-			dummy_unit:set_slot(0)
-		end
-	end
-end
---]]
-
-
-
-
-
-
 
 
 
@@ -239,38 +189,5 @@ function UnitNetworkHandler:sync_tcdsentry_state(unit,ammo_index,mode_index,send
 	local sentry_ext = unit:base()
 	sentry_ext:set_state(ammo_type,fire_mode)
 end
-
--- [[
-
-function UnitNetworkHandler:sync_tcdtripmine_state(unit,sender,ammo_type,fire_mode)
-
-end
-
-function UnitNetworkHandler:sync_tcdtripmine_pickup(unit,sender)
-	
-end
-
-
--- tcd function
--- similar to request_throw_projectile, except this is a purely visual physics simulation
--- clientside projectile disappears on contact with surface,
--- actual result is client-authoritative from projectile owner and synced independently
-function UnitNetworkHandler:sync_projectile_husk(proj_id,pos,direction,sender)
-	if not self._verify_gamestate(self._gamestate_filter.any_ingame) then
-		return
-	end
-
-	local peer = self._verify_sender(rpc)
-	if not peer then
-		return
-	end
-	local peer_id = peer:id()
-	local td = proj_id and tweak_data.blackmarket.projectiles[id]
-	
-	
-	
-	
-end
-
 
 --]]

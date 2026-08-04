@@ -62,10 +62,14 @@ end
 
 function TripmineThrowableBase:throw(params,...)
 --	Print("Throwing a projectile",params.projectile_entry)
---	footrip = self
---	logall(self._ignore_units or {"nul"})
+
+	if tweak_data.blackmarket.projectiles[params.projectile_entry].impact_detonation and self._owner_peer_id and self._owner_peer_id ~= managers.network:session():local_peer():id() then
+		self._unit:damage():add_body_collision_callback(callback(self,self,"_husk_on_collision"))
+	end
 	
 	self._ignore_units = self._ignore_units or {self._unit}
+	-- self:add_ignore_unit(self._unit)
+	
 	TripmineThrowableBase.super.throw(self,params,...)
 
 	if params.projectile_entry and tweak_data.projectiles[params.projectile_entry] then
@@ -84,8 +88,7 @@ function TripmineThrowableBase:_on_collision(col_ray)
 	local position = col_ray.position
 	local stuck_enemy = col_ray.unit
 	
-	Print("Collided with ",col_ray.unit)
-	fooray = col_ray
+--	Print("Collided with ",col_ray.unit)
 	
 	local normal = col_ray.normal
 	
@@ -137,7 +140,7 @@ function TripmineThrowableBase:_on_collision(col_ray)
 		
 		-- session:send_to_host("sync_attach_projectile", self._unit, false, stuck_enemy, body or nil, parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, bits, session:local_peer():id())
 		
-		session:send_to_host("request_spawn_attach_trip_mine stuck", stuck_enemy, "body", body or nil, "obj", parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, bits, payload_mode, specials_only)
+		session:send_to_host("request_spawn_attach_trip_mine", stuck_enemy, "body", body or nil, "obj", parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, bits, payload_mode, specials_only)
 	else
 		-- stuck as host
 		
@@ -178,29 +181,39 @@ function TripmineThrowableBase:_on_collision(col_ray)
 	self._is_detonated = true
 end
 
+-- tcd function
+-- only called as host when another player's tripmine is removed
+function TripmineThrowableBase:_husk_on_collision(...)
+	-- self:_handle_hiding_and_destroying(true,nil)
+	if not self._collided then
+		self._collided = true
+		self._unit:set_slot(0)
+	end
+end
+
 function TripmineThrowableBase:clbk_impact(tag, unit, body, other_unit, other_body, position, normal, collision_velocity, velocity, other_velocity, new_velocity, direction, damage, ...)
 	--TripmineThrowableBase.super.clbk_impact(self, tag, unit, body, other_unit, other_body, position, normal, collision_velocity, velocity, other_velocity, new_velocity, direction, damage, ...)
-	Print("clbk_impact",tag, unit, body, other_unit, other_body, position, normal, collision_velocity, velocity, other_velocity, new_velocity, direction, damage)
+	--Print("Impact",tag,"is detonated?",self._is_detonated,"is collided",self._collided)
+--	Print("clbk_impact",tag, unit, body, other_unit, other_body, position, normal, collision_velocity, velocity, other_velocity, new_velocity, direction, damage)
 	if tag == Idstring("impact2") and not self._is_detonated then
 		-- stuck to world
 		
 		self._unit:set_slot(0)
 		self._is_detonated = true
 		
-
+		local upgrade_bits, payload_mode, specials_only = 1
+		
 		local session = managers.network:session()
 
 		local player_unit = managers.player:local_player()
 		
-		
-		local mark_duration_upgrade = managers.player:has_category_upgrade("trip_mine", "trip_mine_extended_mark_duration")
 		if Network:is_client() then
-			session:send_to_host("place_trip_mine", position, normal, mark_duration_upgrade)
+			session:send_to_host("place_trip_mine", position, normal, upgrade_bits, payload_mode, specials_only)
 		else	
 			local rot = tmp_rot1
 			mrot_set_look_at(rot, normal, math_up)
 
-			local tripmine_unit = TripMineBase.spawn(position, rot, mark_duration_upgrade, session:local_peer():id())
+			local tripmine_unit = TripMineBase.spawn(position, rot, session:local_peer():id(), upgrade_bits, payload_mode, specials_only)
 			tripmine_unit:base():set_active(true, player_unit)
 			
 		end
@@ -236,6 +249,8 @@ function TripmineThrowableBase:clbk_impact(tag, unit, body, other_unit, other_bo
 	end
 end
 
+-- only change is rotating the body 
+-- TODO physics stuff should be handled in a different way
 function TripmineThrowableBase:update(unit, t, dt)
 	if not self._simulated and not self._collided then
 		self._unit:m_position(mvec1)

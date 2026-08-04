@@ -73,7 +73,7 @@ function TripMineBase:setup_upgrades(upgrade_bits,payload_mode,specials_only)
 	self._radius_upgrade_level = radius_upgrade_level
 	self._vuln_upgrade_level = vulnerability_upgrade_level
 	
-	Print("Setup:","radius",radius_upgrade_level,"vuln",vulnerability_upgrade_level)
+	--Print("Setup:","radius",radius_upgrade_level,"vuln",vulnerability_upgrade_level)
 end
 
 
