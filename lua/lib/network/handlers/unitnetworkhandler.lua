@@ -54,7 +54,7 @@ function UnitNetworkHandler:place_trip_mine(pos, normal, upgrade_bits, payload_m
 		return
 	end
 
-	if not managers.player:verify_equipment(peer:id(), "trip_mine") then
+	if not managers.player:verify_grenade(peer:id()) then
 		return
 	end
 
@@ -72,7 +72,7 @@ function UnitNetworkHandler:sync_trip_mine_setup(unit, peer_id, upgrade_bits, pa
 		return
 	end
 
-	managers.player:verify_equipment(peer_id, "trip_mine")
+	--managers.player:verify_grenade(peer_id)
 	unit:base():sync_setup(upgrade_bits, payload_mode, specials_only)
 end
 
