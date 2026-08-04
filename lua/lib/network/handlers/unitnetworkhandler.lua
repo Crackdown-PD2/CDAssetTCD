@@ -76,24 +76,6 @@ function UnitNetworkHandler:sync_trip_mine_setup(unit, peer_id, upgrade_bits, pa
 	unit:base():sync_setup(upgrade_bits, payload_mode, specials_only)
 end
 
---used for tripmine syncing when attached to an enemy
-local orig_sync_attach_projectile = UnitNetworkHandler.sync_attach_projectile
-function UnitNetworkHandler:sync_attach_projectile(unit, instant_dynamic_pickup, parent_unit, parent_body, synced_parent_object, synced_pos, dir, projectile_type_index, peer_id, sender)
-	if not self._verify_gamestate(self._gamestate_filter.any_ingame) then
-		return
-	end
-
-	local peer = self._verify_sender(sender)
-
-	if not peer then
-		return
-	end
-
-
-	--assume that this is the spoofed function
-	return orig_sync_attach_projectile(self, unit, instant_dynamic_pickup, parent_unit, parent_body, synced_parent_object, synced_pos, dir, projectile_type_index, peer_id, sender)
-end
-
 -- as host, receive from client: request spawning and attaching a tripmine to the given enemy
 function UnitNetworkHandler:request_spawn_attach_trip_mine(parent_unit, parent_body, synced_parent_object, local_pos, normal, upgrade_bits, payload_mode, specials_only, sender)
 	Print("incoming client request_spawn_attach_trip_mine:",parent_unit, parent_body, synced_parent_object, local_pos, normal, upgrade_bits, payload_mode, specials_only, sender)
