@@ -79,6 +79,10 @@ function TripmineThrowableBase:_on_collision(col_ray)
 	local body = col_ray.body
 	local position = col_ray.position
 	local stuck_enemy = col_ray.unit
+	
+	Print("Collided with ",col_ray.unit)
+	fooray = col_ray
+	
 	local normal = col_ray.normal
 	
 	
@@ -129,7 +133,7 @@ function TripmineThrowableBase:_on_collision(col_ray)
 		
 		-- session:send_to_host("sync_attach_projectile", self._unit, false, stuck_enemy, body or nil, parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, bits, session:local_peer():id())
 		
-		session:send_to_host("request_spawn_attach_trip_mine", stuck_enemy, body or nil, parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, bits, payload_mode, specials_only)
+		session:send_to_host("request_spawn_attach_trip_mine stuck", stuck_enemy, "body", body or nil, "obj", parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, bits, payload_mode, specials_only)
 	else
 		-- stuck as host
 		
@@ -172,7 +176,7 @@ end
 
 function TripmineThrowableBase:clbk_impact(tag, unit, body, other_unit, other_body, position, normal, collision_velocity, velocity, other_velocity, new_velocity, direction, damage, ...)
 	--TripmineThrowableBase.super.clbk_impact(self, tag, unit, body, other_unit, other_body, position, normal, collision_velocity, velocity, other_velocity, new_velocity, direction, damage, ...)
-
+	Print("clbk_impact",tag, unit, body, other_unit, other_body, position, normal, collision_velocity, velocity, other_velocity, new_velocity, direction, damage)
 	if tag == Idstring("impact2") and not self._is_detonated then
 		-- stuck to world
 		
