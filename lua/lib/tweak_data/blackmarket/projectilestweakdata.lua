@@ -154,4 +154,6 @@ Hooks:PostHook(BlackMarketTweakData, "_init_projectiles", "tcd_projectiletd_init
 	
 	self.projectiles.tag_team.base_cooldown = 60 --same as vanilla anyway
 	self.projectiles.tag_team.hold_function_name = "_update_tagteam_hud_targets"
+	
+	table.insert(self._projectiles_index,#self._projectiles_index+1,"tripmine_throwable")
 end)
