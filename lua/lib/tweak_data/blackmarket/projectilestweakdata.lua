@@ -17,7 +17,7 @@ Hooks:PostHook(BlackMarketTweakData, "_init_projectiles", "tcd_projectiletd_init
 		anim_global_param = "projectile_tripmine_throwable",
 		--local_unit = nil,
 		unit_dummy = "units/equipment/tripmine_throwable/tripmine_throwable_dummy",
-		-- unit = "units/equipment/tripmine_throwable/tripmine_throwable", -- do not open til kithmas
+		unit = "units/equipment/tripmine_throwable/tripmine_throwable", -- do not open til kithmas
 		is_a_grenade = false,
 		impact_detonation = true, -- not literal detonation, but invokes a custom lua callback on physics impact
 		client_authoritative = true,

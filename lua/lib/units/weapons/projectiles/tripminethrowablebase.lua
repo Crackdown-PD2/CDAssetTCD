@@ -127,14 +127,9 @@ function TripmineThrowableBase:_on_collision(col_ray)
 			local_rot_vec = mvec3_cpy(local_rot_vec)
 		end
 		
-		-- since this is actually a request to spawn an actual tripmine,
-		-- the sending unit doesn't matter
-		
 		-- session:send_to_host("sync_attach_projectile", self._unit, false, stuck_enemy, body or nil, parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, bits, session:local_peer():id())
 		
-		-- TEMP: just place a normal, non-attached tripmine
-		-- to test that the tripmine sync is working at all
-		managers.network:session():send_to_host("place_trip_mine", global_pos, normal, bits, payload_mode, specials_only)
+		session:send_to_host("request_spawn_attach_trip_mine", stuck_enemy, body or nil, parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, bits, payload_mode, specials_only)
 	else
 		-- stuck as host
 		
@@ -164,9 +159,11 @@ function TripmineThrowableBase:_on_collision(col_ray)
 		local tripmine_unit = TripMineBase.spawn(global_pos, global_rot, peer_id, bits, payload_mode, specials_only)
 		tripmine_unit:base():set_active(true, player_unit, true)
 		
-		--tripmine_unit:base():attach_to_enemy(stuck_enemy, local_pos, local_rot_vec, parent_obj, radius_upgrade_level, vulnerability_upgrade_level)
+		tripmine_unit:base():attach_to_enemy(stuck_enemy, local_pos, local_rot_vec, parent_obj)
 
-		session:send_to_peers_synched("sync_attach_projectile", tripmine_unit, false, stuck_enemy, body or nil, parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, bits, peer_id)
+		--session:send_to_peers_synched("sync_attach_projectile", tripmine_unit, false, stuck_enemy, body or nil, parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, bits, peer_id)
+		
+		managers.network:session():send_to_peers_synched("sync_spawn_attach_trip_mine", tripmine_unit, parent_unit, body or nil, parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, peer_id, bits, payload_mode, specials_only)
 	end
 	
 	self._unit:set_slot(0)

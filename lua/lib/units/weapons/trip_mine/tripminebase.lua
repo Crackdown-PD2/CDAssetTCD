@@ -2,8 +2,6 @@
 DeathvoxOverhaulCore:require("lua/classes/tripminecontrolmenu")
 
 --tripmine overhaul
-TripMineBase.NAME = "TripMineBase" -- just to id the class
-
 TripMineBase.UPGRADE_SHIFT_VULN = 2
 TripMineBase.UPGRADE_SHIFT_RADIUS = 1
 TripMineBase.UPGRADE_SHIFT_FRIENDLYFIRE = 1
@@ -41,6 +39,9 @@ function TripMineBase:sync_setup(upgrade_bits, payload_mode, specials_only)
 end
 
 function TripMineBase:setup(upgrade_bits, payload_mode, specials_only)
+	self:setup_upgrades(upgrade_bits, payload_mode, specials_only)
+	
+	
 	
 	self._slotmask = managers.slot:get_mask("trip_mine_targets")
 	self._first_armed = false
@@ -64,6 +65,20 @@ function TripMineBase:setup(upgrade_bits, payload_mode, specials_only)
 
 	self._unit:contour():add("deployable_active") -- upgrade and "deployable_interactable" or "deployable_active"
 end
+
+function TripMineBase:setup_upgrades(upgrade_bits,payload_mode,specials_only)
+	local bits = upgrade_bits - 1
+	local radius_upgrade_level = Bitwise:rshift(bits, TripMineBase.UPGRADE_SHIFT_RADIUS)
+	local vulnerability_upgrade_level = Bitwise:rshift(bits, TripMineBase.UPGRADE_SHIFT_VULN) % 2^TripMineBase.UPGRADE_SHIFT_VULN
+	self._radius_upgrade_level = radius_upgrade_level
+	self._vuln_upgrade_level = vulnerability_upgrade_level
+	
+	Print("Setup:","radius",radius_upgrade_level,"vuln",vulnerability_upgrade_level)
+end
+
+
+
+
 
 
 
@@ -607,7 +622,9 @@ function TripMineBase:attach_to_enemy(stuck_enemy, local_pos, local_rot_vec, par
 				sound_ext:say("ch1", true)
 			end
 		end
-
+		
+		
+		--[[
 		if panic_radius > 0 then
 			if char_dmg.build_suppression then 
 				char_dmg:build_suppression("panic")
@@ -625,23 +642,19 @@ function TripMineBase:attach_to_enemy(stuck_enemy, local_pos, local_rot_vec, par
 				end
 			end
 		end
+		--]]
 	else
-		local apply_vuln_data = nil
-
+		--[[
 		if vulnerability_upgrade_level > 0 then
-			local amount, duration = unpack(managers.player:upgrade_value("trip_mine", "stuck_dozer_damage_vulnerability", {0, 0}))
-			apply_vuln_data = {
-				id = "have_blast_aced_aoe_vulnerability",
-				amount = amount,
-				duration = duration
-			}
-
 			local dmg_ext = stuck_enemy:character_damage()
-
 			if dmg_ext.set_damage_vulnerability then
-				stuck_enemy:character_damage():set_damage_vulnerability(apply_vuln_data.id, apply_vuln_data.amount, apply_vuln_data.duration)
+				local amount, duration = unpack(managers.player:upgrade_value("trip_mine", "stuck_dozer_damage_vulnerability", {0, 0}))
+				stuck_enemy:character_damage():set_damage_vulnerability(
+					"have_blast_aced_aoe_vulnerability",
+					amount,
+					duration
+				)
 			end
-
 			local attack_data = {
 				damage = 0,
 				variant = "explosion",
@@ -655,7 +668,7 @@ function TripMineBase:attach_to_enemy(stuck_enemy, local_pos, local_rot_vec, par
 			}
 			char_dmg:_call_listeners(attack_data)
 		end
-
+		
 		if panic_radius > 0 then
 			if char_dmg.build_suppression then 
 				char_dmg:build_suppression("panic")
@@ -691,6 +704,7 @@ function TripMineBase:attach_to_enemy(stuck_enemy, local_pos, local_rot_vec, par
 				end
 			end
 		end
+		--]]
 	end
 
 	local t = TimerManager:game():time()
