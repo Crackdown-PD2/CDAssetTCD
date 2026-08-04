@@ -41,6 +41,94 @@ function UnitNetworkHandler:request_early_hostage_trade(unit,sender)
 	managers.trade:receive_early_trade_request(unit,peer_id)
 end
 
+
+
+
+-- ==================================== TRIPMINES
+function UnitNetworkHandler:place_trip_mine(pos, normal, upgrade_bits, payload_mode, specials_only, rpc)
+	local peer = self._verify_sender(rpc)
+
+	if not self._verify_gamestate(self._gamestate_filter.any_ingame) or not peer then
+		return
+	end
+
+	if not managers.player:verify_equipment(peer:id(), "trip_mine") then
+		return
+	end
+
+	local rot = Rotation(normal, math.UP)
+	local peer = self._verify_sender(rpc)
+	local unit = TripMineBase.spawn(pos, rot, peer:id(), upgrade_bits, payload_mode, specials_only)
+
+	unit:base():set_server_information(peer:id())
+	rpc:activate_trip_mine(unit)
+end
+
+function UnitNetworkHandler:sync_trip_mine_setup(unit, peer_id, upgrade_bits, payload_mode, specials_only)
+	if not alive(unit) or not self._verify_gamestate(self._gamestate_filter.any_ingame) then
+		return
+	end
+
+	managers.player:verify_equipment(peer_id, "trip_mine")
+	unit:base():sync_setup(upgrade_bits, payload_mode, specials_only)
+end
+
+
+function UnitNetworkHandler:sync_attach_throwable_tripmine(unit, parent_unit, parent_body, parent_object, local_pos, dir, projectile_type_index, peer_id, sender, upgrade_bits, payload_mode, specials_only)
+	
+end
+
+function UnitNetworkHandler:sync_attach_projectile(unit, instant_dynamic_pickup, parent_unit, parent_body, parent_object, local_pos, dir, projectile_type_index, peer_id, sender)
+	local peer = self._verify_sender(sender)
+
+	if not self._verify_gamestate(self._gamestate_filter.any_ingame) or not peer then
+		print("_verify failed!!!")
+
+		return
+	end
+
+	local projectile_type = tweak_data.blackmarket:get_projectile_name_from_index(projectile_type_index)
+
+	if not projectile_type then
+		return
+	end
+	
+	local world_position = parent_object and local_pos:rotate_with(parent_object:rotation()) + parent_object:position() or local_pos
+
+	if Network:is_server() then
+		local tweak_entry = tweak_data.blackmarket.projectiles[projectile_type]
+		local unit_name = Idstring(tweak_entry.unit)
+		local synced_unit = World:spawn_unit(unit_name, world_position, Rotation(dir, math.UP))
+
+		managers.network:session():send_to_peers_synched("sync_attach_projectile", synced_unit, instant_dynamic_pickup, alive(parent_unit) and parent_unit:id() ~= -1 and parent_unit or nil, alive(parent_unit) and parent_unit:id() ~= -1 and parent_body or nil, alive(parent_unit) and parent_unit:id() ~= -1 and parent_object or nil, local_pos, dir, projectile_type_index, peer_id)
+		synced_unit:base():set_thrower_unit_by_peer_id(peer_id)
+		synced_unit:base():set_projectile_entry(projectile_type)
+		synced_unit:base():sync_attach_to_unit(instant_dynamic_pickup, parent_unit, parent_body, parent_object, local_pos, dir)
+	elseif unit then
+		unit:set_position(world_position)
+		unit:base():set_thrower_unit_by_peer_id(peer_id)
+		unit:base():set_projectile_entry(projectile_type)
+		unit:base():sync_attach_to_unit(instant_dynamic_pickup, parent_unit, parent_body, parent_object, local_pos, dir)
+	end
+
+	if peer_id ~= 1 then
+		local dummy_unit = ArrowBase.find_nearest_arrow(peer_id, world_position)
+
+		if dummy_unit then
+			dummy_unit:set_slot(0)
+		end
+	end
+end
+
+
+
+
+
+
+
+
+
+
 --[[
 -- from owner peer
 -- todo replace UnitNetworkHandler:picked_up_sentry_gun()

@@ -38,6 +38,7 @@
 	<hook post="true" file="lib/network/matchmaking/networkmatchmakingepic.lua" source_file="lib/network/matchmaking/networkmatchmakingepic"/>
 
 	<hook post="true" file="lib/units/beings/player/playerdamage.lua" source_file="lib/units/beings/player/playerdamage"/>
+	<hook post="true" file="lib/units/beings/player/playerequipment.lua" source_file="lib/units/beings/player/playerequipment"/>
 	<hook post="true" file="lib/units/beings/player/states/playerstandard.lua" source_file="lib/units/beings/player/states/playerstandard"/>
 	<hook post="true" file="lib/units/beings/player/states/playercarry.lua" source_file="lib/units/beings/player/states/playercarry"/>
 	

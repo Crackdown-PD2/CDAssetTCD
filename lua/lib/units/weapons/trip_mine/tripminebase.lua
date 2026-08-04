@@ -1,6 +1,71 @@
 
 DeathvoxOverhaulCore:require("lua/classes/tripminecontrolmenu")
 
+--tripmine overhaul
+TripMineBase.UPGRADE_SHIFT_VULN = 2
+TripMineBase.UPGRADE_SHIFT_RADIUS = 1
+TripMineBase.UPGRADE_SHIFT_FRIENDLYFIRE = 1
+
+TripMineBase.ENUM_PAYLOAD_MODES = {
+	EXPLOSIVE = 1,
+	FIRE      = 2,
+	STUN      = 3,
+	SENSOR    = 4
+}
+TripMineBase.PAYLOAD_MODES_LOOKUP = {}
+for mode,i in pairs(TripMineBase.ENUM_PAYLOAD_MODES) do 
+	TripMineBase.PAYLOAD_MODES_LOOKUP[i] = mode
+end
+
+function TripMineBase.spawn(pos, rot, peer_id, upgrade_bits, payload_mode, specials_only)
+	local unit = World:spawn_unit(Idstring("units/payday2/equipment/gen_equipment_tripmine/gen_equipment_tripmine"), pos, rot)
+
+	managers.network:session():send_to_peers_synched("sync_trip_mine_setup", unit, peer_id or 0, upgrade_bits, payload_mode, specials_only)
+	unit:base():setup(upgrade_bits, payload_mode, specials_only)
+	
+	unit:interaction():set_active(peer_id and peer_id == managers.network:session():local_peer():id()) --only the owner can change the tripmine
+
+	return unit
+end
+
+function TripMineBase:sync_setup(upgrade_bits, payload_mode, specials_only)
+	if self._validate_clbk_id then
+		managers.enemy:remove_delayed_clbk(self._validate_clbk_id)
+
+		self._validate_clbk_id = nil
+	end
+
+	self:setup(upgrade_bits, payload_mode, specials_only)
+end
+
+function TripMineBase:setup(upgrade_bits, payload_mode, specials_only)
+	
+	self._slotmask = managers.slot:get_mask("trip_mine_targets")
+	self._first_armed = false
+	self._armed = false
+	
+	self._specials_only = specials_only
+	
+	if not TripMineBase.PAYLOAD_MODES_LOOKUP[payload_mode] then
+		payload_mode = TripMineBase.PAYLOAD_MODES_LOOKUP.EXPLOSIVE
+	end
+	
+	self._payload_mode = payload_mode
+	self._startup_armed = not managers.groupai:state():whisper_mode() and (payload_mode ~= TripMineBase.ENUM_PAYLOAD_MODES.SENSOR)
+
+	self._sensor_upgrade = true
+
+	self:set_active(false)
+	self._unit:sound_source():post_event("trip_mine_attach")
+
+	-- local upgrade = managers.player:has_category_upgrade("trip_mine", "can_switch_on_off") or managers.player:has_category_upgrade("trip_mine", "sensor_toggle")
+
+	self._unit:contour():add("deployable_active") -- upgrade and "deployable_interactable" or "deployable_active"
+end
+
+
+
+
 local mvec3_dis_sq = mvector3.distance_sq
 local mvec3_cpy = mvector3.copy
 local mvec3_not_equal = mvector3.not_equal
@@ -310,13 +375,10 @@ function TripMineBase:destroy(...)
 end
 
 
---tripmine overhaul
-TripMineBase.vulnerability_upgrade_shift = 2
-TripMineBase.radius_upgrade_shift = 4
 
 --todo disable tripmine updates etc. when it has been stuck to an enemy	
 
---new methods
+--cd methods- DEPRECATED
 function TripMineBase:_get_trigger_mode()
 	return self._trigger_mode
 end
@@ -453,6 +515,9 @@ function TripMineBase:sync_send_payload_mode(mode)
 		end
 	end
 end
+
+
+
 
 function TripMineBase:is_owner()
 	return managers.network:session() and self._owner_peer_id == managers.network:session():local_peer():id()
@@ -702,17 +767,6 @@ TripMineBase.EVENT_IDS = { --unchanged
 	sensor_beep = 1,
 	explosion_beep = 2
 }
-
-function TripMineBase.spawn(pos, rot, sensor_upgrade, peer_id)
-	local unit = World:spawn_unit(Idstring("units/payday2/equipment/gen_equipment_tripmine/gen_equipment_tripmine"), pos, rot)
-
-	managers.network:session():send_to_peers_synched("sync_trip_mine_setup", unit, sensor_upgrade, peer_id or 0)
-	unit:base():setup(sensor_upgrade)
-	
-	unit:interaction():set_active(peer_id and peer_id == managers.network:session():local_peer():id()) --only the owner can change the tripmine
-
-	return unit
-end
 
 function TripMineBase:init(unit)
 	UnitBase.init(self, unit, false)

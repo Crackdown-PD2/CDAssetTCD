@@ -1,10 +1,5 @@
 TripmineThrowableBase = class(ProjectileBase)
 
-
-
-
-
-
 local mvec1 = Vector3()
 local mvec2 = Vector3()
 local mvec3 = Vector3()
@@ -86,11 +81,15 @@ function TripmineThrowableBase:_on_collision(col_ray)
 	local stuck_enemy = col_ray.unit
 	local normal = col_ray.normal
 	
-	-- spawn tripmine at this normal 
+	
+	local payload_mode = 2
+	local specials_only = false
 	
 	local radius_upgrade_level = managers.player:upgrade_level("trip_mine", "stuck_enemy_panic_radius", 0)
 	local vulnerability_upgrade_level = managers.player:upgrade_level("trip_mine", "stuck_dozer_damage_vulnerability", 0)
-	local bits = Bitwise:lshift(radius_upgrade_level, TripMineBase.radius_upgrade_shift) + Bitwise:lshift(vulnerability_upgrade_level, TripMineBase.vulnerability_upgrade_shift) + 1
+	local bits = Bitwise:lshift(radius_upgrade_level, TripMineBase.UPGRADE_SHIFT_RADIUS)
+		+ Bitwise:lshift(vulnerability_upgrade_level, TripMineBase.UPGRADE_SHIFT_VULN)
+		+ 1
 	
 	local parent_obj = body:root_object()
 	
@@ -127,8 +126,15 @@ function TripmineThrowableBase:_on_collision(col_ray)
 			local_pos = mvec3_cpy(local_pos)
 			local_rot_vec = mvec3_cpy(local_rot_vec)
 		end
-
-		session:send_to_host("sync_attach_projectile", stuck_enemy, false, stuck_enemy, body or nil, parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, bits, session:local_peer():id())
+		
+		-- since this is actually a request to spawn an actual tripmine,
+		-- the sending unit doesn't matter
+		
+		-- session:send_to_host("sync_attach_projectile", self._unit, false, stuck_enemy, body or nil, parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, bits, session:local_peer():id())
+		
+		-- TEMP: just place a normal, non-attached tripmine
+		-- to test that the tripmine sync is working at all
+		managers.network:session():send_to_host("place_trip_mine", global_pos, normal, bits, payload_mode, specials_only)
 	else
 		-- stuck as host
 		
@@ -155,10 +161,10 @@ function TripmineThrowableBase:_on_collision(col_ray)
 		end
 
 		local peer_id = session:local_peer():id()
-		local tripmine_unit = TripMineBase.spawn(global_pos, global_rot, false, peer_id)
+		local tripmine_unit = TripMineBase.spawn(global_pos, global_rot, peer_id, bits, payload_mode, specials_only)
 		tripmine_unit:base():set_active(true, player_unit, true)
-
-		tripmine_unit:base():attach_to_enemy(stuck_enemy, local_pos, local_rot_vec, parent_obj, radius_upgrade_level, vulnerability_upgrade_level)
+		
+		--tripmine_unit:base():attach_to_enemy(stuck_enemy, local_pos, local_rot_vec, parent_obj, radius_upgrade_level, vulnerability_upgrade_level)
 
 		session:send_to_peers_synched("sync_attach_projectile", tripmine_unit, false, stuck_enemy, body or nil, parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, bits, peer_id)
 	end

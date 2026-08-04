@@ -17,6 +17,58 @@
 			</message>
 		</target>
 	</tweak>
+	
+	
+	
+	
+	
+	
+	
+	<!-- ==================================== TRIPMINES -->
+	<tweak version="2" name="settings/network" extension="network_settings">
+		<search>
+			<network/>
+			<rpc/>
+			<message name="place_trip_mine"/>
+		</search>
+		<target mode="replace">
+		
+		<message name="place_trip_mine" delivery="ordered" receiver="unit" check="client_to_server">
+			<param type="vector3" />			<!-- Position -->
+			<param type="vector3" />			<!-- Normal of place surface -->
+			<param type="int" min="0" max="15" /> <!-- Upgrade bits -->
+			<param type="int" min="0" max="4" /> <!-- Payload Mode -->
+			<param type="bool" /> 				<!-- toggle: Special targeting only -->
+		</message>
+		
+		</target>
+	</tweak>
+	
+	<tweak version="2" name="settings/network" extension="network_settings">
+		<search>
+			<network/>
+			<rpc/>
+			<message name="sync_trip_mine_setup"/>
+		</search>
+		<target mode="replace">
+		
+		<message name="sync_trip_mine_setup" delivery="ordered" receiver="unit" check="server_to_client">
+			<param type="unit" />
+			<param type="int" min="0" max="15"/> <!-- Peer id -->
+			<param type="int" min="0" max="15" /> <!-- Upgrade bits -->
+			<param type="int" min="0" max="4" /> <!-- Payload Mode -->
+			<param type="bool" /> 				<!-- toggle: Special targeting only -->
+		</message>
+		
+		</target>
+	</tweak>
+
+
+
+
+
+
+
 
 	<tweak version="2" name="settings/network" extension="network_settings">
 		<search>
