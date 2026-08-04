@@ -313,3 +313,7 @@ function TripmineThrowableBase:update(unit, t, dt)
 		self:_warning_fx_vfx_upd(unit, t, dt, self._warning_fx_vfx_data)
 	end
 end
+
+function TripmineThrowableBase:set_owner_peer_id(peer_id)
+	self._owner_peer_id = peer_id 
+end
