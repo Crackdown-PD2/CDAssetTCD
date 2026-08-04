@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
-<unit type="gen" slot="13">
-	<network sync="spawn" />
+<unit type="item" slot="13">
 	<object file="units/equipment/tripmine_throwable/tripmine_throwable" />
 	<extensions>
 		<extension name="base" class="TripmineThrowableBase" >

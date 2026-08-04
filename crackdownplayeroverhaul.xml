@@ -66,6 +66,7 @@
 	<!-- Tripmine Throwable -->
 		<unit_mat path="units/equipment/tripmine_throwable/tripmine_throwable_dummy"/>
 		<unit_obj path="units/equipment/tripmine_throwable/tripmine_throwable"/>
+		<unit     path="units/equipment/tripmine_throwable/tripmine_throwable_local"/>
 		
 		<animation path="anims/fps/unarmed/throw_tripmine_throwable" force="true" load="true" unload="false"/>
 		<animation path="anims/fps/unarmed/throw_tripmine_throwable_idle" force="true" load="true" unload="false"/>
