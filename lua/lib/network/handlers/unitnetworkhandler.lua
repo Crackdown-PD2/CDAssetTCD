@@ -46,7 +46,6 @@ end
 
 -- ==================================== TRIPMINES
 function UnitNetworkHandler:place_trip_mine(pos, normal, upgrade_bits, payload_mode, specials_only, rpc)
-
 	--Print("place_trip_mine",pos, normal, upgrade_bits, payload_mode, specials_only, rpc)
 	local peer = self._verify_sender(rpc)
 
@@ -68,7 +67,6 @@ end
 
 function UnitNetworkHandler:sync_trip_mine_setup(unit, peer_id, upgrade_bits, payload_mode, specials_only)
 --	Print("sync_trip_mine_setup", unit, peer_id, upgrade_bits, payload_mode, specials_only)
---	do return end
 	if not alive(unit) or not self._verify_gamestate(self._gamestate_filter.any_ingame) then
 		return
 	end
@@ -81,7 +79,6 @@ end
 -- as host, receive from client: request spawning and attaching a tripmine to the given enemy
 function UnitNetworkHandler:request_spawn_attach_trip_mine(parent_unit, parent_body, synced_parent_object, local_pos, normal, upgrade_bits, payload_mode, specials_only, sender)
 --	Print("incoming client request_spawn_attach_trip_mine:",parent_unit, parent_body, synced_parent_object, local_pos, normal, upgrade_bits, payload_mode, specials_only, sender)
---	do return end
 	if not self._verify_gamestate(self._gamestate_filter.any_ingame) then
 		return
 	end
@@ -139,8 +136,7 @@ end
 
 -- as client, receive from host: sync enemy-stuck tripmine setup details to clients
 function UnitNetworkHandler:sync_spawn_attach_trip_mine(tripmine_unit, parent_unit, parent_body, synced_parent_object, local_pos, normal, owner_peer_id, upgrade_bits, payload_mode, specials_only, sender)
---	Print("incoming server sync_spawn_attach_trip_mine",tripmine_unit, parent_unit, parent_body, synced_parent_object, local_pos, normal, owner_peer_id, upgrade_bits, payload_mode, specials_only, sender)
--- 	do return end
+--	Print("incoming server sync_spawn_attach_trip_mine",tripmine_unit, "parent",parent_unit, "body",parent_body, "obj",synced_parent_object, "pos",local_pos, "normal",normal, "peerid",owner_peer_id, "bits",upgrade_bits, "payload",payload_mode, "specials",specials_only, sender)
 	if not self._verify_gamestate(self._gamestate_filter.any_ingame) and not self._verify_gamestate(self._gamestate_filter.any_end_game) or not self._verify_sender(sender) then
 		return
 	end

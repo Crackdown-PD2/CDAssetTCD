@@ -138,8 +138,6 @@ function TripmineThrowableBase:_on_collision(col_ray)
 			local_rot_vec = mvec3_cpy(local_rot_vec)
 		end
 		
-		-- session:send_to_host("sync_attach_projectile", self._unit, false, stuck_enemy, body or nil, parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, bits, session:local_peer():id())
-		
 		session:send_to_host("request_spawn_attach_trip_mine", stuck_enemy, "body", body or nil, "obj", parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, bits, payload_mode, specials_only)
 	else
 		-- stuck as host
@@ -168,11 +166,10 @@ function TripmineThrowableBase:_on_collision(col_ray)
 
 		local peer_id = session:local_peer():id()
 		local tripmine_unit = TripMineBase.spawn(global_pos, global_rot, peer_id, bits, payload_mode, specials_only)
-		tripmine_unit:base():set_active(true, player_unit, true)
+		local tripmine_base = tripmine_unit:base()
+		tripmine_base:set_active(true, player_unit, true)
 		
-		tripmine_unit:base():attach_to_enemy(stuck_enemy, local_pos, local_rot_vec, parent_obj)
-
-		--session:send_to_peers_synched("sync_attach_projectile", tripmine_unit, false, stuck_enemy, body or nil, parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, bits, peer_id)
+		tripmine_base:attach_to_enemy(stuck_enemy, local_pos, local_rot_vec, parent_obj)
 		
 		managers.network:session():send_to_peers_synched("sync_spawn_attach_trip_mine", tripmine_unit, stuck_enemy, body or nil, parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, peer_id, bits, payload_mode, specials_only)
 	end
@@ -250,7 +247,7 @@ function TripmineThrowableBase:clbk_impact(tag, unit, body, other_unit, other_bo
 end
 
 -- only change is rotating the body 
--- TODO physics stuff should be handled in a different way
+-- TODO physics rotating stuff should be handled in a different way
 function TripmineThrowableBase:update(unit, t, dt)
 	if not self._simulated and not self._collided then
 		self._unit:m_position(mvec1)
