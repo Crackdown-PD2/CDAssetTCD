@@ -721,9 +721,7 @@ function TripMineBase:attach_to_enemy(stuck_enemy, local_pos, local_rot_vec, par
 			managers.network:session():send_to_peers_synched("sync_unit_event_id_16", unit, "base", TripMineBase.EVENT_IDS.explosion_beep)
 		end
 	end, t + 0.6)
-
-	self._explode_timer = TripMineBase.STUCK_ENEMY_DETONATE_TIMER -- not used?
-
+	
 	local explode_clbk_id = "_explode_clbk_id" .. u_key_str
 	self._explode_clbk_id = explode_clbk_id
 
@@ -785,18 +783,6 @@ end
 --changed vanilla methods	
 
 function TripMineBase:update(unit, t, dt)
-	--if you wish to use debug drawing for whatever reason, use the code below
-	--and comment out the 'if not self._owner then' block of code
-	--[[self:_update_draw_laser()
-
-	if self._explode_timer or not self._owner then
-		if not self._use_draw_laser then
-			self._unit:set_extension_update_enabled(ids_base, false)
-		end
-
-		return
-	end]]
-
 	if not self._owner then
 		--just in case
 		self._unit:set_extension_update_enabled(ids_base, false)
@@ -851,8 +837,7 @@ function TripMineBase:_check()
 
 		if not self._specials_only or managers.groupai:state():is_enemy_special(ray.unit) then 
 			local explode_time = tweak_data.weapon.trip_mines.delay + managers.player:upgrade_value("trip_mine", "explode_timer_delay", 0)
-			self._explode_timer = explode_time -- not used?
-
+			
 			local my_unit = self._unit
 
 			my_unit:interaction():set_active(false)
@@ -901,7 +886,7 @@ function TripMineBase:_explode(col_ray)
 	end
 	
 	self._detonated = true
-	self._unit:set_extension_update_enabled(Idstring("base"), false)
+	self._unit:set_extension_update_enabled(ids_base, false)
 	
 	local activate_clbk_id = self._activate_clbk_id
 
@@ -929,21 +914,6 @@ function TripMineBase:_explode(col_ray)
 	local my_pos = self._ray_from_pos
 	local unit = self._unit
 	local destruction_delay
-	
-	if draw_explosion_sphere then
-		local draw_duration = 3
-		local new_brush = Draw:brush(Color.red:with_alpha(0.5), draw_duration)
-		new_brush:sphere(self._ray_to_pos, damage_size)
-	end
-
-	if draw_vanilla_explosion_cylinder then
-		local draw_duration = 3
-		local new_brush = Draw:brush(Color.blue:with_alpha(0.5), draw_duration)
-		new_brush:cylinder(my_pos, self._ray_to_pos, damage_size)
-	end
-
-	self._deactive_timer = 5 -- not used?
-
 	
 	local payload_mode = self._payload_mode
 	if payload_mode == TripMineBase.ENUM_PAYLOAD_MODES.FIRE then
