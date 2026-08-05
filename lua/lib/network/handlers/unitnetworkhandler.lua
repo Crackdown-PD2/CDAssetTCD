@@ -137,17 +137,37 @@ end
 -- as client, receive from host: sync enemy-stuck tripmine setup details to clients
 function UnitNetworkHandler:sync_spawn_attach_trip_mine(tripmine_unit, parent_unit, parent_body, synced_parent_object, local_pos, normal, owner_peer_id, upgrade_bits, payload_mode, specials_only, sender)
 --	Print("incoming server sync_spawn_attach_trip_mine",tripmine_unit, "parent",parent_unit, "body",parent_body, "obj",synced_parent_object, "pos",local_pos, "normal",normal, "peerid",owner_peer_id, "bits",upgrade_bits, "payload",payload_mode, "specials",specials_only, sender)
-	if not self._verify_gamestate(self._gamestate_filter.any_ingame) and not self._verify_gamestate(self._gamestate_filter.any_end_game) or not self._verify_sender(sender) then
+	if not self._verify_gamestate(self._gamestate_filter.any_ingame) and not self._verify_gamestate(self._gamestate_filter.any_end_game) then
 		return
 	end
 	
+	local parent_is_alive = alive(parent_unit)
+	local parent_object = nil
+	
+	if parent_is_alive then
+		if alive(parent_body) then
+			parent_object = parent_body:root_object()
+		else
+			parent_object = alive(synced_parent_object) and synced_parent_object
+		end
+	end
+	
+--	if alive(parent_body) then
+--		Draw:brush(Color.red:with_alpha(0.2),1):sphere(parent_body:oobb():center(),50,3)
+--	end
+	
+	local peer = self._verify_sender(sender)
+	if not peer then
+		return
+	end
 	
 	local tripmine_base = tripmine_unit:base()
 	
 	tripmine_base:sync_setup(upgrade_bits,payload_mode,specials_only)
-	tripmine_base:attach_to_enemy(parent_unit, local_pos, normal, synced_parent_object, nil,nil)
+	tripmine_base:attach_to_enemy(parent_unit, local_pos, normal, parent_object, nil,nil)
 	
 end
+
 
 
 
