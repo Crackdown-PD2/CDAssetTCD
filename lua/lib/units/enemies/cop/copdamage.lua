@@ -1153,3 +1153,182 @@ Hooks:OverrideFunction(CopDamage,"sync_damage_tase",function(self, attacker_unit
 
 	self:_on_damage_received(attack_data)
 end)
+
+
+-- allow overriding explosive damage resistance through Demolitions tree's Tankbuster
+Hooks:OverrideFunction(CopDamage,"damage_explosion",function(self, attack_data)
+	if self._dead or self._invulnerable then
+		return
+	end
+
+	if self:chk_immune_to_attacker(attack_data.attacker_unit) then
+		return
+	end
+
+	local is_civilian = CopDamage.is_civilian(self._unit:base()._tweak_table)
+	local result
+	local damage = attack_data.damage
+
+	damage = managers.modifiers:modify_value("CopDamage:DamageExplosion", damage, self._unit)
+	
+	-- CD changes below
+	local chartweak_damage_mul = self._char_tweak.damage.explosion_damage_mul or 1
+	if attack_data.attacker_unit == managers.player:player_unit() then
+		-- override damage from Demolition tree's Tankbuster
+		if chartweak_damage_mul < 1 then
+			chartweak_damage_mul = managers.player:upgrade_value("class_specialist","negate_enemy_explosive_resistance",chartweak_damage_mul)
+		end
+	end
+--	if attack_data.vuln_override and chartweak_damage_mul < 1 then
+--		chartweak_damage_mul = managers.player:upgrade_value_by_level("class_specialist","negate_enemy_explosive_resistance",attack_data.vuln_override,chartweak_damage_mul)
+--	end
+	damage = damage * chartweak_damage_mul
+	-- CD changes above
+	
+	if self._unit:base():char_tweak().DAMAGE_CLAMP_EXPLOSION then
+		damage = math.min(damage, self._unit:base():char_tweak().DAMAGE_CLAMP_EXPLOSION)
+	end
+	
+	
+	damage = damage * (self._marked_dmg_mul or 1)
+
+	if attack_data.attacker_unit == managers.player:player_unit() then
+		local critical_hit, crit_damage = self:roll_critical_hit(attack_data, damage)
+
+		if critical_hit then
+			damage = crit_damage
+		end
+
+		if attack_data.weapon_unit and attack_data.variant ~= "stun" then
+			if critical_hit then
+				managers.hud:on_crit_confirmed()
+			else
+				managers.hud:on_hit_confirmed()
+			end
+		end
+	end
+
+	damage = self:_apply_damage_reduction(damage)
+	damage = math.clamp(damage, 0, self._HEALTH_INIT)
+
+	local damage_percent = math.ceil(damage / self._HEALTH_INIT_PRECENT)
+
+	damage = damage_percent * self._HEALTH_INIT_PRECENT
+	damage, damage_percent = self:_apply_min_health_limit(damage, damage_percent)
+
+	if self._immortal then
+		damage = math.min(damage, self._health - 1)
+	end
+
+	if damage >= self._health then
+		if self:check_medic_heal() then
+			attack_data.variant = "healed"
+			result = {
+				type = "healed",
+				variant = attack_data.variant
+			}
+		else
+			attack_data.damage = self._health
+			result = {
+				type = "death",
+				variant = attack_data.variant
+			}
+
+			self:die(attack_data)
+		end
+	else
+		attack_data.damage = damage
+
+		local result_type = attack_data.variant == "stun" and "hurt_sick" or self:get_damage_type(damage_percent, "explosion")
+
+		result = {
+			type = result_type,
+			variant = attack_data.variant
+		}
+
+		self:_apply_damage_to_health(damage)
+	end
+
+	attack_data.result = result
+	attack_data.pos = attack_data.col_ray.position
+
+	local head
+
+	if result.type == "death" and self._head_body_name and attack_data.variant ~= "stun" then
+		head = attack_data.col_ray.body and self._head_body_key and attack_data.col_ray.body:key() == self._head_body_key
+
+		local body = self._unit:body(self._head_body_name)
+
+		self:_spawn_head_gadget({
+			position = body:position(),
+			rotation = body:rotation(),
+			dir = -attack_data.col_ray.ray
+		})
+	end
+
+	local attacker = attack_data.attacker_unit
+
+	if not attacker or attacker:id() == -1 then
+		attacker = self._unit
+	end
+
+	if result.type == "death" then
+		local data = {
+			name = self._unit:base()._tweak_table,
+			stats_name = self._unit:base()._stats_name,
+			owner = attack_data.owner,
+			weapon_unit = attack_data.weapon_unit,
+			variant = attack_data.variant,
+			head_shot = head
+		}
+
+		managers.statistics:killed_by_anyone(data)
+
+		local attacker_unit = attack_data.attacker_unit
+
+		if attacker_unit and attacker_unit:base() and attacker_unit:base().thrower_unit then
+			attacker_unit = attacker_unit:base():thrower_unit()
+			data.weapon_unit = attack_data.attacker_unit
+		end
+
+		if not is_civilian and managers.player:has_category_upgrade("temporary", "overkill_damage_multiplier") and attacker_unit == managers.player:player_unit() and attack_data.weapon_unit and attack_data.weapon_unit:base().weapon_tweak_data and not attack_data.weapon_unit:base().thrower_unit and attack_data.weapon_unit:base():is_category("shotgun", "saw") then
+			managers.player:activate_temporary_upgrade("temporary", "overkill_damage_multiplier")
+		end
+
+		self:chk_killshot(attacker_unit, "explosion", false, attack_data.weapon_unit and attack_data.weapon_unit:base():get_name_id())
+
+		if attacker_unit == managers.player:player_unit() then
+			if alive(attacker_unit) then
+				self:_comment_death(attacker_unit, self._unit)
+			end
+
+			self:_show_death_hint(self._unit:base()._tweak_table)
+			managers.statistics:killed(data)
+
+			if is_civilian then
+				managers.money:civilian_killed()
+			end
+
+			self:_check_damage_achievements(attack_data, false)
+		end
+	end
+
+	local weapon_unit = attack_data.weapon_unit
+
+	if alive(weapon_unit) and weapon_unit:base() and weapon_unit:base().add_damage_result then
+		weapon_unit:base():add_damage_result(self._unit, result.type == "death", attacker, damage_percent)
+	end
+
+	if not self._no_blood then
+		managers.game_play_central:sync_play_impact_flesh(attack_data.pos, attack_data.col_ray.ray)
+	end
+
+	self:_send_explosion_attack_result(attack_data, attacker, damage_percent, self:_get_attack_variant_index(attack_data.result.variant), attack_data.col_ray.ray)
+	self:_on_damage_received(attack_data)
+
+	if not is_civilian and attack_data.attacker_unit and alive(attack_data.attacker_unit) then
+		managers.player:send_message(Message.OnEnemyShot, nil, self._unit, attack_data)
+	end
+
+	return result
+end)
