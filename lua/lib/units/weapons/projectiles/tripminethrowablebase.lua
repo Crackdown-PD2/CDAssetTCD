@@ -174,7 +174,7 @@ function TripmineThrowableBase:_on_collision(col_ray)
 
 		--session:send_to_peers_synched("sync_attach_projectile", tripmine_unit, false, stuck_enemy, body or nil, parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, bits, peer_id)
 		
-		managers.network:session():send_to_peers_synched("sync_spawn_attach_trip_mine", tripmine_unit, parent_unit, body or nil, parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, peer_id, bits, payload_mode, specials_only)
+		managers.network:session():send_to_peers_synched("sync_spawn_attach_trip_mine", tripmine_unit, stuck_enemy, body or nil, parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, peer_id, bits, payload_mode, specials_only)
 	end
 	
 	self._unit:set_slot(0)
