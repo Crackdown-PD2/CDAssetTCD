@@ -19,8 +19,8 @@ function PlayerEquipment:use_trip_mine()
 			managers.network:session():send_to_host("place_trip_mine", ray.position, ray.normal, upgrade_bits, payload_mode, specials_only)
 		else
 			local rot = Rotation(ray.normal, math.UP)
-			local unit = TripMineBase.spawn(ray.position, managers.network:session():local_peer():id(), rot, sensor_upgrade)
-
+			local unit = TripMineBase.spawn(ray.position, rot, managers.network:session():local_peer():id(), upgrade_bits, payload_mode, specials_only)
+			
 			unit:base():set_active(true, self._unit)
 		end
 
