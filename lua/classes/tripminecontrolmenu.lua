@@ -1,6 +1,6 @@
 _G.TripmineControlMenu = {}
 
-TripmineControlMenu._current_mode = 2
+TripmineControlMenu._current_mode = 1
 TripmineControlMenu._current_specials_enabled = false
 
 
