@@ -52,6 +52,32 @@ for mode,i in pairs(TripMineBase.ENUM_PAYLOAD_MODES) do
 end
 
 
+
+local mvec3_dis_sq = mvector3.distance_sq
+local mvec3_cpy = mvector3.copy
+local mvec3_not_equal = mvector3.not_equal
+
+local mrot_equal = mrotation.equal
+local mrot_set = mrotation.set_yaw_pitch_roll
+local tmp_rot = Rotation()
+
+local math_ceil = math.ceil
+local math_random = math.random
+
+local tostring_g = tostring
+
+local call_on_next_update_g = call_on_next_update
+local alive_g = alive
+
+local ids_base = Idstring("base")
+
+local draw_explosion_sphere = nil
+local draw_sync_explosion_sphere = nil
+local draw_vanilla_explosion_cylinder = nil
+local draw_splinters = nil
+local draw_obstructed_splinters = nil
+local draw_splinter_hits = nil
+
 function TripMineBase.spawn(pos, rot, peer_id, upgrade_bits, payload_mode, specials_only)
 	local unit = World:spawn_unit(Idstring("units/payday2/equipment/gen_equipment_tripmine/gen_equipment_tripmine"), pos, rot)
 	local unit_base = unit:base()
@@ -266,30 +292,6 @@ end
 
 
 
-local mvec3_dis_sq = mvector3.distance_sq
-local mvec3_cpy = mvector3.copy
-local mvec3_not_equal = mvector3.not_equal
-
-local mrot_equal = mrotation.equal
-local mrot_set = mrotation.set_yaw_pitch_roll
-local tmp_rot = Rotation()
-
-local math_ceil = math.ceil
-local math_random = math.random
-
-local tostring_g = tostring
-
-local call_on_next_update_g = call_on_next_update
-local alive_g = alive
-
-local ids_base = Idstring("base")
-
-local draw_explosion_sphere = nil
-local draw_sync_explosion_sphere = nil
-local draw_vanilla_explosion_cylinder = nil
-local draw_splinters = nil
-local draw_obstructed_splinters = nil
-local draw_splinter_hits = nil
 
 local set_active_original = TripMineBase.set_active
 function TripMineBase:set_active(active, owner, stuck_on_enemy)
