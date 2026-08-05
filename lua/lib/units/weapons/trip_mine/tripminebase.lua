@@ -725,7 +725,7 @@ function TripMineBase:attach_to_enemy(stuck_enemy, local_pos, local_rot_vec, par
 	local explode_clbk_id = "_explode_clbk_id" .. u_key_str
 	self._explode_clbk_id = explode_clbk_id
 
-	managers.enemy:add_delayed_clbk(explode_clbk_id, callback(self, self, "explode"), t + TripMineBase.STUCK_ENEMY_DETONATE_TIMER)
+	managers.enemy:add_delayed_clbk(explode_clbk_id, callback(self, self, "explode", true), t + TripMineBase.STUCK_ENEMY_DETONATE_TIMER)
 
 	self._attached_data = {
 		unit = stuck_enemy
