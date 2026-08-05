@@ -294,10 +294,7 @@ end
 
 
 
-local set_active_original = TripMineBase.set_active
-function TripMineBase:set_active(active, owner, stuck_on_enemy)
-	set_active_original(self, active, owner)
-
+Hooks:PostHook(TripMineBase,"set_active","cd_tripmine_setactive",function(self, active, owner, stuck_on_enemy)
 	local activate_time = self._activate_timer
 
 	if not activate_time then
@@ -381,7 +378,7 @@ function TripMineBase:set_active(active, owner, stuck_on_enemy)
 
 		managers.enemy:add_delayed_clbk(pos_rot_chk_id, callback(self, self, "_clbk_pos_rot_alive_chk"), Application:time() + 0.5)
 	end
-end
+end)
 
 function TripMineBase:_clbk_activate()
 	self._activate_timer = nil
