@@ -52,7 +52,6 @@ function TripmineThrowableBase:init(unit,...)
 	TripmineThrowableBase.super.init(self,unit,...)
 	--self._draw_debug_trail = true
 	self._orient_to_vel = false
-	
 	--asdf = self
 end
 
@@ -187,6 +186,7 @@ function TripmineThrowableBase:_husk_on_collision(...)
 	end
 end
 
+-- hit world geometry
 function TripmineThrowableBase:clbk_impact(tag, unit, body, other_unit, other_body, position, normal, collision_velocity, velocity, other_velocity, new_velocity, direction, damage, ...)
 	--TripmineThrowableBase.super.clbk_impact(self, tag, unit, body, other_unit, other_body, position, normal, collision_velocity, velocity, other_velocity, new_velocity, direction, damage, ...)
 	--Print("Impact",tag,"is detonated?",self._is_detonated,"is collided",self._collided)
@@ -194,14 +194,34 @@ function TripmineThrowableBase:clbk_impact(tag, unit, body, other_unit, other_bo
 	if tag == Idstring("impact2") and not self._is_detonated then
 		-- stuck to world
 		
+		-- do custom raycast to check placement;
+		-- diesel physics collision is not to be trusted here
+		if self._sweep_data then
+			local from_pos = self._sweep_data.last_pos -- position is current position after collision, but last_pos is the position from prev frame
+			-- since we don't trust the results of the physics engine collision,
+			-- we're going to pretend it didn't happen and just calculate a collision detection from the previous frame's position
+			local to_pos = tmp_vec1
+			mvec3_set(to_pos,position)
+			mvec3_add(to_pos,velocity)
+			
+--			Draw:brush(Color(1,0,1):with_alpha(0.1),10):cylinder(from_pos, to_pos, 2) -- draw forward cast
+--			Draw:brush(Color(1,0,0.5):with_alpha(0.7),10):cone(from_pos, to_pos, 3) -- draw trail
+--			Draw:brush(Color.yellow:with_alpha(0.3)):sphere(from_pos,50,3)  -- draw current pos
+			
+			local slot_mask = managers.slot:get_mask("trip_mine_placeables") -- literally just mask 1; could use self._sweep_data.slot_mask?
+			local ray = self._unit:raycast("ray", from_pos, to_pos, "slot_mask", slot_mask, "ignore_unit", self._ignore_units, "ray_type", "equipment_placement")
+			if ray and ray.unit then
+				normal = ray.normal
+				position = ray.position
+			end
+		end
+		
 --		if normal then
---			Draw:brush(Color.red,5):cone(position,position + normal * 100,50)
+--			Draw:brush(Color.red:with_alpha(0.3),5):cone(position,position + normal * 100,25)
 --		end
 --		if direction then
---			Draw:brush(Color.blue,5):cone(position,position + direction * 100,50)
+--			Draw:brush(Color.blue:with_alpha(0.3),5):cone(position,position + direction * 100,25)
 --		end
-		
-		
 		
 		self._unit:set_slot(0)
 		self._is_detonated = true
@@ -263,7 +283,7 @@ function TripmineThrowableBase:clbk_impact(tag, unit, body, other_unit, other_bo
 end
 
 -- only change is rotating the body 
--- TODO physics rotating stuff should be handled in a different way
+-- TODO visual rotating stuff should be handled in a different way
 function TripmineThrowableBase:update(unit, t, dt)
 	if not self._simulated and not self._collided then
 		self._unit:m_position(mvec1)
@@ -297,7 +317,6 @@ function TripmineThrowableBase:update(unit, t, dt)
 			self._sweep_data.current_pos,
 			"slot_mask",
 			self._sweep_data.slot_mask
---			"ray_type", "equipment_placement"
 		}
 
 		if self._ignore_units then
@@ -315,7 +334,53 @@ function TripmineThrowableBase:update(unit, t, dt)
 				4
 			})
 		end
+		--[[
+		local to_pos = self._sweep_data.current_pos
+		local dir = (self._sweep_data.last_pos - to_pos)
+		local length = mvector3.normalize(dir)
+		dir = dir * (length + 100)
+		to_pos = to_pos + dir
+		
+--		Draw:brush(Color(1,0,1):with_alpha(0.1),10):cylinder(self._sweep_data.last_pos, self._sweep_data.current_pos, 2)
+--		Draw:brush(Color(1,0,0.5):with_alpha(0.7),10):cone(self._sweep_data.last_pos, to_pos, 3)
+--		Draw:brush(Color.yellow:with_alpha(0.3)):sphere(self._sweep_data.current_pos,50,3)
+		local ray = false and self._unit:raycast("ray", self._sweep_data.last_pos, to_pos, "slot_mask", managers.slot:get_mask("trip_mine_placeables"), "ignore_unit", self._ignore_units, "ray_type", "equipment_placement")
+		if ray and ray.unit then
+			Print("Update ray hit")
+--			mvector3.direction(mvec1, self._sweep_data.last_pos, self._sweep_data.current_pos)
+--			mvector3.add(mvec1, ray.position)
+--			self._unit:set_position(mvec1)
+--			self._unit:set_position(mvec1)
 
+			if self._draw_debug_impact then
+				Draw:brush(Color(0.5, 0, 0, 1), nil, 10):sphere(ray.position, 4)
+				Draw:brush(Color(0.5, 1, 0, 0), nil, 10):sphere(self._unit:position(), 3)
+			end
+			
+			-- todo visualize 
+			
+			if ray.normal then
+				Draw:brush(Color.red:with_alpha(0.3),5):cone(ray.position,ray.position + ray.normal * 100,25)
+			end
+			if ray.direction then
+				Draw:brush(Color.blue:with_alpha(0.3),5):cone(ray.position,ray.position + ray.direction * 100,25)
+			end
+			
+			ray.velocity = self._unit:velocity()
+			self._collided = true
+
+			self:_on_collision(ray)
+			
+			
+			--self._unit:m_position(self._sweep_data.last_pos)
+
+			if self._warning_fx_vfx_data then
+				self:_warning_fx_vfx_upd(unit, t, dt, self._warning_fx_vfx_data)
+			end
+			
+			return
+		end
+		--]]
 		local col_ray = World:raycast(unpack(raycast_params))
 
 		if self._draw_debug_trail then

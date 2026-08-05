@@ -153,7 +153,12 @@ function TripMineBase:setup(upgrade_bits, payload_mode, specials_only)
 	self._sensor_upgrade = true
 
 	self:set_active(false)
+	
 	self._unit:sound_source():post_event("trip_mine_attach")
+	-- note: this sound event occurs before placement validation, 
+	-- so the sound can play and the tripmine can immediately disappear/be refunded on that frame,
+	-- which is weird and bad.
+	-- however, this issue should be mostly mitigated by the improved placement raycast
 
 	-- local upgrade = managers.player:has_category_upgrade("trip_mine", "can_switch_on_off") or managers.player:has_category_upgrade("trip_mine", "sensor_toggle")
 
