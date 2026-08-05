@@ -663,7 +663,6 @@ function TripMineBase:attach_to_enemy(stuck_enemy, local_pos, local_rot_vec, par
 	
 	local base_ext = stuck_enemy:base()
 	local is_dozer = base_ext and base_ext.has_tag and base_ext:has_tag("tank")
-	local panic_radius = managers.player:upgrade_value_by_level("trip_mine", "stuck_enemy_panic_radius", radius_upgrade_level, 0)
 
 	if not is_dozer then
 		local attack_data = {
@@ -694,89 +693,19 @@ function TripMineBase:attach_to_enemy(stuck_enemy, local_pos, local_rot_vec, par
 				sound_ext:say("ch1", true)
 			end
 		end
-		
-		
-		--[[
-		if panic_radius > 0 then
-			if char_dmg.build_suppression then 
-				char_dmg:build_suppression("panic")
-			end
-
-			--not sure if i should use tripmine's position or stuck_enemy's position
-			--i guess hit_position since the other enemies would be afraid of the tripmine itself?
-			local nearby_enemies = stuck_enemy:find_units_quick("sphere", position or stuck_enemy:movement():m_pos(), panic_radius, managers.slot:get_mask("enemies"))
-
-			for i = 1, #nearby_enemies do
-				local nearby_enemy_dmg_ext = nearby_enemies[i]:character_damage()
-
-				if nearby_enemy_dmg_ext and nearby_enemy_dmg_ext.build_suppression then 
-					nearby_enemy_dmg_ext:build_suppression("panic")
-				end
-			end
-		end
-		--]]
 	else
-		--[[
-		if vulnerability_upgrade_level > 0 then
-			local dmg_ext = stuck_enemy:character_damage()
-			if dmg_ext.set_damage_vulnerability then
-				local amount, duration = unpack(managers.player:upgrade_value("trip_mine", "stuck_dozer_damage_vulnerability", {0, 0}))
-				stuck_enemy:character_damage():set_damage_vulnerability(
-					"have_blast_aced_aoe_vulnerability",
-					amount,
-					duration
-				)
-			end
-			local attack_data = {
-				damage = 0,
+		local attack_data = {
+			damage = 0,
+			variant = "explosion",
+			pos = unit:position(),
+			attack_dir = unit:rotation():inverse():y(),
+			attacker_unit = managers.player:player_unit() or nil,
+			result = {
 				variant = "explosion",
-				pos = unit:position(),
-				attack_dir = unit:rotation():inverse():y(),
-				attacker_unit = managers.player:player_unit() or nil,
-				result = {
-					variant = "explosion",
-					type = "expl_hurt"
-				}
+				type = "expl_hurt"
 			}
-			char_dmg:_call_listeners(attack_data)
-		end
-		
-		if panic_radius > 0 then
-			if char_dmg.build_suppression then 
-				char_dmg:build_suppression("panic")
-			end
-
-			local nearby_enemies = stuck_enemy:find_units_quick("sphere", stuck_enemy:movement():m_pos(), panic_radius, managers.slot:get_mask("enemies"))
-
-			for i = 1, #nearby_enemies do
-				local nearby_enemy = nearby_enemies[i]
-				local dmg_ext = nearby_enemy:character_damage()
-
-				if dmg_ext then
-					if dmg_ext.build_suppression then 
-						dmg_ext:build_suppression("panic")
-					end
-
-					if apply_vuln_data and dmg_ext.set_damage_vulnerability then
-						--doesn't apply to turrets
-						dmg_ext:set_damage_vulnerability(apply_vuln_data.id, apply_vuln_data.amount, apply_vuln_data.duration)
-					end
-				end
-			end
-		elseif apply_vuln_data then
-			local vulnerability_radius = tweak_data.upgrades.values.trip_mine.stuck_enemy_panic_radius[1]
-			local nearby_enemies = stuck_enemy:find_units_quick("sphere", stuck_enemy:movement():m_pos(), vulnerability_radius, managers.slot:get_mask("enemies"))
-
-			for i = 1, #nearby_enemies do
-				local nearby_enemy_dmg_ext = nearby_enemies[i]:character_damage()
-
-				if nearby_enemy_dmg_ext and nearby_enemy_dmg_ext.set_damage_vulnerability then
-					--doesn't apply to turrets
-					nearby_enemy_dmg_ext:set_damage_vulnerability(apply_vuln_data.id, apply_vuln_data.amount, apply_vuln_data.duration)
-				end
-			end
-		end
-		--]]
+		}
+		char_dmg:_call_listeners(attack_data)
 	end
 
 	local t = TimerManager:game():time()
