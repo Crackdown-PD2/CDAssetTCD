@@ -53,7 +53,7 @@ function TripMineBase:setup(upgrade_bits, payload_mode, specials_only)
 		payload_mode = TripMineBase.PAYLOAD_MODES_LOOKUP.EXPLOSIVE
 	end
 	
-	self._payload_mode = payload_mode
+	--self._payload_mode = payload_mode
 	self._startup_armed = not managers.groupai:state():whisper_mode() and (payload_mode ~= TripMineBase.ENUM_PAYLOAD_MODES.SENSOR)
 
 	self._sensor_upgrade = true
