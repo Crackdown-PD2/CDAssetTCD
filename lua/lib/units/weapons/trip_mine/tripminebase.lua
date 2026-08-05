@@ -600,12 +600,12 @@ function TripMineBase:set_payload_mode(mode) -- from local
 	end
 	if mode ~= self._payload_mode then 
 		self:_set_payload_mode(mode)
-		self:sync_send_payload_mode(mode)
+		self:sync_send_payload_mode(mode) -- note: not validated at this stage, but that's someone else's problem (the peers', specifically)
 	end
 end
 
 function TripMineBase:_set_payload_mode(mode)
-	if mode and TripmineControlMenu.PAYLOAD_MODES_LOOKUP[mode] then
+	if mode and TripMineBase.PAYLOAD_MODES_LOOKUP[mode] then
 		self._payload_mode = mode
 		if self._activate_timer then 
 			self._activate_timer = nil
