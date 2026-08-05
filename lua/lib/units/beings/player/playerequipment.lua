@@ -12,14 +12,14 @@ function PlayerEquipment:use_trip_mine()
 			+ Bitwise:lshift(vulnerability_upgrade_level, TripMineBase.UPGRADE_SHIFT_VULN)
 			+ 1
 		
-		local payload_mode = TripMineBase.ENUM_PAYLOAD_MODES.SENSOR -- todo get from rrm/user config
-		local specials_only = false
+		local payload_mode = TripmineControlMenu._current_mode
+		local specials_only = TripmineControlMenu._current_specials_enabled
 		
 		if Network:is_client() then
 			managers.network:session():send_to_host("place_trip_mine", ray.position, ray.normal, upgrade_bits, payload_mode, specials_only)
 		else
 			local rot = Rotation(ray.normal, math.UP)
-			local unit = TripMineBase.spawn(ray.position, rot, sensor_upgrade, managers.network:session():local_peer():id())
+			local unit = TripMineBase.spawn(ray.position, managers.network:session():local_peer():id(), rot, sensor_upgrade)
 
 			unit:base():set_active(true, self._unit)
 		end

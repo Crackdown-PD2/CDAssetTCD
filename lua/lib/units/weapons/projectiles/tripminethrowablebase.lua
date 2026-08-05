@@ -81,20 +81,19 @@ function TripmineThrowableBase:throw(params,...)
 	end
 end
 
+-- hit enemy
 function TripmineThrowableBase:_on_collision(col_ray)
-	-- hit enemy
-	
 	local body = col_ray.body
 	local position = col_ray.position
 	local stuck_enemy = col_ray.unit
+	local normal = col_ray.normal
 	
 --	Print("Collided with ",col_ray.unit)
 	
-	local normal = col_ray.normal
 	
 	
-	local payload_mode = 2
-	local specials_only = false
+	local payload_mode = TripmineControlMenu._current_mode
+	local specials_only = TripmineControlMenu._current_specials_enabled
 	
 	local radius_upgrade_level = managers.player:upgrade_level("trip_mine", "stuck_enemy_panic_radius", 0)
 	local vulnerability_upgrade_level = managers.player:upgrade_level("trip_mine", "stuck_dozer_damage_vulnerability", 0)
@@ -191,14 +190,31 @@ end
 function TripmineThrowableBase:clbk_impact(tag, unit, body, other_unit, other_body, position, normal, collision_velocity, velocity, other_velocity, new_velocity, direction, damage, ...)
 	--TripmineThrowableBase.super.clbk_impact(self, tag, unit, body, other_unit, other_body, position, normal, collision_velocity, velocity, other_velocity, new_velocity, direction, damage, ...)
 	--Print("Impact",tag,"is detonated?",self._is_detonated,"is collided",self._collided)
---	Print("clbk_impact",tag, unit, body, other_unit, other_body, position, normal, collision_velocity, velocity, other_velocity, new_velocity, direction, damage)
+	--Print("clbk_impact",tag, unit, body, other_unit, other_body, position, normal, collision_velocity, velocity, other_velocity, new_velocity, direction, damage)
 	if tag == Idstring("impact2") and not self._is_detonated then
 		-- stuck to world
+		
+--		if normal then
+--			Draw:brush(Color.red,5):cone(position,position + normal * 100,50)
+--		end
+--		if direction then
+--			Draw:brush(Color.blue,5):cone(position,position + direction * 100,50)
+--		end
+		
+		
 		
 		self._unit:set_slot(0)
 		self._is_detonated = true
 		
-		local upgrade_bits, payload_mode, specials_only = 1
+		local radius_upgrade_level = managers.player:upgrade_level("trip_mine", "stuck_enemy_panic_radius", 0)
+		local vulnerability_upgrade_level = managers.player:upgrade_level("trip_mine", "stuck_dozer_damage_vulnerability", 0)
+		local upgrade_bits = Bitwise:lshift(radius_upgrade_level, TripMineBase.UPGRADE_SHIFT_RADIUS)
+			+ Bitwise:lshift(vulnerability_upgrade_level, TripMineBase.UPGRADE_SHIFT_VULN)
+			+ 1
+	
+		local payload_mode = TripmineControlMenu._current_mode
+		local specials_only = TripmineControlMenu._current_specials_enabled
+		
 		
 		local session = managers.network:session()
 
@@ -281,6 +297,7 @@ function TripmineThrowableBase:update(unit, t, dt)
 			self._sweep_data.current_pos,
 			"slot_mask",
 			self._sweep_data.slot_mask
+--			"ray_type", "equipment_placement"
 		}
 
 		if self._ignore_units then

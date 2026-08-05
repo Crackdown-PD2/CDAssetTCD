@@ -1,4 +1,9 @@
 _G.TripmineControlMenu = {}
+
+TripmineControlMenu._current_mode = 2
+TripmineControlMenu._current_specials_enabled = false
+
+
 TripmineControlMenu.action_radial = TripmineControlMenu.action_radial or nil
 TripmineControlMenu.button_held_state = nil
 TripmineControlMenu.interacted_radial_start_t = nil
@@ -6,7 +11,7 @@ TripmineControlMenu.ALPHA_HIGHLIGHT_ON = 1
 TripmineControlMenu.ALPHA_HIGHLIGHT_OFF = 1/3
 TripmineControlMenu.DEFAULT_TRIGGER_MODE = "trigger_default"
 TripmineControlMenu.DEFAULT_PAYLOAD_MODE = "payload_explosive"
-TripmineControlMenu.NETWORK_SPOOF_ID = "sync_trip_mine_explode_spawn_fire" --todo use "sync_trip_mine_setup" instead? would have to see if the sensor_upgrade value can be something other than a bool
+TripmineControlMenu.NETWORK_SPOOF_ID = "sync_unit_event_id_16" -- do not use
 TripmineControlMenu.NetworkSyncIDs = { --ordered table for network ids- DO NOT CHANGE THIS
 	"payload_explosive",
 	"payload_incendiary",
@@ -84,7 +89,7 @@ function TripmineControlMenu:RefreshRadialHighlights()
 	local payload_mode = self.DEFAULT_PAYLOAD_MODE
 	if alive(self._selected_unit) then 
 		trigger_mode = self._selected_unit:base():_get_trigger_mode()
-		payload_mode = self._selected_unit:base():_get_payload_mode()
+		payload_mode = self._selected_unit:base():get_payload_mode()
 	end
 	
 	for i,mode in ipairs(self.MenuOrder) do

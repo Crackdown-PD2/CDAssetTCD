@@ -45,6 +45,7 @@ end
 
 
 -- ==================================== TRIPMINES
+-- as host, from client
 function UnitNetworkHandler:place_trip_mine(pos, normal, upgrade_bits, payload_mode, specials_only, rpc)
 	--Print("place_trip_mine",pos, normal, upgrade_bits, payload_mode, specials_only, rpc)
 	local peer = self._verify_sender(rpc)
@@ -61,19 +62,23 @@ function UnitNetworkHandler:place_trip_mine(pos, normal, upgrade_bits, payload_m
 	local peer = self._verify_sender(rpc)
 	local unit = TripMineBase.spawn(pos, rot, peer:id(), upgrade_bits, payload_mode, specials_only)
 
-	unit:base():set_server_information(peer:id())
+	local peer_id = peer:id()
+	local unit_base = unit:base()
+	unit_base:set_server_information(peer_id)
 	rpc:activate_trip_mine(unit)
 end
 
+-- as client, from host
 function UnitNetworkHandler:sync_trip_mine_setup(unit, peer_id, upgrade_bits, payload_mode, specials_only)
 --	Print("sync_trip_mine_setup", unit, peer_id, upgrade_bits, payload_mode, specials_only)
 	if not alive(unit) or not self._verify_gamestate(self._gamestate_filter.any_ingame) then
 		return
 	end
 	
-
 	--managers.player:verify_grenade(peer_id)
-	unit:base():sync_setup(upgrade_bits, payload_mode, specials_only)
+	local unit_base = unit:base()
+	unit_base:set_server_information(peer_id)
+	unit_base:sync_setup(upgrade_bits, payload_mode, specials_only)
 end
 
 -- as host, receive from client: request spawning and attaching a tripmine to the given enemy

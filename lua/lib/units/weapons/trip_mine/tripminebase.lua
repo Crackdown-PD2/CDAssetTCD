@@ -2,10 +2,43 @@
 DeathvoxOverhaulCore:require("lua/classes/tripminecontrolmenu")
 
 --tripmine overhaul
+TripMineBase.SENSOR_INTERVAL = 5 -- the variable is new, but it's functionally the same as vanilla
 TripMineBase.STUCK_ENEMY_DETONATE_TIMER = 1
 TripMineBase.UPGRADE_SHIFT_VULN = 2
 TripMineBase.UPGRADE_SHIFT_RADIUS = 1
 TripMineBase.UPGRADE_SHIFT_FRIENDLYFIRE = 1
+TripMineBase.FIRE_DURATION_ADD = 0
+TripMineBase.FIRE_RADIUS_MUL = 1
+
+TripMineBase.EVENT_IDS = {
+	sensor_beep      = 1,  -- vanilla sensor marked beep sound event
+	explosion_beep   = 2,  -- vanilla explode sound event
+	set_payload_expl = 3,  -- set to explosive mode
+	set_payload_fire = 4,  -- set to flame mode
+	set_payload_stun = 5,  -- set to concussion mode
+	set_payload_sens = 6,  -- set to sensor mode
+	set_trigger_spec = 7,  -- set to trigger only on specials
+	set_trigger_norm = 8,  -- set to trigger on any enemy
+	on_trigger_pick  = 9,  -- on tripmine retrieved
+	on_trigger_expl  = 10, -- tripmine exploded (normal)
+	on_trigger_fire  = 11, -- tripmine exploded (fire)
+	on_trigger_stun  = 12  -- tripmine exploded (stun)
+}
+
+TripMineBase.MODE_TO_EVENT_IDS = {
+	{ -- set payload mode
+		EXPLOSIVE = 3,
+		FIRE      = 4,
+		STUN      = 5,
+		SENSOR    = 6,
+	},
+	{ -- trigger event; most of these aren't used
+		EXPLOSIVE = 10,  -- explosive detonation
+		FIRE      = 11, -- fire detonation
+		STUN      = 12, -- concussive detonation
+		SENSOR    = 1   -- sensor beep
+	}
+}
 
 TripMineBase.ENUM_PAYLOAD_MODES = {
 	EXPLOSIVE = 1,
@@ -18,15 +51,53 @@ for mode,i in pairs(TripMineBase.ENUM_PAYLOAD_MODES) do
 	TripMineBase.PAYLOAD_MODES_LOOKUP[i] = mode
 end
 
+
 function TripMineBase.spawn(pos, rot, peer_id, upgrade_bits, payload_mode, specials_only)
 	local unit = World:spawn_unit(Idstring("units/payday2/equipment/gen_equipment_tripmine/gen_equipment_tripmine"), pos, rot)
-
-	managers.network:session():send_to_peers_synched("sync_trip_mine_setup", unit, peer_id or 0, upgrade_bits, payload_mode, specials_only)
-	unit:base():setup(upgrade_bits, payload_mode, specials_only)
-	
+	local unit_base = unit:base()
+	unit_base:setup(upgrade_bits, payload_mode, specials_only)
+	unit_base:set_server_information(peer_id)
 	unit:interaction():set_active(peer_id and peer_id == managers.network:session():local_peer():id()) --only the owner can change the tripmine
-
+	managers.network:session():send_to_peers_synched("sync_trip_mine_setup", unit, peer_id or 0, upgrade_bits, payload_mode, specials_only)
 	return unit
+end
+
+function TripMineBase:init(unit)
+	UnitBase.init(self, unit, false)
+	
+	self._unit = unit
+	self._position = self._unit:position()
+	self._rotation = self._unit:rotation()
+	self._forward = self._rotation:y()
+	self._ray_from_pos = Vector3()
+	self._ray_to_pos = Vector3()
+	self._init_length = 500
+	self._length = self._init_length
+	self._ids_laser = Idstring("laser")
+	self._g_laser = self._unit:get_object(Idstring("g_laser"))
+	self._g_laser_sensor = self._unit:get_object(Idstring("g_laser_sensor"))
+	self._use_draw_laser = false
+	
+	--offy wuz hear v
+	self._CONCUSSION_DAMAGE = 100
+--		self._CONCUSSION_RANGE = 1000
+	
+	
+	if self._use_draw_laser then
+		self._laser_color = Color(0.15, 1, 0, 0)
+		self._laser_sensor_color = Color(0.15, 0.1, 0.1, 1)
+		self._laser_brush = Draw:brush(self._laser_color, "VertexColor")
+
+		self._laser_brush:set_blend_mode("opacity_add")
+	end
+
+	if Network:is_client() then
+		self._validate_clbk_id = "trip_mine_validate" .. tostring_g(unit:key())
+
+		managers.enemy:add_delayed_clbk(self._validate_clbk_id, callback(self, self, "_clbk_validate"), Application:time() + 60)
+	end
+
+	managers.player:send_message("trip_mine_placed", nil, self._unit)
 end
 
 function TripMineBase:sync_setup(upgrade_bits, payload_mode, specials_only)
@@ -40,21 +111,16 @@ function TripMineBase:sync_setup(upgrade_bits, payload_mode, specials_only)
 end
 
 function TripMineBase:setup(upgrade_bits, payload_mode, specials_only)
-	self:setup_upgrades(upgrade_bits, payload_mode, specials_only)
-	
-	
-	
 	self._slotmask = managers.slot:get_mask("trip_mine_targets")
 	self._first_armed = false
 	self._armed = false
 	
-	self._specials_only = specials_only
+	self:setup_upgrades(upgrade_bits, payload_mode, specials_only)
 	
 	if not TripMineBase.PAYLOAD_MODES_LOOKUP[payload_mode] then
 		payload_mode = TripMineBase.PAYLOAD_MODES_LOOKUP.EXPLOSIVE
 	end
 	
-	--self._payload_mode = payload_mode
 	self._startup_armed = not managers.groupai:state():whisper_mode() and (payload_mode ~= TripMineBase.ENUM_PAYLOAD_MODES.SENSOR)
 
 	self._sensor_upgrade = true
@@ -65,8 +131,12 @@ function TripMineBase:setup(upgrade_bits, payload_mode, specials_only)
 	-- local upgrade = managers.player:has_category_upgrade("trip_mine", "can_switch_on_off") or managers.player:has_category_upgrade("trip_mine", "sensor_toggle")
 
 	self._unit:contour():add("deployable_active") -- upgrade and "deployable_interactable" or "deployable_active"
+	
+	--offy wuz hear
+	self._payload_mode = payload_mode -- int [1-4]
 end
 
+-- cd func
 function TripMineBase:setup_upgrades(upgrade_bits,payload_mode,specials_only)
 	local bits = upgrade_bits - 1
 	local radius_upgrade_level = Bitwise:rshift(bits, TripMineBase.UPGRADE_SHIFT_RADIUS)
@@ -74,13 +144,125 @@ function TripMineBase:setup_upgrades(upgrade_bits,payload_mode,specials_only)
 	self._radius_upgrade_level = radius_upgrade_level
 	self._vuln_upgrade_level = vulnerability_upgrade_level
 	
+	self._specials_only = specials_only
+	
 	--Print("Setup:","radius",radius_upgrade_level,"vuln",vulnerability_upgrade_level)
 end
 
+-- cd func
+function TripMineBase:set_specials_only_mode(specials_only)
+	self:_set_specials_only_mode(specials_only)
+	managers.network:session():send_to_peers_synched("sync_unit_event_id_16", self._unit, "base", specials_only and TripMineBase.EVENT_IDS.set_trigger_spec or TripMineBase.EVENT_IDS.set_trigger_norm)
+end
 
+-- cd func
+function TripMineBase:_set_specials_only_mode(specials_only)
+	self._specials_only = specials_only
+end
 
+-- handle any events, including custom ones
+function TripMineBase:sync_net_event(event_id)
+	if event_id == TripMineBase.EVENT_IDS.sensor_beep          then 
+		self:sync_trip_mine_beep_sensor()
+	elseif event_id == TripMineBase.EVENT_IDS.explosion_beep   then
+		self:sync_trip_mine_beep_explode()
+	elseif event_id == TripMineBase.EVENT_IDS.set_payload_expl then
+		self:_set_payload_mode(TripMineBase.ENUM_PAYLOAD_MODES.EXPLOSIVE)
+	elseif event_id == TripMineBase.EVENT_IDS.set_payload_fire then 
+		self:_set_payload_mode(TripMineBase.ENUM_PAYLOAD_MODES.FIRE)
+	elseif event_id == TripMineBase.EVENT_IDS.set_payload_stun then 
+		self:_set_payload_mode(TripMineBase.ENUM_PAYLOAD_MODES.STUN)
+	elseif event_id == TripMineBase.EVENT_IDS.set_payload_sens then
+		self:_set_payload_mode(TripMineBase.ENUM_PAYLOAD_MODES.SENSOR)
+	elseif event_id == TripMineBase.EVENT_IDS.set_trigger_spec then
+		self:_set_specials_only_mode(true)
+	elseif event_id == TripMineBase.EVENT_IDS.set_trigger_norm then
+		self:_set_specials_only_mode(false)
+	elseif event_id == TripMineBase.EVENT_IDS.on_trigger_pick  then
+		self:pickup()
+		
+		-- for these events, assume that the mode is set properly already
+	elseif event_id == TripMineBase.EVENT_IDS.on_trigger_expl  then
+		self:explode()
+	elseif event_id == TripMineBase.EVENT_IDS.on_trigger_fire  then
+		self:explode()
+	elseif event_id == TripMineBase.EVENT_IDS.on_trigger_stun  then
+		self:explode()
+	end
+end
 
+function TripMineBase:pickup()
+	--[[
+	if Network:is_server() or self._unit:id() == -1 then 
+		self._unit:set_slot(0)
+	else
+		self._active = false
+		self._unit:interaction():set_disabled(true)
+		self._unit:set_visible(false)
+	end
+	--]]
+	if self:is_owner() then
+		managers.player:add_grenade_amount(1, true)
+	end
+	self:_handle_hiding_and_destroying(true, destruction_delay)
+end
 
+function TripMineBase:_sensor(t)
+	local ray = self:_raycast()
+
+	if ray and ray.unit and not tweak_data.character[ray.unit:base()._tweak_table].is_escort then
+		self._sensor_units_detected = self._sensor_units_detected or {}
+
+		if not self._sensor_units_detected[ray.unit:key()] then
+			self._sensor_units_detected[ray.unit:key()] = true
+
+			if (self._payload_mode == TripMineBase.ENUM_PAYLOAD_MODES.SENSOR) or (managers.groupai:state():whisper_mode() and tweak_data.character[ray.unit:base()._tweak_table].silent_priority_shout or tweak_data.character[ray.unit:base()._tweak_table].priority_shout) then 
+			--or managers.groupai:state():is_enemy_special(ray.unit)
+				managers.game_play_central:auto_highlight_enemy(ray.unit, true,self:is_owner()) --only apply tripmine spotting upgrades if the person is the owner
+				self:_emit_sensor_sound_and_effect()
+
+				if managers.network:session() then
+					managers.network:session():send_to_peers_synched("sync_unit_event_id_16", self._unit, "base", TripMineBase.EVENT_IDS.sensor_beep)
+				end
+			end
+
+			self._sensor_last_unit_time = t + TripMineBase.SENSOR_INTERVAL
+		end
+	end
+end
+
+Hooks:OverrideFunction(TripMineBase,"_give_explosion_damage",function(self, col_ray, unit, damage)
+	local action_data = {}
+	-- key difference is to apply damage vuln override
+	action_data.vuln_override = self._vuln_upgrade_level
+	
+	action_data.variant = "explosion"
+	action_data.damage = damage
+	action_data.weapon_unit = self._unit
+	action_data.attacker_unit = managers.player:player_unit()
+	action_data.col_ray = col_ray
+	action_data.owner = managers.player:player_unit()
+	action_data.owner_peer_id = self._owner_peer_id
+	
+
+	local defense_data = unit:character_damage():damage_explosion(action_data)
+	
+	return defense_data
+end)
+
+function TripMineBase:is_owner()
+	local session = managers.network:session()
+	return session and self._server_information.owner_peer_id == session:local_peer():id()
+end
+
+function TripMineBase:set_server_information(peer_id)
+	self._server_information = {
+		owner_peer_id = peer_id
+	}
+
+	--not actually a deployable in Total Crackdown, disabling
+	--managers.network:session():peer(peer_id):set_used_deployable(true)
+end
 
 
 
@@ -125,20 +307,17 @@ function TripMineBase:set_active(active, owner, stuck_on_enemy)
 
 	if stuck_on_enemy then
 		self._attached_data = nil
-
+		-- don't start the rest of the tripmine behavior,
+		-- because it's going to explode soon
+		-- (controlled by owner)
 		return
 	end
 
 	local attached_data = self._attached_data
 
 	if not attached_data then
-		--refund the trip mine to the owner for Total Crackdown, else explode (I'd need to rework some equipment functions to make that work normally)
-		if self.set_payload_mode then
-			self:set_payload_mode("payload_recover")
-		else
-			self:_explode()
-		end
-
+		-- refund the trip mine to the owner, or remove
+		self:pickup()
 		return
 	end
 
@@ -396,20 +575,14 @@ end
 
 --todo disable tripmine updates etc. when it has been stuck to an enemy	
 
---cd methods- DEPRECATED
-function TripMineBase:_get_trigger_mode()
-	return self._trigger_mode
-end
-
-function TripMineBase:_get_payload_mode()
+function TripMineBase:get_payload_mode()
 	return self._payload_mode
 end
 
-function TripMineBase:set_trigger_mode(mode) --local
+function TripMineBase:set_payload_mode(mode) -- from local
 	if self._activate_timer then 
 		self._activate_timer = nil
-		self:set_armed(self:_get_payload_mode() ~= "payload_sensor")
-
+		
 		self._unit:set_extension_update_enabled(ids_base, true)
 
 		local activate_clbk_id = self._activate_clbk_id
@@ -420,139 +593,44 @@ function TripMineBase:set_trigger_mode(mode) --local
 			self._activate_clbk_id = nil
 		end
 	end
-	if self:_get_trigger_mode() == mode and mode == "trigger_special" then 
-		--this one's a single-switch toggle between default/special (detonate doesn't really count as a trigger mode here since uh. as they say, it's a neat trick, but you can only do it once)
-		self:_set_trigger_mode("trigger_default")
-	else
-		if self:is_owner() then 
-			self:_set_trigger_mode(mode)
-			if mode == "trigger_detonate" then 
-				if self:_get_payload_mode() == "payload_sensor" then
-					self:_set_payload_mode("payload_explosive")
-					self:sync_send_trigger_mode(mode)
-				end
-				self:explode()
-			end
-		end
-	end
-end
-
-function TripMineBase:_set_trigger_mode(mode)
-	if mode and TripmineControlMenu.VALID_TRIPMINE_TRIGGER_MODES[mode] then
-		if self._activate_timer then 
-			self._activate_timer = nil
-			self:set_armed(mode)
-		end
-		self._trigger_mode = mode
-	else
-		log("TOTAL CRACKDOWN: TripMineBase:_set_trigger_mode(" .. tostring_g(mode) .. "): Unknown trigger mode")
-		return
-	end
-end
-
-function TripMineBase:set_payload_mode(mode) --local
-	if self._activate_timer then 
-		self._activate_timer = nil
-		self:set_armed(mode ~= "payload_sensor")
-
-		self._unit:set_extension_update_enabled(ids_base, true)
-
-		local activate_clbk_id = self._activate_clbk_id
-
-		if activate_clbk_id then
-			managers.enemy:remove_delayed_clbk(activate_clbk_id)
-
-			self._activate_clbk_id = nil
-		end
-	end
-	if self:is_owner() and mode ~= self:_get_payload_mode() then 
+	if mode ~= self._payload_mode then 
 		self:_set_payload_mode(mode)
 		self:sync_send_payload_mode(mode)
-
-		if mode == "payload_recover" then 
-			managers.player:add_grenade_amount(1, true)
-		end
 	end
 end
 
 function TripMineBase:_set_payload_mode(mode)
-	if mode and TripmineControlMenu.VALID_TRIPMINE_PAYLOAD_MODES[mode] then
+	if mode and TripmineControlMenu.PAYLOAD_MODES_LOOKUP[mode] then
 		self._payload_mode = mode
 		if self._activate_timer then 
 			self._activate_timer = nil
 		end
-		if mode == "payload_recover" then			
---				self:set_armed(false)
-			if Network:is_server() or self._unit:id() == -1 then 
-				self._unit:set_slot(0)
-			else
-				self._active = false
-				self._unit:interaction():set_disabled(true)
-				self._unit:set_visible(false)
-			end
-		else
-			self:set_armed(mode ~= "payload_sensor")
-		end
-	else
-		log("TOTAL CRACKDOWN: TripMineBase:_set_payload_mode(" .. tostring_g(mode) .. "): Unknown payload mode")
-		return
-	end
-end
-
-function TripMineBase:sync_send_trigger_mode(mode)
-	--self._unit:network():send(self.NETWORK_SPOOF_ID,"_set_trigger_mode",0,mode) 
-	--unit doesn't have network extension or else this would work great
-
-	local session = managers.network:session()
-
-	if session and self:is_owner() then
-		local mode_sync_id = mode and TripmineControlMenu.NetworkSyncIDsReverseLookup[mode]
-
-		if mode_sync_id then 
-			session:send_to_peers_synched(TripmineControlMenu.NETWORK_SPOOF_ID, self._unit, managers.player:player_unit() or nil, Vector3(), Vector3(), 0, 0, mode_sync_id, 0)
-		else
-			log("TOTAL CRACKDOWN: TripMineBase:sync_send_trigger_mode(" .. tostring_g(mode) .. "): Unknown mode network id")
-			return
-		end
+		
+		self:set_armed(mode ~= TripMineBase.ENUM_PAYLOAD_MODES.SENSOR)
 	end
 end
 
 function TripMineBase:sync_send_payload_mode(mode)
-	--self._unit:network():send(self.NETWORK_SPOOF_ID,"_set_payload_mode",0,mode)
-
 	local session = managers.network:session()
-
 	if session and self:is_owner() then
-		local mode_sync_id = mode and TripmineControlMenu.NetworkSyncIDsReverseLookup[mode]
-
-		if mode_sync_id then 
-			session:send_to_peers_synched(TripmineControlMenu.NETWORK_SPOOF_ID, self._unit, managers.player:player_unit() or nil, Vector3(), Vector3(), 0, 0, mode_sync_id, 1)
-		else
-			log("TOTAL CRACKDOWN: TripMineBase:sync_send_payload_mode(" .. tostring_g(mode) .. "): Unknown mode network id")
-			return
+		local event_id = TripMineBase.MODE_TO_EVENT_IDS[1][mode]
+		if event_id then
+			session:send_to_peers_synched("sync_unit_event_id_16", self._unit, "base", event_id)
 		end
 	end
 end
 
 
 
-
-function TripMineBase:is_owner()
-	return managers.network:session() and self._owner_peer_id == managers.network:session():local_peer():id()
+-- cd func
+--[[ function TripMineBase:set_owner_id(peer_id)
+	self._owner_peer_id = peer_id
 end
-
-function TripMineBase:set_server_information(peer_id)
-	self._server_information = {
-		owner_peer_id = peer_id
-	}
-
-	--not actually a deployable in Total Crackdown, disabling
-	--managers.network:session():peer(peer_id):set_used_deployable(true)
-end
+--]]
 
 function TripMineBase:attach_to_enemy(stuck_enemy, local_pos, local_rot_vec, parent_obj, radius_upgrade_level, vulnerability_upgrade_level)
 	local unit = self._unit
-
+	
 	unit:interaction():set_active(false)
 	unit:set_extension_update_enabled(ids_base, false)
 
@@ -560,14 +638,11 @@ function TripMineBase:attach_to_enemy(stuck_enemy, local_pos, local_rot_vec, par
 
 	if not char_dmg or char_dmg:dead() then
 		--due to latency, the enemy was killed/despawned before the client received the placement result from the host
-		if self:is_owner() then
-			--refund the trip mine to the owner
-			self:set_payload_mode("payload_recover")
-		else
-			--make it invisible for non-owners since it's getting refunded anyway
-			unit:set_visible(false)
-		end
-
+		
+		-- therefore invalid placement
+		-- => refund or remove
+		self:pickup()
+		
 		return
 	end
 
@@ -585,11 +660,7 @@ function TripMineBase:attach_to_enemy(stuck_enemy, local_pos, local_rot_vec, par
 	if not self:is_owner() then
 		return
 	end
-
-	if self:_get_payload_mode() == "payload_sensor" then
-		self:set_payload_mode("payload_explosive")
-	end
-
+	
 	local base_ext = stuck_enemy:base()
 	local is_dozer = base_ext and base_ext.has_tag and base_ext:has_tag("tank")
 	local panic_radius = managers.player:upgrade_value_by_level("trip_mine", "stuck_enemy_panic_radius", radius_upgrade_level, 0)
@@ -780,74 +851,6 @@ end
 
 
 --changed vanilla methods	
-TripMineBase.EVENT_IDS = { --unchanged
-	sensor_beep = 1,
-	explosion_beep = 2
-}
-
-function TripMineBase:init(unit)
-	UnitBase.init(self, unit, false)
-	
-	self._unit = unit
-	self._position = self._unit:position()
-	self._rotation = self._unit:rotation()
-	self._forward = self._rotation:y()
-	self._ray_from_pos = Vector3()
-	self._ray_to_pos = Vector3()
-	self._init_length = 500
-	self._length = self._init_length
-	self._ids_laser = Idstring("laser")
-	self._g_laser = self._unit:get_object(Idstring("g_laser"))
-	self._g_laser_sensor = self._unit:get_object(Idstring("g_laser_sensor"))
-	self._use_draw_laser = false
-	
-	--offy wuz hear v
-	self._CONCUSSION_DAMAGE = 100
---		self._CONCUSSION_RANGE = 1000
-	--
-	
-	
-	if self._use_draw_laser then
-		self._laser_color = Color(0.15, 1, 0, 0)
-		self._laser_sensor_color = Color(0.15, 0.1, 0.1, 1)
-		self._laser_brush = Draw:brush(self._laser_color, "VertexColor")
-
-		self._laser_brush:set_blend_mode("opacity_add")
-	end
-
-	if Network:is_client() then
-		self._validate_clbk_id = "trip_mine_validate" .. tostring_g(unit:key())
-
-		managers.enemy:add_delayed_clbk(self._validate_clbk_id, callback(self, self, "_clbk_validate"), Application:time() + 60)
-	end
-
-	managers.player:send_message("trip_mine_placed", nil, self._unit)
-end
-
-function TripMineBase:setup(sensor_upgrade)
-	self._slotmask = managers.slot:get_mask("trip_mine_targets")
-	self._first_armed = false
-	self._armed = false
-
-	if sensor_upgrade then
---			self._MARK_CONTOUR = ""
---not needed actually
-	end
-
-	self._startup_armed = not managers.groupai:state():whisper_mode()
-
-	self._sensor_upgrade = true
-
-	self:set_active(false)
-	self._unit:sound_source():post_event("trip_mine_attach")
-
-	self._unit:contour():add("deployable_interactable")
-	
-	
-	--offy wuz hear
-	self._trigger_mode = TripmineControlMenu.DEFAULT_TRIGGER_MODE
-	self._payload_mode = managers.groupai:state():whisper_mode() and "payload_sensor" or TripmineControlMenu.DEFAULT_PAYLOAD_MODE
-end
 
 function TripMineBase:update(unit, t, dt)
 	--if you wish to use debug drawing for whatever reason, use the code below
@@ -869,7 +872,7 @@ function TripMineBase:update(unit, t, dt)
 		return
 	end
 	
-	if self:_get_payload_mode() == "payload_sensor" then
+	if self._payload_mode == TripMineBase.ENUM_PAYLOAD_MODES.SENSOR then
 		self:_sensor(t)
 
 		local det_unit_last_t = self._sensor_last_unit_time
@@ -885,29 +888,6 @@ function TripMineBase:update(unit, t, dt)
 	self:_check()
 end
 
-function TripMineBase:_sensor(t)
-	local ray = self:_raycast()
-
-	if ray and ray.unit and not tweak_data.character[ray.unit:base()._tweak_table].is_escort then
-		self._sensor_units_detected = self._sensor_units_detected or {}
-
-		if not self._sensor_units_detected[ray.unit:key()] then
-			self._sensor_units_detected[ray.unit:key()] = true
-
-			if (self:_get_trigger_mode() ~= "trigger_special") or (managers.groupai:state():whisper_mode() and tweak_data.character[ray.unit:base()._tweak_table].silent_priority_shout or tweak_data.character[ray.unit:base()._tweak_table].priority_shout) then 
-			--or managers.groupai:state():is_enemy_special(ray.unit)
-				managers.game_play_central:auto_highlight_enemy(ray.unit, true,self:is_owner()) --only apply tripmine spotting upgrades if the person is the owner
-				self:_emit_sensor_sound_and_effect()
-
-				if managers.network:session() then
-					managers.network:session():send_to_peers_synched("sync_unit_event_id_16", self._unit, "base", TripMineBase.EVENT_IDS.sensor_beep)
-				end
-			end
-
-			self._sensor_last_unit_time = t + 5
-		end
-	end
-end
 
 function TripMineBase:_check()
 	local session = managers.network:session()
@@ -937,7 +917,7 @@ function TripMineBase:_check()
 			end
 		end
 
-		if self:_get_trigger_mode() ~= "trigger_special" or managers.groupai:state():is_enemy_special(ray.unit) then 
+		if not self._specials_only or managers.groupai:state():is_enemy_special(ray.unit) then 
 			local explode_time = tweak_data.weapon.trip_mines.delay + managers.player:upgrade_value("trip_mine", "explode_timer_delay", 0)
 			self._explode_timer = explode_time -- not used?
 
@@ -966,7 +946,7 @@ function TripMineBase:explode(force)
 			return
 		end
 		
-		if self._payload_mode == "payload_sensor" then 
+		if self._payload_mode == TripMineBase.ENUM_PAYLOAD_MODES.SENSOR then 
 		--self._active is used to check whether the unit is doing anything, basically, including its regular extension update
 		--so check for the sensor mode manually here instead of doing set_active() when toggling sensor mode
 			return
@@ -983,6 +963,13 @@ function TripMineBase:explode(force)
 end
 
 function TripMineBase:_explode()
+	local session = managers.network:session()
+	if not session or self._detonated then
+		return
+	end
+	
+	self._detonated = true
+	
 	local activate_clbk_id = self._activate_clbk_id
 
 	if activate_clbk_id then
@@ -1024,12 +1011,56 @@ function TripMineBase:_explode()
 
 	local unit = self._unit
 
-	self._deactive_timer = 5
+	self._deactive_timer = 5 -- not used?
 
-	local session = managers.network:session()
-	local payload_mode = self:_get_payload_mode()
+	local destruction_delay
+	
+	local payload_mode = self._payload_mode
+	if payload_mode == TripMineBase.ENUM_PAYLOAD_MODES.FIRE then
+		self:_play_sound_and_effects(damage_size)
 
-	if payload_mode == "payload_explosive" then
+		if session then
+			--see enveffecttweakdata to change values
+			local added_time = TripMineBase.FIRE_DURATION_ADD
+			local range_multiplier = TripMineBase.FIRE_RADIUS_MUL
+			local damage = 0
+			session:send_to_peers_synched("sync_trip_mine_explode_spawn_fire", unit, player, my_pos, my_fwd, damage_size, damage, added_time, range_multiplier)
+			
+			destruction_delay = self:_spawn_environment_fire(player, added_time, range_multiplier)
+		end
+	elseif payload_mode == TripMineBase.ENUM_PAYLOAD_MODES.STUN then
+		local damage = 0
+		managers.explosion:play_sound_and_effects(hit_pos, my_fwd, damage_size, {
+			camera_shake_max_mul = 4,
+			effect = "effects/particles/explosions/explosion_flash_grenade",
+			sound_event = "flashbang_explosion", --or the normal "trip_mine_explode", but in that case should use at least some of the code in TripMineBase:_play_sound_and_effects() since it disposes of the soundsource afterward
+			feedback_range = damage_size * 2
+		})
+
+		if Network:is_server() then
+			local hit_units, splinters = managers.explosion:detect_and_stun({
+				player_damage = 1,
+				hit_pos = hit_pos,
+				range = damage_size,
+				collision_slotmask = managers.slot:get_mask("enemies"),
+				curve_pow = 2,
+				damage = self._CONCUSSION_DAMAGE,
+				ignore_unit = unit,
+				alert_filter = self._alert_filter or managers.groupai:state():get_unit_type_filter("civilians_enemies"),
+				alert_radius = tweak_data.weapon.trip_mines.alert_radius,
+				user = player or unit,
+				verify_callback = callback(self, self, "_can_stun_unit")
+			})
+		end
+
+		if session then
+			if player then
+				session:send_to_peers_synched("sync_trip_mine_explode", unit, player, hit_pos, my_fwd, damage_size, damage)
+			else
+				session:send_to_peers_synched("sync_trip_mine_explode_no_user", unit, hit_pos, my_fwd, damage_size, damage)
+			end
+		end
+	else -- default: TripMineBase.ENUM_PAYLOAD_MODES.EXPLOSIVE or SENSOR
 		managers.explosion:give_local_player_dmg(hit_pos, damage_size, tweak_data.weapon.trip_mines.player_damage)
 		self:_play_sound_and_effects(damage_size)
 
@@ -1201,8 +1232,14 @@ function TripMineBase:_explode()
 							position = body_hit_pos,
 							ray = dir
 						}
-
-						self:_give_explosion_damage(accurate_col_ray, hit_unit, dmg)
+						
+						if self._attached_data and hit_unit == self._attached_data.unit then
+							-- deal 3x damage to the stuck enemy (Have a Blast basic)
+							-- assume that if the enemy was stuck, it had to have been stuck there by a player with Have a Blast basic
+							self:_give_explosion_damage(accurate_col_ray, hit_unit, damage * managers.player:upgrade_value_by_level("trip_mine","stuck_enemy_damage_mul",1))
+						else
+							self:_give_explosion_damage(accurate_col_ray, hit_unit, damage)
+						end
 					end
 				end
 			end
@@ -1217,53 +1254,9 @@ function TripMineBase:_explode()
 		end
 
 		managers.explosion:units_to_push(units_to_push, hit_pos, 300)
-	elseif payload_mode == "payload_incendiary" then
-		self:_play_sound_and_effects(damage_size)
-
-		if session then
-			--see enveffecttweakdata to change values
-			local added_time = 0
-			local range_multiplier = 1
-
-			session:send_to_peers_synched("sync_trip_mine_explode_spawn_fire", unit, player, my_pos, my_fwd, damage_size, damage, added_time, range_multiplier)
-			self:_spawn_environment_fire(player, added_time, range_multiplier)
-		end
-	elseif payload_mode == "payload_concussive" then
-		managers.explosion:play_sound_and_effects(hit_pos, my_fwd, damage_size, {
-			camera_shake_max_mul = 4,
-			effect = "effects/particles/explosions/explosion_flash_grenade",
-			sound_event = "flashbang_explosion", --or the normal "trip_mine_explode", but in that case should use at least some of the code in TripMineBase:_play_sound_and_effects() since it disposes of the soundsource afterward
-			feedback_range = damage_size * 2
-		})
-
-		if Network:is_server() then
-			local hit_units, splinters = managers.explosion:detect_and_stun({
-				player_damage = 1,
-				hit_pos = hit_pos,
-				range = damage_size,
-				collision_slotmask = managers.slot:get_mask("enemies"),
-				curve_pow = 2,
-				damage = self._CONCUSSION_DAMAGE,
-				ignore_unit = unit,
-				alert_filter = self._alert_filter or managers.groupai:state():get_unit_type_filter("civilians_enemies"),
-				alert_radius = tweak_data.weapon.trip_mines.alert_radius,
-				user = player or unit,
-				verify_callback = callback(self, self, "_can_stun_unit")
-			})
-		end
-
-		if session then
-			if player then
-				session:send_to_peers_synched("sync_trip_mine_explode", unit, player, hit_pos, my_fwd, damage_size, damage)
-			else
-				session:send_to_peers_synched("sync_trip_mine_explode_no_user", unit, hit_pos, my_fwd, damage_size, damage)
-			end
-		end
-	else
-		log("TOTAL CRACKDOWN: TripMineBase:_explode(" .. tostring_g(payload_mode) .."): Unknown payload detonation type")
 	end
 
-	if payload_mode ~= "payload_concussive" then
+	if payload_mode ~= TripMineBase.ENUM_PAYLOAD_MODES.STUN then
 		local alert_radius = tweak_data.weapon.trip_mines.alert_radius
 		local alert_filter = self._alert_filter or managers.groupai:state():get_unit_type_filter("civilians_enemies")
 		local alert_unit = player or unit
@@ -1280,12 +1273,9 @@ function TripMineBase:_explode()
 
 	if Network:is_server() then
 		managers.mission:call_global_event("tripmine_exploded")
-
-		unit:set_slot(0)
-	else
-		unit:set_visible(false)
-		unit:interaction():set_active(false)
 	end
+	
+	self:_handle_hiding_and_destroying(true, destruction_delay)
 end
 
 function TripMineBase:_can_stun_unit(unit)
@@ -1312,12 +1302,46 @@ function TripMineBase:_can_stun_unit(unit)
 	return false
 end
 
-function TripMineBase:sync_trip_mine_explode(user_unit, ray_from, ray_to, damage_size, damage)
+function TripMineBase:sync_trip_mine_explode(user_unit, ray_from, ray_to, damage_size, damage, destruction_delay)
+	if self._detonated then
+		return
+	end
+	
 	local hit_pos = ray_from + ray_to * 5
-	local payload_mode = self:_get_payload_mode()
+	local payload_mode = self._payload_mode
 	local unit = self._unit
 
-	if payload_mode == "payload_explosive" then
+	if payload_mode == TripMineBase.ENUM_PAYLOAD_MODES.FIRE then
+		self:_play_sound_and_effects(damage_size)
+	elseif payload_mode == TripMineBase.ENUM_PAYLOAD_MODES.STUN then
+		managers.explosion:play_sound_and_effects(hit_pos, my_fwd, damage_size, {
+			camera_shake_max_mul = 4,
+			effect = "effects/particles/explosions/explosion_flash_grenade",
+			sound_event = "flashbang_explosion", --or the normal "trip_mine_explode", but in that case should use at least some of the code in TripMineBase:_play_sound_and_effects() since it disposes of the soundsource afterward
+			feedback_range = damage_size * 2
+		})
+
+		if Network:is_server() then
+			local owner_peer = managers.network:session():peer(self._server_information.owner_peer_id)
+			local owner_unit = owner_peer and owner_peer:unit()
+			owner_unit = alive_g(owner_unit) and owner_unit or nil
+
+			local alert_filter = owner_unit and owner_unit:movement():SO_access() or managers.groupai:state():get_unit_type_filter("civilians_enemies")
+			local hit_units, splinters = managers.explosion:detect_and_stun({
+				player_damage = 1,
+				hit_pos = hit_pos,
+				range = damage_size,
+				collision_slotmask = managers.slot:get_mask("enemies"),
+				curve_pow = 2,
+				damage = self._CONCUSSION_DAMAGE,
+				ignore_unit = unit,
+				alert_filter = alert_filter,
+				alert_radius = tweak_data.weapon.trip_mines.alert_radius,
+				user = owner_unit or unit,
+				verify_callback = callback(self, self, "_can_stun_unit")
+			})
+		end
+	else -- default: if TripMineBase.ENUM_PAYLOAD_MODES.EXPLOSIVE (or SENSOR)
 		local hit_pos_player = unit:position() + unit:rotation():y() * 5
 
 		managers.explosion:give_local_player_dmg(hit_pos_player, damage_size, tweak_data.weapon.trip_mines.player_damage)
@@ -1362,46 +1386,11 @@ function TripMineBase:sync_trip_mine_explode(user_unit, ray_from, ray_to, damage
 		end
 
 		managers.explosion:units_to_push(units_to_push, hit_pos, 300)
-	elseif payload_mode == "payload_incendiary" then
-		self:_play_sound_and_effects(damage_size)
-	elseif payload_mode == "payload_concussive" then
-		managers.explosion:play_sound_and_effects(hit_pos, my_fwd, damage_size, {
-			camera_shake_max_mul = 4,
-			effect = "effects/particles/explosions/explosion_flash_grenade",
-			sound_event = "flashbang_explosion", --or the normal "trip_mine_explode", but in that case should use at least some of the code in TripMineBase:_play_sound_and_effects() since it disposes of the soundsource afterward
-			feedback_range = damage_size * 2
-		})
-
-		if Network:is_server() then
-			local owner_peer = managers.network:session():peer(self._server_information.owner_peer_id)
-			local owner_unit = owner_peer and owner_peer:unit()
-			owner_unit = alive_g(owner_unit) and owner_unit or nil
-
-			local alert_filter = owner_unit and owner_unit:movement():SO_access() or managers.groupai:state():get_unit_type_filter("civilians_enemies")
-			local hit_units, splinters = managers.explosion:detect_and_stun({
-				player_damage = 1,
-				hit_pos = hit_pos,
-				range = damage_size,
-				collision_slotmask = managers.slot:get_mask("enemies"),
-				curve_pow = 2,
-				damage = self._CONCUSSION_DAMAGE,
-				ignore_unit = unit,
-				alert_filter = alert_filter,
-				alert_radius = tweak_data.weapon.trip_mines.alert_radius,
-				user = owner_unit or unit,
-				verify_callback = callback(self, self, "_can_stun_unit")
-			})
-		end
-	else
-		log("TOTAL CRACKDOWN: TripMineBase:sync_trip_mine_explode(" .. tostring_g(payload_mode) .."): Unknown payload detonation type")
 	end
 
 	if Network:is_server() then
 		managers.mission:call_global_event("tripmine_exploded")
-
-		unit:set_slot(0)
-	else
-		unit:set_visible(false)
-		unit:interaction():set_active(false)
 	end
+	
+	self:_handle_hiding_and_destroying(true, destruction_delay)
 end
