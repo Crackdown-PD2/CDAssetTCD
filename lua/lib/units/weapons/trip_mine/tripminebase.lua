@@ -62,6 +62,7 @@ local mrot_set = mrotation.set_yaw_pitch_roll
 local tmp_rot = Rotation()
 
 local math_ceil = math.ceil
+local math_min = math.min
 local math_random = math.random
 
 local tostring_g = tostring
@@ -470,7 +471,7 @@ function TripMineBase:_attach_explode()
 		self._explode_clbk_id = nil
 	end
 
-	self:_explode()
+	self:explode()
 end
 
 function TripMineBase:_remove_attached_body_callbacks()
@@ -726,7 +727,7 @@ function TripMineBase:attach_to_enemy(stuck_enemy, local_pos, local_rot_vec, par
 	local explode_clbk_id = "_explode_clbk_id" .. u_key_str
 	self._explode_clbk_id = explode_clbk_id
 
-	managers.enemy:add_delayed_clbk(explode_clbk_id, callback(self, self, "_explode"), t + TripMineBase.STUCK_ENEMY_DETONATE_TIMER)
+	managers.enemy:add_delayed_clbk(explode_clbk_id, callback(self, self, "explode"), t + TripMineBase.STUCK_ENEMY_DETONATE_TIMER)
 
 	self._attached_data = {
 		unit = stuck_enemy
@@ -775,7 +776,7 @@ function TripMineBase:_clbk_attached_unit_destroyed()
 			return
 		end
 
-		self:_explode()
+		self:explode()
 	end)
 end
 
@@ -860,7 +861,7 @@ function TripMineBase:_check()
 			local explode_clbk_id = "_explode_clbk_id" .. tostring_g(my_unit:key())
 			self._explode_clbk_id = explode_clbk_id
 
-			managers.enemy:add_delayed_clbk(explode_clbk_id, callback(self, self, "_explode"), TimerManager:game():time() + explode_time)
+			managers.enemy:add_delayed_clbk(explode_clbk_id, callback(self, self, "explode"), TimerManager:game():time() + explode_time)
 
 			self._explode_ray = ray
 
@@ -893,13 +894,14 @@ function TripMineBase:explode(force)
 	self:_explode(col_ray)
 end
 
-function TripMineBase:_explode()
+function TripMineBase:_explode(col_ray)
 	local session = managers.network:session()
 	if not session or self._detonated then
 		return
 	end
 	
 	self._detonated = true
+	self._unit:set_extension_update_enabled(Idstring("base"), false)
 	
 	local activate_clbk_id = self._activate_clbk_id
 
@@ -925,13 +927,13 @@ function TripMineBase:_explode()
 	local damage_size = tweak_data.weapon.trip_mines.damage_size * player_manager:upgrade_value("trip_mine", "explosion_size_multiplier_1", 1) * player_manager:upgrade_value("trip_mine", "damage_multiplier", 1)
 	local player = player_manager:player_unit() or nil
 	local my_pos = self._ray_from_pos
-	local my_fwd = self._forward
-	local hit_pos = my_pos + my_fwd * 5
-
+	local unit = self._unit
+	local destruction_delay
+	
 	if draw_explosion_sphere then
 		local draw_duration = 3
 		local new_brush = Draw:brush(Color.red:with_alpha(0.5), draw_duration)
-		new_brush:sphere(hit_pos, damage_size)
+		new_brush:sphere(self._ray_to_pos, damage_size)
 	end
 
 	if draw_vanilla_explosion_cylinder then
@@ -940,11 +942,8 @@ function TripMineBase:_explode()
 		new_brush:cylinder(my_pos, self._ray_to_pos, damage_size)
 	end
 
-	local unit = self._unit
-
 	self._deactive_timer = 5 -- not used?
 
-	local destruction_delay
 	
 	local payload_mode = self._payload_mode
 	if payload_mode == TripMineBase.ENUM_PAYLOAD_MODES.FIRE then
@@ -955,13 +954,16 @@ function TripMineBase:_explode()
 			local added_time = TripMineBase.FIRE_DURATION_ADD
 			local range_multiplier = TripMineBase.FIRE_RADIUS_MUL
 			local damage = 0
-			session:send_to_peers_synched("sync_trip_mine_explode_spawn_fire", unit, player, my_pos, my_fwd, damage_size, damage, added_time, range_multiplier)
+			session:send_to_peers_synched("sync_trip_mine_explode_spawn_fire", unit, player, my_pos, self._ray_to_pos, damage_size, damage, added_time, range_multiplier)
 			
 			destruction_delay = self:_spawn_environment_fire(player, added_time, range_multiplier)
 		end
+		
+		-- don't deal damage on detonation,
+		-- only secondhand fire dot from puddle
 	elseif payload_mode == TripMineBase.ENUM_PAYLOAD_MODES.STUN then
 		local damage = 0
-		managers.explosion:play_sound_and_effects(hit_pos, my_fwd, damage_size, {
+		managers.explosion:play_sound_and_effects(my_pos, self._ray_to_pos, damage_size, {
 			camera_shake_max_mul = 4,
 			effect = "effects/particles/explosions/explosion_flash_grenade",
 			sound_event = "flashbang_explosion", --or the normal "trip_mine_explode", but in that case should use at least some of the code in TripMineBase:_play_sound_and_effects() since it disposes of the soundsource afterward
@@ -971,7 +973,7 @@ function TripMineBase:_explode()
 		if Network:is_server() then
 			local hit_units, splinters = managers.explosion:detect_and_stun({
 				player_damage = 1,
-				hit_pos = hit_pos,
+				hit_pos = self._ray_to_pos,
 				range = damage_size,
 				collision_slotmask = managers.slot:get_mask("enemies"),
 				curve_pow = 2,
@@ -986,217 +988,102 @@ function TripMineBase:_explode()
 
 		if session then
 			if player then
-				session:send_to_peers_synched("sync_trip_mine_explode", unit, player, hit_pos, my_fwd, damage_size, damage)
+				session:send_to_peers_synched("sync_trip_mine_explode", unit, player, my_pos, self._ray_to_pos, damage_size, damage)
 			else
-				session:send_to_peers_synched("sync_trip_mine_explode_no_user", unit, hit_pos, my_fwd, damage_size, damage)
+				session:send_to_peers_synched("sync_trip_mine_explode_no_user", unit, my_pos, self._ray_to_pos, damage_size, damage)
 			end
 		end
 	else -- default: TripMineBase.ENUM_PAYLOAD_MODES.EXPLOSIVE or SENSOR
-		managers.explosion:give_local_player_dmg(hit_pos, damage_size, tweak_data.weapon.trip_mines.player_damage)
+		managers.explosion:give_local_player_dmg(self._ray_to_pos, damage_size, tweak_data.weapon.trip_mines.player_damage)
 		self:_play_sound_and_effects(damage_size)
+		
+		local slotmask = managers.slot:get_mask("explosion_targets")
+		local bodies = World:find_bodies("intersect", "cylinder", my_pos, self._ray_to_pos, damage_size, slotmask)
+		
+		local damage = tweak_data.weapon.trip_mines.damage * managers.player:upgrade_value("trip_mine", "damage_multiplier", 1)
+		local characters_hit = {}
 
-		local splinters = {
-			mvec3_cpy(hit_pos)
-		}
-		local dirs = {
-			Vector3(damage_size, 0, 0),
-			Vector3(-damage_size, 0, 0),
-			Vector3(0, damage_size, 0),
-			Vector3(0, -damage_size, 0),
-			Vector3(0, 0, damage_size),
-			Vector3(0, 0, -damage_size)
-		}
-
-		local geometry_mask = managers.slot:get_mask("world_geometry")
-
-		for i = 1, #dirs do
-			local dir = dirs[i]
-			local tmp_pos = hit_pos - dir
-			local splinter_ray = unit:raycast("ray", hit_pos, tmp_pos, "slot_mask", geometry_mask)
-
-			if splinter_ray then
-				local ray_dis = splinter_ray.distance
-				local dis = ray_dis > 10 and 10 or ray_dis
-
-				tmp_pos = splinter_ray.position - dir:normalized() * dis
-			end
-
-			if draw_splinters then
-				local draw_duration = 3
-				local new_brush = Draw:brush(Color.white:with_alpha(0.5), draw_duration)
-				new_brush:cylinder(hit_pos, tmp_pos, 0.5)
-			end
-
-			local near_other_splinter = nil
-
-			for idx = 1, #splinters do
-				local s_pos = splinters[idx]
-
-				if mvec3_dis_sq(tmp_pos, s_pos) < 900 then
-					near_other_splinter = true
-
-					break
-				end
-			end
-
-			if not near_other_splinter then
-				splinters[#splinters + 1] = mvec3_cpy(tmp_pos)
-			end
-		end
-
-		local slot_manager = managers.slot
-		local slotmask = slot_manager:get_mask("explosion_targets")
-		local no_friendly_fire = player_manager:has_category_upgrade("class_specialist","no_friendly_fire")
-
-		if no_friendly_fire then
-			slotmask = slotmask - slot_manager:get_mask("civilians")
-			slotmask = slotmask - 22 --hostages slotmask
-		end
-
-		local units_to_hit, units_to_push = {}, {}
-		local damage = tweak_data.weapon.trip_mines.damage * player_manager:upgrade_value("trip_mine", "damage_multiplier", 1)
-		local bodies = unit:find_bodies("intersect", "sphere", hit_pos, damage_size, slotmask)
-
-		for i = 1, #bodies do
-			local hit_body = bodies[i]
-
-			if alive_g(hit_body) then
+		for _, hit_body in ipairs(bodies) do
+			if alive(hit_body) then
 				local hit_unit = hit_body:unit()
-				local hit_unit_key = hit_unit:key()
-				units_to_push[hit_unit_key] = hit_unit
+				local character = hit_unit:character_damage() and hit_unit:character_damage().damage_explosion
+				local apply_dmg = hit_body:extension() and hit_body:extension().damage
+				local dir, ray_hit
+				
+				if character and not characters_hit[hit_unit:key()] then
+					local com = hit_body:center_of_mass()
+					local ray_from = math.point_on_line(my_pos, self._ray_to_pos, com)
 
-				local char_dmg_ext = hit_unit:character_damage()
-				local hit_character = char_dmg_ext and char_dmg_ext.damage_explosion and not char_dmg_ext:dead()
-				local body_ext = hit_body:extension()
-				local body_ext_dmg = body_ext and body_ext.damage
-				local ray_hit, body_com, damage_character = nil
+					ray_hit = not World:raycast("ray", ray_from, com, "slot_mask", slotmask, "ignore_unit", {
+						hit_unit
+					}, "report")
 
-				if hit_character then
-					if not units_to_hit[hit_unit_key] then
-						body_com = hit_body:center_of_mass()
-
-						for i = 1, #splinters do
-							local s_pos = splinters[i]
-
-							ray_hit = not unit:raycast("ray", s_pos, body_com, "slot_mask", geometry_mask, "report")
-
-							if ray_hit then
-								units_to_hit[hit_unit_key] = true
-								damage_character = true
-
-								if draw_splinter_hits then
-									local draw_duration = 3
-									local new_brush = Draw:brush(Color.green:with_alpha(0.5), draw_duration)
-									new_brush:cylinder(s_pos, body_com, 0.5)
-								end
-
-								break
-							elseif draw_obstructed_splinters then
-								local draw_duration = 3
-								local new_brush = Draw:brush(Color.yellow:with_alpha(0.5), draw_duration)
-								new_brush:cylinder(s_pos, body_com, 0.5)
-							end
-						end
+					if ray_hit then
+						characters_hit[hit_unit:key()] = true
 					end
-				elseif body_ext_dmg or hit_body:dynamic() then
-					if not units_to_hit[hit_unit_key] then
-						ray_hit = true
-						units_to_hit[hit_unit_key] = true
-					end
-				end
-
-				if not ray_hit and body_ext_dmg and units_to_hit[hit_unit_key] and char_dmg_ext and char_dmg_ext.damage_explosion then
-					body_com = body_com or hit_body:center_of_mass()
-
-					for i = 1, #splinters do
-						local s_pos = splinters[i]
-
-						ray_hit = not unit:raycast("ray", s_pos, body_com, "slot_mask", geometry_mask, "report")
-
-						if ray_hit then
-							break
-						end
-					end
+				elseif apply_dmg or hit_body:dynamic() then
+					ray_hit = true
 				end
 
 				if ray_hit then
-					body_com = body_com or hit_body:center_of_mass()
-					local dir = body_com - hit_pos
-					dir = dir:normalized()
+					dir = hit_body:center_of_mass()
 
-					local dmg = damage
-					local base_ext = hit_unit:base()
+					mvector3.direction(dir, my_pos, dir)
 
-					if base_ext and base_ext.has_tag and base_ext:has_tag("tank") then
-						dmg = dmg * 7
-					end
-
-					local body_hit_pos = nil
-
-					if body_ext_dmg then
+					if apply_dmg then
 						local normal = dir
-						local prop_damage = dmg > 200 and 200 or dmg
+						local prop_damage = math_min(damage, 200)
 						local network_damage = math_ceil(prop_damage * 163.84)
+
 						prop_damage = network_damage / 163.84
 
-						body_hit_pos = mvec3_cpy(hit_body:position())
+						hit_body:extension().damage:damage_explosion(player, normal, hit_body:position(), dir, prop_damage)
+						hit_body:extension().damage:damage_damage(player, normal, hit_body:position(), dir, prop_damage)
 
-						body_ext_dmg:damage_explosion(player, normal, body_hit_pos, dir, prop_damage)
-						body_ext_dmg:damage_damage(player, normal, body_hit_pos, dir, prop_damage)
-
-						if session and hit_unit:id() ~= -1 then
-							network_damage = network_damage > 32768 and 32768 or network_damage
-
+						if hit_body:unit():id() ~= -1 then
 							if player then
-								session:send_to_peers_synched("sync_body_damage_explosion", hit_body, player, normal, body_hit_pos, dir, network_damage)
+								managers.network:session():send_to_peers_synched("sync_body_damage_explosion", hit_body, player, normal, hit_body:position(), dir, math.min(32768, network_damage))
 							else
-								session:send_to_peers_synched("sync_body_damage_explosion_no_attacker", hit_body, normal, body_hit_pos, dir, network_damage)
+								managers.network:session():send_to_peers_synched("sync_body_damage_explosion_no_attacker", hit_body, normal, hit_body:position(), dir, math.min(32768, network_damage))
 							end
 						end
 					end
 
-					if damage_character then
-						body_hit_pos = body_hit_pos or mvec3_cpy(hit_body:position())
+					if hit_unit:in_slot(managers.game_play_central._slotmask_physics_push) then
+						hit_unit:push(5, dir * 500)
+					end
 
-						--since sending the same col_ray table for all hits actually doesn't make much sense
-						local accurate_col_ray = {
-							position = body_hit_pos,
-							ray = dir
-						}
+					if character then
 						
 						if self._attached_data and hit_unit == self._attached_data.unit then
 							-- deal 3x damage to the stuck enemy (Have a Blast basic)
 							-- assume that if the enemy was stuck, it had to have been stuck there by a player with Have a Blast basic
-							self:_give_explosion_damage(accurate_col_ray, hit_unit, damage * managers.player:upgrade_value_by_level("trip_mine","stuck_enemy_damage_mul",1))
+							self:_give_explosion_damage(col_ray, hit_unit, damage * managers.player:upgrade_value_by_level("trip_mine","stuck_enemy_damage_mul",1))
 						else
-							self:_give_explosion_damage(accurate_col_ray, hit_unit, damage)
+							self:_give_explosion_damage(col_ray, hit_unit, damage)
 						end
+						
 					end
 				end
 			end
 		end
-
+		
 		if session then
 			if player then
-				session:send_to_peers_synched("sync_trip_mine_explode", unit, player, my_pos, my_fwd, damage_size, damage)
+				session:send_to_peers_synched("sync_trip_mine_explode", unit, player, my_pos, self._ray_to_pos, damage_size, damage)
 			else
-				session:send_to_peers_synched("sync_trip_mine_explode_no_user", unit, my_pos, my_fwd, damage_size, damage)
+				session:send_to_peers_synched("sync_trip_mine_explode_no_user", unit, my_pos, self._ray_to_pos, damage_size, damage)
 			end
 		end
-
-		managers.explosion:units_to_push(units_to_push, hit_pos, 300)
 	end
 
 	if payload_mode ~= TripMineBase.ENUM_PAYLOAD_MODES.STUN then
-		local alert_radius = tweak_data.weapon.trip_mines.alert_radius
-		local alert_filter = self._alert_filter or managers.groupai:state():get_unit_type_filter("civilians_enemies")
-		local alert_unit = player or unit
 		local alert_event = {
-			"explosion",
-			hit_pos,
-			alert_radius,
-			alert_filter,
-			alert_unit
+			"aggression",
+			self._position,
+			tweak_data.weapon.trip_mines.alert_radius,
+			self._alert_filter,
+			self._unit
 		}
 
 		managers.groupai:state():propagate_alert(alert_event)
