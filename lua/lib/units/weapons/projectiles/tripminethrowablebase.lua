@@ -138,7 +138,7 @@ function TripmineThrowableBase:_on_collision(col_ray)
 			local_rot_vec = mvec3_cpy(local_rot_vec)
 		end
 		
-		session:send_to_host("request_spawn_attach_trip_mine", stuck_enemy, "body", body or nil, "obj", parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, bits, payload_mode, specials_only)
+		session:send_to_host("request_spawn_attach_trip_mine", stuck_enemy, body or nil, parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, bits, payload_mode, specials_only)
 	else
 		-- stuck as host
 		
