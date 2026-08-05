@@ -2,6 +2,7 @@
 DeathvoxOverhaulCore:require("lua/classes/tripminecontrolmenu")
 
 --tripmine overhaul
+TripMineBase.STUCK_ENEMY_DETONATE_TIMER = 1
 TripMineBase.UPGRADE_SHIFT_VULN = 2
 TripMineBase.UPGRADE_SHIFT_RADIUS = 1
 TripMineBase.UPGRADE_SHIFT_FRIENDLYFIRE = 1
@@ -718,12 +719,12 @@ function TripMineBase:attach_to_enemy(stuck_enemy, local_pos, local_rot_vec, par
 		end
 	end, t + 0.6)
 
-	self._explode_timer = 1
+	self._explode_timer = TripMineBase.STUCK_ENEMY_DETONATE_TIMER -- not used?
 
 	local explode_clbk_id = "_explode_clbk_id" .. u_key_str
 	self._explode_clbk_id = explode_clbk_id
 
-	managers.enemy:add_delayed_clbk(explode_clbk_id, callback(self, self, "_explode"), t + 1)
+	managers.enemy:add_delayed_clbk(explode_clbk_id, callback(self, self, "_explode"), t + TripMineBase.STUCK_ENEMY_DETONATE_TIMER)
 
 	self._attached_data = {
 		unit = stuck_enemy
@@ -938,7 +939,7 @@ function TripMineBase:_check()
 
 		if self:_get_trigger_mode() ~= "trigger_special" or managers.groupai:state():is_enemy_special(ray.unit) then 
 			local explode_time = tweak_data.weapon.trip_mines.delay + managers.player:upgrade_value("trip_mine", "explode_timer_delay", 0)
-			self._explode_timer = explode_time
+			self._explode_timer = explode_time -- not used?
 
 			local my_unit = self._unit
 
