@@ -54,9 +54,9 @@ function UnitNetworkHandler:place_trip_mine(pos, normal, upgrade_bits, payload_m
 		return
 	end
 
-	if not managers.player:verify_grenade(peer:id()) then
-		return
-	end
+--	if not managers.player:verify_grenade(peer:id()) then
+--		return
+--	end
 
 	local rot = Rotation(normal, math.UP)
 	local peer = self._verify_sender(rpc)
