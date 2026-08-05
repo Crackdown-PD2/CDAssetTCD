@@ -868,6 +868,14 @@ function TripMineBase:explode(force)
 		--so check for the sensor mode manually here instead of doing set_active() when toggling sensor mode
 			return
 		end
+	else
+		-- force update positions
+		-- so that stuck tripmines can have accurate raycast positions
+		
+		mvector3.set(self._ray_to_pos, self._forward)
+		mvector3.multiply(self._ray_to_pos, self._init_length)
+		mvector3.set(self._ray_from_pos,self._position)
+		mvector3.add(self._ray_to_pos,self._ray_from_pos)
 	end
 
 	self._active = false
