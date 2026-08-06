@@ -1412,17 +1412,95 @@ Hooks:OverrideFunction(PlayerStandard,"_update_foley",function(self,t, input)
 end)
 
 
+
 -- for throwables that also need "deployable" behavior (Tripmines and FAKs)
 -- perform raycasts on nearby surfaces
 -- and spawn the deployable object there if valid,
 -- then cancel throwable action;
 -- perform this check BEFORE initiating a throw
 -- (todo: make this a setting for "quick placement"? eg. "on tap with valid placement ray: throw/place")
---[[
 Hooks:OverrideFunction(PlayerStandard,"_check_action_throw_projectile",function(self,t,input)
 	local projectile_entry = managers.blackmarket:equipped_projectile()
 	local projectile_tweak = tweak_data.blackmarket.projectiles[projectile_entry]
+	local can_throw_grenade = managers.player:can_throw_grenade()
+	
+	-- throwable faks/tripmines
+	if projectile_tweak.override_equipment_id and can_throw_grenade then -- this can_throw_grenade check will need to be revised if the throw action bypasses the amount check
+			-- if pressed/held:
+			-- if held > threshold_t
+				-- if raycast, preview
+					-- check cast to enemy
+				-- elseif can throw, switch to throw
+		
+		-- if released:
+			-- if raycast, place
+				-- check cast to enemy
+			-- elseif can throw, quick throw
 
+		local equipment_data = tweak_data.equipments[projectile_tweak.override_equipment_id]
+		local use_function_name = equipment_data.use_function_name
+		
+		local press = input.btn_projectile_press 
+		local held = input.btn_projectile_state
+		local release = input.btn_projectile_release 
+		
+		local has_skill_throw = projectile_tweak.throw_skill_check and managers.player:has_category_upgrade(projectile_tweak.throw_skill_check.category,projectile_tweak.throw_skill_check.upgrade)
+		local has_skill_stick = projectile_tweak.stick_skill_check and managers.player:has_category_upgrade(projectile_tweak.stick_skill_check.category,projectile_tweak.stick_skill_check.upgrade)
+		
+		if press then
+			self._state_data.projectile_hold_t = t + (projectile_tweak.throw_allowed_expire_t or 0.2)
+			return
+		elseif held or release then
+			if self._state_data.projectile_hold_t then
+				local equipmentbase = self._unit:equipment()
+				local ray,stuck_enemy = equipmentbase:valid_look_at_placement(equipment_data, has_skill_stick)
+				
+				if held then
+					if has_skill_throw and not self._state_data.projectile_idle_wanted then
+						if self._state_data.projectile_hold_t and self._state_data.projectile_hold_t < t then
+							self._state_data.projectile_idle_wanted = true
+						else
+							return
+						end
+					end
+				elseif release then
+					self._state_data.projectile_idle_wanted = nil
+					
+					-- dispose preview unit
+					equipmentbase:on_deploy_interupted()
+					local success
+					
+					if ray then
+						success = equipmentbase[use_function_name](equipmentbase,ray,stuck_enemy)
+						if success then
+							self:_interupt_action_throw_projectile(t)
+							managers.player:add_grenade_amount(-1)
+							
+							self._state_data.projectile_hold_t = nil
+							self._state_data.projectile_throw_wanted = nil
+							self._state_data.projectile_idle_wanted = nil
+							return true
+						end
+					end
+					if not success and has_skill_throw and self._state_data.projectile_hold_t and not self:_is_throwing_grenade() then
+						-- attempt throw
+						self._state_data.projectile_throw_wanted = true
+						self._camera_unit:base():hide_weapon()
+						return
+					end
+					self._state_data.projectile_hold_t = nil
+				end
+			end
+		end
+
+		-- currently pondering(tm) a throw or placement,
+		-- so don't do default placement behavior
+		if not has_skill_throw then
+			return
+		end
+	end
+	-- from here onward, regular behavior
+	
 	if projectile_tweak.is_a_grenade then
 		return self:_check_action_throw_grenade(t, input)
 	elseif projectile_tweak.ability then
@@ -1445,10 +1523,14 @@ Hooks:OverrideFunction(PlayerStandard,"_check_action_throw_projectile",function(
 		return
 	end
 
-	if not managers.player:can_throw_grenade() then
+	if not can_throw_grenade then
 		self._state_data.projectile_throw_wanted = nil
 		self._state_data.projectile_idle_wanted = nil
 
+		if self._state_data.throwing_projectile then
+			self:_interupt_action_throw_projectile(t)
+		end
+		
 		return
 	end
 

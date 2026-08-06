@@ -64,7 +64,7 @@ Hooks:PostHook(EquipmentsTweakData,"init","tcd_equipmentstweakdata_init",functio
 		4
 	}
 	
-	self.tripmine_throwable = {
+	self.tripmine_throwable = { -- not used
 		deploy_time = 2,
 		dummy_unit = "units/equipment/tripmine_throwable/tripmine_throwable_dummy",
 		use_function_name = "use_trip_mine",

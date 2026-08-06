@@ -23,10 +23,13 @@ Hooks:PostHook(BlackMarketTweakData, "_init_projectiles", "tcd_projectiletd_init
 		client_authoritative = true,
 		no_cheat_count = true,
 		--instant_use = true,
-		override_equipment_id = "tripmine_throwable", --reference key for corresponding data in equipmentstweakdata
-		primary_class = "class_grenade",
-		subclasses = {}
+		override_equipment_id = "trip_mine", --reference key for corresponding data in equipmentstweakdata -- or "tripmine_throwable"
+		primary_class = "class_grenade", -- the projectile itself is inert as it only spawns the actual tripmine, so class/subclasses don't actually matter much
+		subclasses = {},
+		throw_skill_check = { category = "trip_mine", upgrade = "can_throw" },
+		stick_skill_check = { category = "trip_mine", upgrade = "can_place_on_enemies" }
 	}
+	
 	--self.projectiles.smoke_screen_grenade.hold_function_name = "_update_sicario_throw_smoke"
 	self.projectiles.smoke_screen_grenade.is_from_perk_deck = true
 	self.projectiles.pocket_ecm_jammer.is_from_perk_deck = true
