@@ -977,10 +977,20 @@ function TripMineBase:_explode(col_ray)
 		managers.explosion:give_local_player_dmg(self._ray_to_pos, damage_size, tweak_data.weapon.trip_mines.player_damage)
 		self:_play_sound_and_effects(damage_size)
 		
+		local damage = tweak_data.weapon.trip_mines.damage * managers.player:upgrade_value("trip_mine", "damage_multiplier", 1)
+		
+		if self._attached_data and alive(self._attached_data.unit) then
+			local dmg_ext = self._attached_data.unit:character_damage()
+			if dmg_ext and dmg_ext.damage_explosion then
+				-- deal 3x damage to the stuck enemy (Have a Blast basic)
+				-- assume that if the enemy was stuck, it had to have been stuck there by a player with Have a Blast basic
+				self:_give_explosion_damage(col_ray, self._attached_data.unit, damage * managers.player:upgrade_value_by_level("trip_mine","stuck_enemy_damage_mul",1))
+			end
+		end
+		
 		local slotmask = managers.slot:get_mask("explosion_targets")
 		local bodies = World:find_bodies("intersect", "cylinder", my_pos, self._ray_to_pos, damage_size, slotmask)
 		
-		local damage = tweak_data.weapon.trip_mines.damage * managers.player:upgrade_value("trip_mine", "damage_multiplier", 1)
 		local characters_hit = {}
 
 		for _, hit_body in ipairs(bodies) do
@@ -1036,9 +1046,7 @@ function TripMineBase:_explode(col_ray)
 					if character then
 						
 						if self._attached_data and hit_unit == self._attached_data.unit then
-							-- deal 3x damage to the stuck enemy (Have a Blast basic)
-							-- assume that if the enemy was stuck, it had to have been stuck there by a player with Have a Blast basic
-							self:_give_explosion_damage(col_ray, hit_unit, damage * managers.player:upgrade_value_by_level("trip_mine","stuck_enemy_damage_mul",1))
+							-- stuck unit is already damaged separately
 						else
 							self:_give_explosion_damage(col_ray, hit_unit, damage)
 						end
