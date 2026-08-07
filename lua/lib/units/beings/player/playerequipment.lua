@@ -192,9 +192,17 @@ function PlayerEquipment:use_first_aid_kit(ray,criminal_to_revive)
 		managers.statistics:use_first_aid()
 
 		if criminal_to_revive and alive_g(criminal_to_revive) then
-			PlayerStandard.say_line(self, "f36x_any")
-
-			criminal_to_revive:interaction():interact(self._unit, true)
+			if criminal_to_revive ~= self._unit then
+				PlayerStandard.say_line(self, "f36x_any")
+				
+				-- send revive message
+				
+				
+				criminal_to_revive:interaction():interact(self._unit, true)
+			else -- allow self revive :)  ....for now
+				
+				criminal_to_revive:character_damage():revive()
+			end
 		else
 			local pos = ray.position
 			local rot = tmp_rot1

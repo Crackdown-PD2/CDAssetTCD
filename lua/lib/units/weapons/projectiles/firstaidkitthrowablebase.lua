@@ -95,8 +95,7 @@ function FirstAidKitThrowableBase:clbk_impact(tag, unit, body, other_unit, other
 		
 		local revivable_unit = nil
 		
-		local autorevive_level = 0
-		local closest_rev_dis = managers.player:upgrade_value_by_level("first_aid_kit", "auto_revive", autorevive_level,0)
+		local closest_rev_dis = managers.player:upgrade_value("first_aid_kit", "auto_revive",0)
 
 		if closest_rev_dis > 0 then
 			local nearby_criminals = world_g:find_units_quick(unit, "sphere" , position, closest_rev_dis, managers.slot:get_mask("criminals_no_deployables"))
@@ -106,7 +105,7 @@ function FirstAidKitThrowableBase:clbk_impact(tag, unit, body, other_unit, other
 				local ext_mov = criminal:movement()
 
 				if ext_mov and ext_mov.downed and ext_mov:downed() then
-					local dis = mvec3_dis(dummy_pos, ext_mov:m_pos())
+					local dis = mvec3_dis(position, ext_mov:m_pos())
 
 					if dis < closest_rev_dis then
 						closest_rev_dis = dis
