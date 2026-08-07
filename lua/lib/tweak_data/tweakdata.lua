@@ -25,7 +25,7 @@ tweak_data.projectiles.wpn_prj_jav.damage = 400
 
 tweak_data.projectiles.tripmine_throwable = {
 	name_id = "bm_grenade_tripmine",
-	damage = 0,
+	damage = 150, -- menu only; the projectile itself does no damage
 	launch_speed = 125,
 	adjust_z = 0,
 	mass_look_up_modifier = 1,
