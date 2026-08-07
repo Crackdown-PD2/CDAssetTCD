@@ -343,7 +343,7 @@ Hooks:PostHook(SkillTreeTweakData, "init", "tcd_skilltreetd_init", function(self
 		{
 			upgrades = {
 				"first_aid_kit_can_throw",
-				"revive_interaction_speed_multiplier"
+				"medic_doctor_bag_heal_aura_1"
 			},
 			cost = self.costs.hightier
 		},
@@ -383,13 +383,13 @@ Hooks:PostHook(SkillTreeTweakData, "init", "tcd_skilltreetd_init", function(self
 	replace_skill(tree_indices.medic,3,{ --Checkup
 		{
 			upgrades = {
-				"doctor_bag_aoe_health_regen_1"
+				"medic_doctor_bag_heal_aura_2"
 			},
 			cost = self.costs.hightier
 		},
 		{
 			upgrades = {
-				"doctor_bag_aoe_health_regen_2"
+				"medic_doctor_bag_heal_aura_3"
 			},
 			cost = self.costs.hightierpro
 		},

@@ -227,6 +227,41 @@ function PlayerEquipment:use_first_aid_kit(ray,criminal_to_revive)
 	return false
 end
 
+function PlayerEquipment:use_doctor_bag(index)
+	local ray = self:valid_shape_placement("doctor_bag")
+
+	if ray then
+		local pos = ray.position
+		local rot = self:_m_deploy_rot()
+
+		rot = Rotation(rot:yaw(), 0, 0)
+
+		PlayerStandard.say_line(self, "s02x_plu")
+
+		if managers.blackmarket:equipped_mask().mask_id == tweak_data.achievement.no_we_cant.mask then
+			managers.achievment:award_progress(tweak_data.achievement.no_we_cant.stat)
+		end
+
+		managers.mission:call_global_event("player_deploy_doctorbag")
+		managers.statistics:use_doctor_bag()
+
+		local upgrade_lvl_healaura = managers.player:upgrade_level("doctor_bag", "heal_aura", 0)
+		local upgrade_lvl_overshield = managers.player:upgrade_level("first_aid_kit", "damage_overshield", 0)
+		local upgrade_bits = Bitwise:lshift(upgrade_lvl_healaura, DoctorBagBase.UPGRADE_SHIFT_HEALAURA)
+			+ Bitwise:lshift(upgrade_lvl_overshield, DoctorBagBase.UPGRADE_SHIFT_OVERSHIELD)
+		
+		if Network:is_client() then
+			managers.network:session():send_to_host("place_deployable_bag", "DoctorBagBase", pos, rot, upgrade_bits)
+		else
+			local unit = DoctorBagBase.spawn(pos, rot, upgrade_bits, managers.network:session():local_peer():id())
+		end
+
+		return true
+	end
+
+	return false
+end
+
 function PlayerEquipment:valid_shape_placement(equipment_id, equipment_data)
 	local unit = self._unit
 	local mov_ext = unit:movement()

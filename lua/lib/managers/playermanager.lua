@@ -6,6 +6,21 @@ local pairs_g = pairs
 local alive_g = alive
 local world_g = World
 
+Hooks:PostHook(PlayerManager,"init","tcd_playermanager_init",function(self)
+	self._damage_overshield = {}
+--	self._can_lunge = true
+--	Global.player_manager.synced_abilities = {} --not actually synced atm
+end)
+
+
+Hooks:PostHook(PlayerManager,"_internal_load","tcd_playermanager_internal_load",function(self)
+	local grenade = managers.blackmarket:equipped_grenade()
+	self:_set_grenade({
+		grenade = grenade,
+		amount = self:get_max_grenades() --for some reason, in vanilla, spawn amount is math.min()'d with the DEFAULT amount 
+	})
+end)
+
 Hooks:PostHook(PlayerManager,"check_skills","tcd_playermanager_checkskills",function(self)
 	
 	-- Point and Click related skill checks
@@ -556,9 +571,99 @@ function PlayerManager:_deduct_local_cocaine_stacks()
 end
 
 
-function PlayerManager:consume_damage_overshield(damage)
-	-- todo!
+--new overshield mechanic whose sources are separate like damage absorption,
+-- and provides flat damage reduction like absorption, except the amount of damage you take is subtracted from your overshield amount.
+--....so, like overshield in basically any other video game.
+function PlayerManager:set_damage_overshield(id,amount,params,skip_sort)
+	local overshield_data
+	
+	for i,_overshield_data in pairs(self._damage_overshield) do 
+		if _overshield_data.id == id then 
+			overshield_data = _overshield_data
+			break
+		end
+	end
+	if not overshield_data then 
+		local i = #self._damage_overshield + 1
+		self._damage_overshield[i] = {id=id}
+		overshield_data = self._damage_overshield[i]
+	end
+	
+	overshield_data.amount = amount
+	if params then 
+		if params.depleted_callback then 
+			overshield_data.depleted_callback = params.depleted_callback
+		end
+	end
+	
+	--none of that Application:digest_value() nonsense here
+	if not skip_sort then 
+		--skip_sort should ideally be used when setting multiple damage overshields at once,
+		--since the get_damage_overshield_total() func involves iterating over a table,
+		--so it is somewhat inefficient
+		self:sort_damage_overshield()
+	end
+end
+
+--completely unregister a damage overshield
+function PlayerManager:remove_damage_overshield(key,force_sort)
+	for i,overshield_data in pairs(self._damage_overshield) do 
+		if overshield_data.id == key then
+			table.remove(self._damage_overshield,i)
+		end
+	end
+	if not force_sort then 
+		self:sort_damage_overshield()
+	end
+end
+
+--subtracts incoming damage from overshields, and returns remaining damage
+--smaller overshield amounts are consumed first, so that their callbacks can be triggered
+function PlayerManager:consume_damage_overshield(damage,force_sort)
+	--overshield 
+	if damage <= 0 then 
+		return damage
+	end
+	for i=#self._damage_overshield,1,-1 do
+		local overshield_data = self._damage_overshield[i]
+		if damage <= 0 then 
+			break
+		end
+		local prev_overshield_amount = overshield_data.amount
+		local new_overshield_amount = math.max(overshield_data.amount - damage,0)
+		overshield_data.amount = new_overshield_amount
+		local blocked_damage = prev_overshield_amount - new_overshield_amount
+		if new_overshield_amount <= 0 then 
+			if type(overshield_data.depleted_callback) == "function" then 
+				damage = overshield_data.depleted_callback(damage,blocked_damage) or damage
+				--note that this callback is performed before the player damage calculation is complete!
+			end
+			table.remove(self._damage_overshield,i)
+		end
+		damage = damage - blocked_damage
+	end
+	
+	if not force_sort then
+		self:sort_damage_overshield()
+	end
+	
 	return damage
+end
+
+function PlayerManager:sort_damage_overshield()
+	table.sort(self._damage_overshield,function(a,b)
+		return a.amount > b.amount
+	end)
+	
+	managers.hud:set_absorb_active(HUDManager.PLAYER_PANEL, self:get_damage_overshield_total())
+end
+
+function PlayerManager:get_damage_overshield_total()
+	local sum = 0
+	for k,v in pairs(self._damage_overshield) do 
+		sum = sum + v.amount
+	end
+	return sum
 end
 
 
@@ -662,3 +767,33 @@ Hooks:OverrideFunction(PlayerManager,"damage_reduction_skill_multiplier",functio
 end)
 
 
+function PlayerManager:get_max_grenades(grenade_id)
+	local eq_gr,eq_max = managers.blackmarket:equipped_grenade()
+	local max_amount = 0
+	if not grenade_id then 
+		grenade_id = eq_gr
+		max_amount = eq_max
+	end
+	local ptd = tweak_data.blackmarket.projectiles
+	local gtd = ptd and grenade_id and ptd[grenade_id]
+--		local max_amount = tweak_data:get_raw_value("blackmarket", "projectiles", grenade_id, "max_amount") or 0
+	if gtd then 
+		max_amount = gtd.max_amount or max_amount
+		if gtd.throwable then
+			if gtd.is_a_grenade then 
+				max_amount = math.round(max_amount * self:upgrade_value("player","grenades_amount_increase_mul",1))
+			else
+				max_amount = math.round(max_amount * self:upgrade_value("class_throwing","throwing_amount_increase_mul",1))
+			end
+		end
+		max_amount = managers.modifiers:modify_value("PlayerManager:GetThrowablesMaxAmount", max_amount)
+		
+		if gtd.override_equipment_id then
+			if tweak_data.upgrades.values[gtd.override_equipment_id] then
+				max_amount = max_amount + self:upgrade_value(gtd.override_equipment_id,"quantity",0)
+			end
+		end
+		
+	end
+	return max_amount
+end

@@ -145,11 +145,11 @@
 	"menu_mulligan_desc" : "BASIC: ##$basic##\nAfter missing, you gain a ##1-second## grace period where you still benefit from your Point and Click stacks. Killing an enemy during the grace period will prevent your stacks from being lost.\n\nACE: ##$pro##\nThe grace period is extended to ##1.5 seconds##.",
 	
 	"menu_doctors_orders" : "Doctor's Orders",
-	"menu_doctors_orders_desc" : "BASIC: ##$basic##\nYou revive downed players ##30%## faster.\n\nACE: ##$pro##\nAfter you revive a player, you and the player you revived gain ##+50%## Damage Resistance for ##4## seconds.",
+	"menu_doctors_orders_desc" : "BASIC: ##$basic##\nYour Doctor bags gain a healing aura that restores ##1%## of a player's Missing Health per second in a ##3## meter diameter.\n\nYou gain the ability to throw First Aid Kits. To throw a First Aid Kit, release $BTN_THROW_GRENADE while aiming the First Aid Kit outside of its placement range.\n\nACE: ##$pro##\nReviving a player grants ##+50%## Damage Resistance to both of you for ##4## seconds.\n\nNote: Healing aura requires line of sight to Doctor Bag and does not stack.",
 	"menu_in_case_of_trouble" : "In Case Of Trouble",
 	"menu_in_case_of_trouble_desc" : "BASIC: ##$basic##\nYour supply of First Aid Kits is increased to ##12##.\n\nACE: ##$pro##\nYour supply of First Aid Kits is increased to ##18##.",
 	"menu_checkup" : "Checkup",
-	"menu_checkup_desc" : "BASIC: ##$basic##\nYour Doctor Bags restore ##1%## of a player's Maximum Health every ##2## seconds in a ##3## meter diameter.\n\nACE: ##$pro##\nRange increased to ##6## meters.\n\nNote: Healing effect cannot stack. Requires line of sight to the Doctor Bag in question.",
+	"menu_checkup_desc" : "BASIC: ##$basic##\nYour Doctor Bags also restore ##1%## Maximum Health per second.\n\nACE: ##$pro##\nThe healing aura's effect persists for ##5## seconds after exiting it.",
 	"menu_life_insurance" : "Life Insurance",
 	"menu_life_insurance_desc" : "BASIC: ##$basic##\nYour deployed First Aid Kits will be automatically used if a player is downed within ##5## meters, healing them and preventing the down.\nThis effect has a ##20## second cooldown per player.\n\nACE: ##$pro##\nCooldown reduced to ##10## seconds.\n\nNote: This effect directly interacts with Crook's Borrowed Time, allowing users to prevent going down at the end of the grace period with Life Insurance's effect.",
 	"menu_outpatient" : "Outpatient",

@@ -568,6 +568,9 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 	
 
 	--Medic
+	-- health_regen_missing = 0.01 -- 1% of missing health
+	
+	
 	self.values.player.revive_interaction_speed_multiplier = { --vanilla upgrade, but tweaked values
 		0.7
 	}
@@ -580,21 +583,13 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 	}
 
 	self.values.first_aid_kit.quantity = {
-		8, -- + 4 = 12 total
-		14 -- + 4 = 18 total
+		2, -- + 4 = 6 total
+		6  -- + 4 = 10 total
 	}
-
-		--i didn't want to change the data type from a number to a table to hold the cooldown
-		--for many reasons, including stability and mod compatibility
-		--and the upgrade level index is used instead of the direct value for networking anyway,
-		--so we'll just get the cooldown time that way
+	
 	self.values.first_aid_kit.first_aid_kit_auto_recovery = {
-		500,
-		500
-	}
-	self.values.first_aid_kit.auto_recovery_cooldown = {--this is referenced by the index of the above upgrade instead of having its own cooldown upgrade
-		20, --20 seconds cooldown
-		10 --10 seconds cooldown
+		300,
+		300
 	}
 	self.definitions.first_aid_kit_auto_recovery_2 = {
 		name_id = "menu_life_insurance",
@@ -631,6 +626,58 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 		}
 	}
 	
+	self.values.doctor_bag.heal_aura = {
+		{
+			interval = 1, -- 1 second per heal tick
+			radius = 300, -- 3m effective heal aura radius
+			linger_duration = false,
+			health_regen_missing = 0.01, -- regen 1% of missing health per tick
+			health_regen_maximum = nil
+		},
+		{
+			interval = 1, -- 1 second per heal tick
+			radius = 300, -- 3m effective heal aura radius
+			linger_duration = false,
+			health_regen_missing = 0.01, -- regen 1% of missing health per tick
+			health_regen_maximum = 0.01 -- regen 1% of max health per tick
+		},
+		{
+			interval = 1, -- 1 second per heal tick
+			radius = 300, -- 3m effective heal aura radius
+			linger_duration = 5, -- persists for 5 seconds after leaving docbag aura
+			health_regen_missing = 0.01, -- regen 1% of missing health per tick
+			health_regen_maximum = 0.01 -- regen 1% of max health per tick
+		}
+	}
+	
+	self.definitions.medic_doctor_bag_heal_aura_1 = {
+		name_id = "menu_checkup",
+		category = "feature",
+		upgrade = {
+			value = 1,
+			upgrade = "heal_aura",
+			category = "doctor_bag"
+		}
+	}
+	self.definitions.medic_doctor_bag_heal_aura_2 = {
+		name_id = "menu_checkup",
+		category = "feature",
+		upgrade = {
+			value = 2,
+			upgrade = "heal_aura",
+			category = "doctor_bag"
+		}
+	}
+	self.definitions.medic_doctor_bag_heal_aura_3 = {
+		name_id = "menu_checkup",
+		category = "feature",
+		upgrade = {
+			value = 3,
+			upgrade = "heal_aura",
+			category = "doctor_bag"
+		}
+	}
+	--[[
 	self.values.doctor_bag.aoe_health_regen = {
 		{
 			0.01, --regenerate 1% of max health
@@ -661,7 +708,9 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 			category = "doctor_bag"
 		}
 	}
+	--]]
 	
+	-- reused for both first aid kits and doctor bags
 	self.values.first_aid_kit.damage_overshield = {
 		{
 			1, --100% of the sum of health and armor is added as an absorption overshield

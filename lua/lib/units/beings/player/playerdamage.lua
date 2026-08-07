@@ -1,9 +1,198 @@
 local mvec3_norm = mvector3.normalize
-local mvec1 = Vector3()
+local mvec3_set = mvector3.set
+local mvec3_sz = mvector3.set_z
+local mvec3_sub = mvector3.subtract
+local mvec3_cross = mvector3.cross
+local mvec3_norm = mvector3.normalize
+local mvec3_set_static = mvector3.set_static
+local mvec3_mul = mvector3.multiply
+local tmp_vec1 = Vector3()
+local tmp_vec2 = Vector3()
+local tmp_vec3 = Vector3()
+local bezier3 = require("lib/utils/Bezier3")
 
 Hooks:PostHook(PlayerDamage,"init","tcd_playerdmg_init",function(self)
 	self._lives_max = 0 -- tcd var
+	self._medic_hot_aura_t = 0 -- cooldown timer counter value for medic's docbag healing aura
 	self:recalculate_max_revives()
+end)
+
+
+function PlayerDamage._draw_bezier(brush, source, target, tangent)
+	local line_segments = {}
+	local v = target - source
+
+	mvec3_sz(v, 0)
+
+	local xmax = mvec3_norm(v)
+	local p = source + tangent * xmax / 2
+	local x1 = 0
+	local y1 = source.z
+	local x2 = xmax / 2
+	local y2 = p.z
+	local x3 = xmax / 2
+	local y3 = p.z
+	local x4 = xmax
+	local y4 = target.z
+	local angle_tolerance = 0
+	local cusp_limit = 0
+	local scale = 1
+
+	table.insert(line_segments, {
+		0,
+		source.z
+	})
+	bezier3.interpolate(function (s, x, y)
+		table.insert(line_segments, {
+			x,
+			y
+		})
+	end, x1, y1, x2, y2, x3, y3, x4, y4, scale, angle_tolerance, cusp_limit)
+
+	local n = #line_segments
+
+	for i = 1, n - 1 do
+		local p1 = source + v * line_segments[i][1]
+
+		mvec3_sz(p1, line_segments[i][2])
+
+		local p2 = source + v * line_segments[i + 1][1]
+
+		mvec3_sz(p2, line_segments[i + 1][2])
+		brush:cylinder(p1, p2, 0.5)
+
+		line_segments[i] = nil
+	end
+end
+
+-- Medic's Doctor's Orders (doctor bag healing over time radius)
+Hooks:PostHook(PlayerDamage,"_upd_health_regen","tcd_playerdmg_update_health_regen",function(self,t,dt)
+	-- check for nearby docbags
+	
+	local pm = managers.player
+	
+	do -- Doctor's Orders (i totally overengineered this)
+	
+		-- use a variable instead of a cooldown property
+		-- so that healing can be properly calculated in case of performance loss,
+		-- even if frame loss spans over multiple ticks
+		
+		local heal_aura_level,heal_aura_upgrade_data
+		local bag,docbag_level,distance = DoctorBagBase.get_best_hot(self._unit:movement():m_pos())
+		if bag then
+			docbag_level = bag._healaura_upgrade_level
+			local upgrade_data = pm:upgrade_value_by_level("doctor_bag","heal_aura",docbag_level,nil)
+			if upgrade_data and upgrade_data ~= 0 and upgrade_data.linger_duration then
+				-- set/extend linger duration
+				pm:activate_temporary_property("medic_hot_aura_linger",upgrade_data.linger_duration,docbag_level)
+				
+				-- use this heal aura level
+				heal_aura_level = docbag_level
+				heal_aura_upgrade_data = upgrade_data
+			end
+			local dir_to_bag = tmp_vec1
+			mvec3_set(dir_to_bag,bag._hot_draw_pos)
+			local player_pos = tmp_vec2
+			mvec3_set(player_pos,self._unit:position()) --self._unit:oobb():center())
+			mvec3_sub(dir_to_bag,player_pos)
+			
+			local bt = math.sin(t * math.pi * 3) * 10
+			local tangent = tmp_vec3
+			mvec3_cross(tangent,dir_to_bag,math.UP * bt)
+			--[[ test tether drawing stuff
+			--local fwd = self._unit:movement():m_head_rot():y()
+			--mvec3_set_static(tangent,math.cos(bt),math.sin(bt),0)
+			--mvec3_cross(tangent,dir_to_bag,tangent)
+			
+			
+			--mvec3_norm(dir_to_bag)
+			mvec3_set(tangent,dir_to_bag)
+			Console:SetTracker(tostring(bt),1)
+			Console:SetTracker(tostring(dir_to_bag),2)
+			mvec3_cross(tangent,dir_to_bag,math.UP * bt)
+			Console:SetTracker(tostring(tangent),3)
+			Console:SetTracker(tostring(mvector3.length(tangent)),4)
+			
+
+			--local len = mvec3_norm(tangent)
+--			mvec3_mul(tangent,distance)
+--			mvec3_mul(tangent,bt)
+			Draw:brush(Color.green:with_alpha(0.75)):cylinder(bag._unit:position(),bag._unit:position() + tangent,1.5)
+			--]]
+			
+			self._draw_bezier(bag._hot_brush,bag._unit:position(),player_pos,tangent)
+			bag._hot_brush:sphere(player_pos,1,2)
+		end
+		if not heal_aura_level then
+			-- optimization: only check against linger level if best nearby is not already max
+			heal_aura_level = math.max(docbag_level,pm:get_temporary_property("medic_hot_aura_linger",0))
+			
+			if heal_aura_level > 0 then
+				heal_aura_upgrade_data = pm:upgrade_value_by_level("doctor_bag","heal_aura",heal_aura_level,nil)
+			end
+		end
+		
+		
+		
+		if self._medic_hot_aura_t > 0 then
+			-- on cooldown
+			self._medic_hot_aura_t = self._medic_hot_aura_t - dt
+		elseif heal_aura_level and heal_aura_level > 0 then
+			
+			local seconds_per_tick = heal_aura_upgrade_data.interval
+			local active_t = math.abs(self._medic_hot_aura_t/seconds_per_tick)
+			
+			local linger = pm._temporary_properties._properties.medic_hot_aura_linger
+			if linger then
+				local time_left = linger[2] - Application:time()
+				
+				active_t = math.min(time_left,active_t)
+			end
+			
+			
+			local num_ticks = 1 + math.floor(active_t)
+			
+			local heal_amount = 0
+			-- calculate healing
+			if heal_aura_upgrade_data.health_regen_missing then
+				-- 1% of missing health
+				
+				-- due to how this frame loss compensation works,
+				-- it's actually better healing if you drop excessive frames during the heal period
+				heal_amount = heal_amount + ((1 - self:health_ratio()) * heal_aura_upgrade_data.health_regen_missing)
+			end
+			if heal_aura_upgrade_data.health_regen_maximum then
+				-- 1% of maximum health
+				heal_amount = heal_amount + (self:_max_health() * heal_aura_upgrade_data.health_regen_maximum)
+			end
+			self:restore_health(heal_amount * num_ticks,true,true)
+			
+			-- reset cooldown
+			self._medic_hot_aura_t = self._medic_hot_aura_t + num_ticks * seconds_per_tick
+		end
+		
+		
+	end
+--[[
+	-- todo feed status info to buffmanager
+	local player = managers.player:local_player()
+	if alive(player) then
+		local mov_ext = player:movement()
+		if mov_ext then
+			local player_pos = mov_ext:m_pos()
+			
+			--!!! TODO
+			if mvector3.distance_sq(player_pos,unit:position()) <= self._HOT_RADIUS_SQ then
+				if hot_persist then
+				else
+				end
+			end
+			
+			
+		end
+	end
+--]]
+	
 end)
 
 function PlayerDamage:damage_melee(attack_data)
@@ -802,4 +991,44 @@ function PlayerDamage:play_melee_hit_sound_and_effects(attack_data, sound_type, 
 			end
 		end
 	end
+end
+
+
+function PlayerDamage:_activate_preventative_care(upgrade_level)
+	if upgrade_level and upgrade_level > 0 then
+
+		local pm = managers.player
+		local ehp = nil
+		local mul = nil
+		local upgrade_data = pm:upgrade_value_by_level("first_aid_kit","damage_overshield",upgrade_level,{0,0})
+		
+		if managers.player:has_category_upgrade("player", "sociopath_mode") then
+			ehp = 1
+			mul = 1
+		else
+			ehp = self:_max_health() + self:_max_armor()
+			mul = upgrade_data[1]
+		end
+		
+		local amount = ehp * mul
+		
+		local duration = upgrade_data[2]
+		pm:set_damage_overshield("preventative_care_absorption",amount,
+			{
+				depleted_callback = function(damage_before_overshield,damage_blocked_by_overshield)
+					if duration > 0 then 
+						pm:activate_temporary_property("preventative_care_invuln_active",duration,true)
+						
+						return 0 -- nullify remaining damage for this attack
+					end
+				end
+			}
+		)
+	end
+end
+
+-- temporary invuln from Medic's Preventative Care
+local orig_chk_invuln = PlayerDamage._chk_can_take_dmg
+function PlayerDamage:_chk_can_take_dmg(...)
+	return orig_chk_invuln(self,...) and not managers.player:has_active_temporary_property("preventative_care_invuln_active") and not managers.player:has_active_temporary_property("armorer_perfect_defense_invuln")
 end
