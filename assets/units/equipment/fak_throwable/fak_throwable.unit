@@ -13,7 +13,7 @@
 		<extension name="contour" class="ContourExt" />
 	</extensions>
 	<sounds>
-		<default_soundsource source="g_g" />
-		<soundsource name="snd" source="g_g" />
+		<default_soundsource source="g_first_aid" />
+		<soundsource name="snd" source="g_first_aid" />
 	</sounds>
 </unit> 

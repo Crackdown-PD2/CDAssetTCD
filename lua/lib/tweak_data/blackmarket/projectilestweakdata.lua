@@ -9,6 +9,7 @@ Hooks:PostHook(BlackMarketTweakData, "_init_projectiles", "tcd_projectiletd_init
 		ability = false,
 		dlc = false,
 		throwable = true,
+		throw_shout = true, -- setting this to true actually disables shouting
 		max_amount = 6,
 		repeat_expire_t = 1.5,
 		throw_allowed_expire_t = 0.1,
@@ -41,6 +42,7 @@ Hooks:PostHook(BlackMarketTweakData, "_init_projectiles", "tcd_projectiletd_init
 		ability = false,
 		dlc = false,
 		throwable = true,
+		throw_shout = true,
 		max_amount = 4,
 		repeat_expire_t = 1.5,
 		throw_allowed_expire_t = 0.1,

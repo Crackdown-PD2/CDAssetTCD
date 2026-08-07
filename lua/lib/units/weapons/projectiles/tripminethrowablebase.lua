@@ -179,10 +179,9 @@ end
 -- tcd function
 -- only called as host when another player's tripmine is removed
 function TripmineThrowableBase:_husk_on_collision(...)
-	-- self:_handle_hiding_and_destroying(true,nil)
 	if not self._collided then
 		self._collided = true
-		self._unit:set_slot(0)
+		self:_handle_hiding_and_destroying(true,nil)
 	end
 end
 

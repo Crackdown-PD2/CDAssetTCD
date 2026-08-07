@@ -1,6 +1,8 @@
 <materials version="3">
-    <material name="tripmine" unique="true" render_template="generic:DEPTH_SCALING:DIFFUSE_TEXTURE:NORMALMAP" version="2">
-        <diffuse_texture file="units/payday2/equipment/gen_equipment_tripmine/tripmine_df"/>
-        <bump_normal_texture file="units/payday2/equipment/gen_equipment_tripmine/tripmine_nm"/>
-    </material>
+	<material unique="true" name="glow" render_template="generic:DEPTH_SCALING:DIFFUSE_TEXTURE:NORMALMAP" version="2">
+		<diffuse_texture file="units/pd2_dlc_old_hoxton/equipment/gen_equipment_first_aid_kit/gen_equipment_first_aid_kit_df"/>
+		<variable value="1" type="scalar" name="contour_opacity"/>
+		<variable value="0 1 0" type="vector3" name="contour_color"/>
+		<bump_normal_texture file="units/pd2_dlc_old_hoxton/equipment/gen_equipment_first_aid_kit/gen_equipment_first_aid_kit_nm"/>
+	</material>
 </materials>
