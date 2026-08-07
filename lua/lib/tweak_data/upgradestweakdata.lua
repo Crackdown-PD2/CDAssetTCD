@@ -606,6 +606,17 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 		}
 	}
 	
+	self.values.first_aid_kit.can_throw = { true }
+	self.definitions.first_aid_kit_can_throw = {
+		name_id = "menu_doctors_orders",
+		category = "feature",
+		upgrade = {
+			value = 1,
+			upgrade = "can_throw",
+			category = "first_aid_kit"
+		}
+	}
+	
 	self.values.doctor_bag.quantity = { --this is for the number of deployable docbags you have
 		1, --2 total
 		2 --3 total

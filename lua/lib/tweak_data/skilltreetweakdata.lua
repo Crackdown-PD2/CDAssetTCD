@@ -342,6 +342,7 @@ Hooks:PostHook(SkillTreeTweakData, "init", "tcd_skilltreetd_init", function(self
 	replace_skill(tree_indices.medic,1,{ --Doctor's Orders
 		{
 			upgrades = {
+				"first_aid_kit_can_throw",
 				"revive_interaction_speed_multiplier"
 			},
 			cost = self.costs.hightier
