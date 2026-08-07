@@ -537,7 +537,6 @@ Hooks:OverrideFunction(PlayerStandard,"_do_melee_damage",function(self, t, bayon
 end)
 
 -- Runner's Float Like a Butterfly (melee-and-sprint check)
-
 Hooks:OverrideFunction(PlayerStandard,"_start_action_melee",function(self, t, input, instant)
 	self._equipped_unit:base():tweak_data_anim_stop("fire")
 	self:_interupt_action_reload(t)
@@ -1491,6 +1490,8 @@ Hooks:OverrideFunction(PlayerStandard,"_check_action_throw_projectile",function(
 					self._state_data.projectile_hold_t = nil
 				end
 			end
+		else
+			self._state_data.projectile_hold_t = nil
 		end
 
 		-- currently pondering(tm) a throw or placement,
