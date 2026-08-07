@@ -10,6 +10,7 @@
 		
 		<target mode="append">
 			<anim name="throw_tripmine_throwable" weight="projectile_tripmine_throwable"/>
+			<anim name="throw_fak_throwable" weight="projectile_fak_throwable"/>
 		</target>
 	</tweak>
 	
@@ -23,6 +24,7 @@
 		
 		<target mode="append">
 			<anim name="throw_tripmine_throwable_idle" weight="projectile_tripmine_throwable"/>
+			<anim name="throw_fak_throwable_idle" weight="projectile_fak_throwable"/>
 		</target>
 	</tweak>
 	
@@ -36,6 +38,7 @@
 		
 		<target mode="append">
 			<anim name="throw_tripmine_throwable_equip" weight="projectile_tripmine_throwable"/>
+			<anim name="throw_fak_throwable_equip" weight="projectile_fak_throwable"/>
 		</target>
 	</tweak>
 </tweaks>

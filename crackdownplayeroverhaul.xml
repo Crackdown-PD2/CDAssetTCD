@@ -39,6 +39,7 @@
 		<texture path="guis/textures/pd2/specialization/icons_atlas"/>
 	
 	<!-- Equipment/throwables -->
+		<texture path="guis/textures/pd2/blackmarket/icons/grenades/fak_throwable" force="false"/>
 		<texture path="guis/textures/pd2/blackmarket/icons/grenades/tripmine_throwable" force="false"/>
 		<texture path="guis/textures/pd2/blackmarket/icons/deployables/sentry_gun_silent"/>
 		
@@ -71,6 +72,16 @@
 		<animation path="anims/fps/unarmed/throw_tripmine_throwable" force="true" load="true" unload="false"/>
 		<animation path="anims/fps/unarmed/throw_tripmine_throwable_idle" force="true" load="true" unload="false"/>
 		<animation path="anims/fps/unarmed/throw_tripmine_throwable_equip" force="true" load="true" unload="false"/>
+		
+		
+	<!-- First Aid Kit Throwable -->
+		<unit_mat path="units/equipment/fak_throwable/fak_throwable_dummy"/>
+		<unit_obj path="units/equipment/fak_throwable/fak_throwable"/>
+		<unit     path="units/equipment/fak_throwable/fak_throwable_local"/>
+		
+		<animation path="anims/fps/unarmed/throw_fak_throwable" force="true" load="true" unload="false"/>
+		<animation path="anims/fps/unarmed/throw_fak_throwable_idle" force="true" load="true" unload="false"/>
+		<animation path="anims/fps/unarmed/throw_fak_throwable_equip" force="true" load="true" unload="false"/>
 		
 	
 		

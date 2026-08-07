@@ -32,6 +32,15 @@ tweak_data.projectiles.tripmine_throwable = {
 	push_at_body_index = 0,
 	sounds = {}
 }
+tweak_data.projectiles.fak_throwable = {
+	name_id = "debug_equipment_first_aid_kit",
+	damage = 0,
+	launch_speed = 125,
+	adjust_z = 0,
+	mass_look_up_modifier = 1,
+	push_at_body_index = 0,
+	sounds = {}
+}
 
 --frag grenade
 

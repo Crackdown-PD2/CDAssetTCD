@@ -2,7 +2,7 @@ Hooks:PostHook(BlackMarketTweakData, "_init_projectiles", "tcd_projectiletd_init
 	self.projectiles.tripmine_throwable = {
 		name_id = "bm_grenade_tripmine",
 		desc_id = "bm_grenade_tripmine_desc",
-		ignore_statistics = false,
+		ignore_statistics = true,
 		icon = "equipment_trip_mine", 
 		no_cheat_count = true,
 		texture_bundle_folder = nil,
@@ -27,8 +27,40 @@ Hooks:PostHook(BlackMarketTweakData, "_init_projectiles", "tcd_projectiletd_init
 		primary_class = "class_grenade", -- the projectile itself is inert as it only spawns the actual tripmine, so class/subclasses don't actually matter much
 		subclasses = {},
 		throw_skill_check = { category = "trip_mine", upgrade = "can_throw" },
-		stick_skill_check = { category = "trip_mine", upgrade = "can_place_on_enemies" }
+		unitcast_skill_check = { category = "trip_mine", upgrade = "can_place_on_enemies" }
 	}
+	table.insert(self._projectiles_index,#self._projectiles_index+1,"tripmine_throwable")
+	
+	self.projectiles.fak_throwable = {
+		name_id = "debug_equipment_first_aid_kit",
+		desc_id = "des_first_aid_kit",
+		ignore_statistics = true,
+		icon = "equipment_first_aid_kit", 
+		no_cheat_count = true,
+		texture_bundle_folder = nil,
+		ability = false,
+		dlc = false,
+		throwable = true,
+		max_amount = 4,
+		repeat_expire_t = 1.5,
+		throw_allowed_expire_t = 0.1,
+		expire_t = 1.1,
+		animation = "throw_fak_throwable",
+		anim_global_param = "projectile_fak_throwable",
+		local_unit = "units/equipment/fak_throwable/fak_throwable_local",
+		unit_dummy = "units/equipment/fak_throwable/fak_throwable_dummy",
+		unit = "units/equipment/fak_throwable/fak_throwable", -- do not open til kithmas
+		is_a_grenade = false,
+		impact_detonation = true, 
+		client_authoritative = true,
+		no_cheat_count = true,
+		override_equipment_id = "first_aid_kit",
+		primary_class = nil,
+		subclasses = {},
+		throw_skill_check = { category = "first_aid_kit", upgrade = "can_throw" },
+		unitcast_skill_check = { category = "first_aid_kit", upgrade = "auto_revive" }
+	}
+	table.insert(self._projectiles_index,#self._projectiles_index+1,"fak_throwable")
 	
 	--self.projectiles.smoke_screen_grenade.hold_function_name = "_update_sicario_throw_smoke"
 	self.projectiles.smoke_screen_grenade.is_from_perk_deck = true
@@ -157,6 +189,4 @@ Hooks:PostHook(BlackMarketTweakData, "_init_projectiles", "tcd_projectiletd_init
 	
 	self.projectiles.tag_team.base_cooldown = 60 --same as vanilla anyway
 	self.projectiles.tag_team.hold_function_name = "_update_tagteam_hud_targets"
-	
-	table.insert(self._projectiles_index,#self._projectiles_index+1,"tripmine_throwable")
 end)

@@ -73,6 +73,7 @@
 	<hook post="true" file="lib/units/weapons/projectiles/arrowbase.lua" source_file="lib/units/weapons/projectiles/arrowbase"/>
 	<hook post="true" file="lib/units/weapons/projectiles/projectilebase.lua" source_file="lib/units/weapons/projectiles/projectilebase"/>
 	<hook post="true" file="lib/units/weapons/projectiles/tripminethrowablebase.lua" source_file="lib/units/weapons/projectiles/projectilebase"/>
+	<hook post="true" file="lib/units/weapons/projectiles/firstaidkitthrowablebase.lua" source_file="lib/units/weapons/projectiles/projectilebase"/>
 
 	<hook post="true" file="lib/units/weapons/grenades/concussiongrenade.lua" source_file="lib/units/weapons/grenades/concussiongrenade"/>
 	<hook post="true" file="lib/units/weapons/grenades/fraggrenade.lua" source_file="lib/units/weapons/grenades/fraggrenade"/>

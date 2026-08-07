@@ -1444,8 +1444,8 @@ Hooks:OverrideFunction(PlayerStandard,"_check_action_throw_projectile",function(
 		local held = input.btn_projectile_state
 		local release = input.btn_projectile_release 
 		
-		local has_skill_throw = projectile_tweak.throw_skill_check and managers.player:has_category_upgrade(projectile_tweak.throw_skill_check.category,projectile_tweak.throw_skill_check.upgrade)
-		local has_skill_stick = projectile_tweak.stick_skill_check and managers.player:has_category_upgrade(projectile_tweak.stick_skill_check.category,projectile_tweak.stick_skill_check.upgrade)
+		local has_skill_throw = projectile_tweak.throw_skill_check and (projectile_tweak.throw_skill_check == true) or managers.player:has_category_upgrade(projectile_tweak.throw_skill_check.category,projectile_tweak.throw_skill_check.upgrade)
+		local has_skill_unitcast = projectile_tweak.unitcast_skill_check and (projectile_tweak.unitcast_skill_check == true) or managers.player:has_category_upgrade(projectile_tweak.unitcast_skill_check.category,projectile_tweak.unitcast_skill_check.upgrade)
 		
 		if press then
 			self._state_data.projectile_hold_t = t + (projectile_tweak.throw_allowed_expire_t or 0.2)
@@ -1453,7 +1453,7 @@ Hooks:OverrideFunction(PlayerStandard,"_check_action_throw_projectile",function(
 		elseif held or release then
 			if self._state_data.projectile_hold_t then
 				local equipmentbase = self._unit:equipment()
-				local ray,stuck_enemy = equipmentbase:valid_look_at_placement(equipment_data, has_skill_stick)
+				local ray,cast_unit = equipmentbase:check_deployable_placement(projectile_tweak.override_equipment_id, equipment_data, has_skill_unitcast)
 				
 				if held then
 					if has_skill_throw and not self._state_data.projectile_idle_wanted then
@@ -1471,7 +1471,7 @@ Hooks:OverrideFunction(PlayerStandard,"_check_action_throw_projectile",function(
 					local success
 					
 					if ray then
-						success = equipmentbase[use_function_name](equipmentbase,ray,stuck_enemy)
+						success = equipmentbase[use_function_name](equipmentbase,ray,cast_unit)
 						if success then
 							self:_interupt_action_throw_projectile(t)
 							managers.player:add_grenade_amount(-1)

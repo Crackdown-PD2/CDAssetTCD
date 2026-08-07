@@ -40,6 +40,34 @@ local world_g = World
 local idstr_func = Idstring
 local body_idstr = idstr_func("body")
 
+local rot_yaw_mods = {
+	bodybags_bag = -90
+}
+local custom_find_params = {
+	ammo_bag = {
+		20,
+		21,
+		12
+	},
+	doctor_bag = {
+		22,
+		28,
+		15
+	}
+}
+
+-- similar to check_equipment_placement_valid
+function PlayerEquipment:check_deployable_placement(equipment_id,equipment_data,...)
+	if equipment_id == "trip_mine" then
+		return self:valid_look_at_placement(equipment_data,...)
+	elseif equipment_id == "first_aid_kit" then
+		return self:valid_shape_placement(equipment_id,equipment_data,...)
+	else
+		return
+	end
+end
+
+
 --also changed signature: allow passing the arguments from the raycast check 
 function PlayerEquipment:use_trip_mine(ray,stuck_enemy,...)
 	if ray == nil and stuck_enemy == nil then
@@ -150,6 +178,139 @@ function PlayerEquipment:use_trip_mine(ray,stuck_enemy,...)
 	end
 
 	return false
+end
+
+-- allow passing arguments from raycast check
+function PlayerEquipment:use_first_aid_kit(ray,criminal_to_revive)
+	if ray == nil and criminal_to_revive == nil then
+		-- fallback;
+		-- but ideally, ray and revive unit should always be passed
+		ray, criminal_to_revive = self:valid_shape_placement("first_aid_kit", tweak_data.equipments.first_aid_kit, managers.player:has_category_upgrade("first_aid_kit", "auto_revive"))
+	end
+	
+	if ray then
+		managers.statistics:use_first_aid()
+
+		if criminal_to_revive and alive_g(criminal_to_revive) then
+			PlayerStandard.say_line(self, "f36x_any")
+
+			criminal_to_revive:interaction():interact(self._unit, true)
+		else
+			local pos = ray.position
+			local rot = tmp_rot1
+			mrot_set(rot, mrot_yaw(self:_m_deploy_rot()), 0, 0)
+
+			PlayerStandard.say_line(self, "s12")
+
+			local upgrade_lvl = managers.player:upgrade_level("first_aid_kit", "damage_overshield", 0)
+			local auto_recovery = managers.player:upgrade_level("first_aid_kit", "first_aid_kit_auto_recovery", 0)
+			local bits = Bitwise:lshift(auto_recovery, FirstAidKitBase.auto_recovery_shift) + Bitwise:lshift(upgrade_lvl, FirstAidKitBase.upgrade_lvl_shift)
+
+			if Network:is_client() then
+				managers.network:session():send_to_host("place_deployable_bag", "FirstAidKitBase", pos, rot, bits)
+			else
+				FirstAidKitBase.spawn(pos, rot, bits, managers.network:session():local_peer():id())
+			end
+		end
+
+		return true
+	end
+	
+	return false
+end
+
+function PlayerEquipment:valid_shape_placement(equipment_id, equipment_data)
+	local unit = self._unit
+	local mov_ext = unit:movement()
+	local rot = self:_m_deploy_rot()
+	local from = mov_ext:m_head_pos()
+	local to, ray, stuck_enemy = tmp_vec1
+
+	mrot_y(rot, to)
+	mvec3_mul(to, 220)
+	mvec3_add(to, from)
+
+	local slot_manager = managers.slot
+	local slotmask = slot_manager:get_mask("trip_mine_placeables")
+	local ray = unit:raycast("ray", from, to, "slot_mask", slotmask, "ray_type", "equipment_placement")
+	local valid = ray and true or false
+	local dummy_unit = self._dummy_unit
+	local revivable_unit = nil
+
+	if ray then
+		valid = math_dot(ray.normal, math_up) > 0.25
+
+		if valid then
+			local dummy_pos = ray.position
+			local dummy_rot = tmp_rot1
+			local yaw_mod = rot_yaw_mods[equipment_id]
+			local yaw = yaw_mod and mrot_yaw(rot) + yaw_mod or mrot_yaw(rot)
+			mrot_set(dummy_rot, yaw, 0, 0)
+
+			if alive_g(dummy_unit) then
+				dummy_unit:set_position(dummy_pos)
+				dummy_unit:set_rotation(dummy_rot)
+			else
+				dummy_unit = world_g:spawn_unit(idstr_func(equipment_data.dummy_unit), dummy_pos, dummy_rot)
+				self._dummy_unit = dummy_unit
+
+				self:_disable_contour(dummy_unit)
+			end
+
+			local find_params = custom_find_params[equipment_id] or {30, 40, 17}
+			local find_start_pos, find_end_pos = tmp_vec2, tmp_vec3
+			local find_radius = find_params[3]
+
+			mvec3_set(find_start_pos, math_up)
+			mvec3_mul(find_start_pos, find_params[1])
+			mvec3_add(find_start_pos, dummy_pos)
+			mvec3_set(find_end_pos, math_up)
+			mvec3_mul(find_end_pos, find_params[2])
+			mvec3_add(find_end_pos, dummy_pos)
+
+			local bodies = dummy_unit:find_bodies("intersect", "capsule", find_start_pos, find_end_pos, find_radius, slotmask + 14 + 25)
+
+			for i = 1, #bodies do
+				local body = bodies[i]
+
+				if body:has_ray_type(body_idstr) then
+					valid = false
+
+					break
+				end
+			end
+
+			if valid then
+				if equipment_id == "first_aid_kit" then
+					local closest_rev_dis = managers.player:upgrade_value("first_aid_kit", "auto_revive", 0) --init as max distance
+
+					if closest_rev_dis > 0 then
+						local nearby_criminals = world_g:find_units_quick(unit, "sphere" , dummy_pos, closest_rev_dis, slot_manager:get_mask("criminals_no_deployables"))
+
+						for i = 1, #nearby_criminals do
+							local criminal = nearby_criminals[i]
+							local ext_mov = criminal:movement()
+
+							if ext_mov and ext_mov.downed and ext_mov:downed() then
+								local dis = mvec3_dis(dummy_pos, ext_mov:m_pos())
+
+								if dis < closest_rev_dis then
+									closest_rev_dis = dis
+									revivable_unit = criminal
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+
+	if alive_g(dummy_unit) then
+		dummy_unit:set_enabled(valid)
+	end
+
+	return valid and ray, revivable_unit
 end
 
 function PlayerEquipment:valid_look_at_placement(equipment_data, can_place_on_enemies)

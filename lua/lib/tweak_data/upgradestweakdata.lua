@@ -29,6 +29,11 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 	}
 	table.insert(self.level_tree[0].upgrades,"tripmine_throwable")
 	
+	self.definitions.fak_throwable = {
+		category = "grenade"
+	}
+	table.insert(self.level_tree[0].upgrades,"fak_throwable")
+	
 	self.armor_plates_base = 4 --armor plates deployable
 	self.armor_plates_dmg_reduction = 0.85 -- damage_applied = kevlar_plates_dmg_reduction * incoming_damage, so eg. 0.9 = 10% damage reduction
 	

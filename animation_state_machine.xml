@@ -7,5 +7,6 @@
 	
 	<target mode="append">
 		<global name="projectile_tripmine_throwable" value="0"/>
+		<global name="projectile_fak_throwable" value="0"/>
 	</target>
 </tweak>
