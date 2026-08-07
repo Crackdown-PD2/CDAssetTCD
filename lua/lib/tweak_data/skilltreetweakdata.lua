@@ -1894,13 +1894,13 @@ Hooks:PostHook(SkillTreeTweakData, "init", "tcd_skilltreetd_init", function(self
 	replace_skill(tree_indices.demolitions,3,{ --Cheap Trick
 		{
 			upgrades = {
-				"player_throwable_regen"
+				"trip_mine_can_throw"
 			},
 			cost = self.costs.hightier
 		},
 		{
 			upgrades = {
-				"trip_mine_can_throw"
+				"player_throwable_regen"
 			},
 			cost = self.costs.hightierpro
 		},
