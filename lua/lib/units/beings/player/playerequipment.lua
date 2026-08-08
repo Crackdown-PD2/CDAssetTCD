@@ -191,17 +191,41 @@ function PlayerEquipment:use_first_aid_kit(ray,criminal_to_revive)
 	if ray then
 		managers.statistics:use_first_aid()
 
+		local overshield_upgrade_lvl = managers.player:upgrade_level("first_aid_kit","damage_overshield",0)
 		if criminal_to_revive and alive_g(criminal_to_revive) then
 			if criminal_to_revive ~= self._unit then
 				PlayerStandard.say_line(self, "f36x_any")
 				
 				-- send revive message
 				
+				local is_npc
+				local peer_id = managers.criminals:character_peer_id_by_unit(criminal_to_revive)
+				if peer_id then
+					is_npc = false
+					managers.network:session():send_to_peer(peer_id,"revive_with_firstaidkit",overshield_upgrade_lvl)
+					
+					local hint_index = 2
+					managers.network:session():send_to_peers_synched("sync_teammate_helped_hint", hint_index, criminal_to_revive, self._unit)
+					managers.trade:sync_teammate_helped_hint(criminal_to_revive, self._unit, hint_index)
+					
+				else
+					--can't apply overshields/invuln to bots
+					criminal_to_revive:interaction():interact(self._unit, true)
+					is_npc = true
+				end
 				
-				criminal_to_revive:interaction():interact(self._unit, true)
+				if managers.blackmarket:equipped_mask().mask_id == tweak_data.achievement.witch_doctor.mask then
+					managers.achievment:award_progress(tweak_data.achievement.witch_doctor.stat)
+				end
+				
+				managers.statistics:revived({
+					npc = is_npc,
+					reviving_unit = self._unit
+				})
+				
 			else -- allow self revive :)  ....for now
-				
 				criminal_to_revive:character_damage():revive()
+				criminal_to_revive:character_damage():_on_use_first_aid_kit(overshield_upgrade_lvl)
 			end
 		else
 			local pos = ray.position
@@ -210,9 +234,8 @@ function PlayerEquipment:use_first_aid_kit(ray,criminal_to_revive)
 
 			PlayerStandard.say_line(self, "s12")
 
-			local upgrade_lvl = managers.player:upgrade_level("first_aid_kit", "damage_overshield", 0)
 			local auto_recovery = managers.player:upgrade_level("first_aid_kit", "first_aid_kit_auto_recovery", 0)
-			local bits = Bitwise:lshift(auto_recovery, FirstAidKitBase.auto_recovery_shift) + Bitwise:lshift(upgrade_lvl, FirstAidKitBase.upgrade_lvl_shift)
+			local bits = Bitwise:lshift(auto_recovery, FirstAidKitBase.auto_recovery_shift) + Bitwise:lshift(overshield_upgrade_lvl, FirstAidKitBase.upgrade_lvl_shift)
 
 			if Network:is_client() then
 				managers.network:session():send_to_host("place_deployable_bag", "FirstAidKitBase", pos, rot, bits)
@@ -262,7 +285,7 @@ function PlayerEquipment:use_doctor_bag(index)
 	return false
 end
 
-function PlayerEquipment:valid_shape_placement(equipment_id, equipment_data)
+function PlayerEquipment:valid_shape_placement(equipment_id, equipment_data,can_raycast_units,...)
 	local unit = self._unit
 	local mov_ext = unit:movement()
 	local rot = self:_m_deploy_rot()
@@ -324,10 +347,13 @@ function PlayerEquipment:valid_shape_placement(equipment_id, equipment_data)
 			end
 
 			if valid then
-				if equipment_id == "first_aid_kit" then
-					local closest_rev_dis = managers.player:upgrade_value("first_aid_kit", "auto_revive", 0) --init as max distance
-
+				if equipment_id == "first_aid_kit" and can_raycast_units then
+					local closest_rev_dis = managers.player:upgrade_value("first_aid_kit", "deploy_auto_recovery", 0)
 					if closest_rev_dis > 0 then
+						-- because the unit collection is performed by the player unit,
+						-- it can never find the player unit;
+						-- therefore, a downed player cannot ground-deploy a fak to revive themself
+						-- (though they can by throwing the first aid kit at their feet instead)
 						local nearby_criminals = world_g:find_units_quick(unit, "sphere" , dummy_pos, closest_rev_dis, slot_manager:get_mask("criminals_no_deployables"))
 
 						for i = 1, #nearby_criminals do

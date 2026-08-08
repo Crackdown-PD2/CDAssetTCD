@@ -403,12 +403,13 @@ Hooks:PostHook(SkillTreeTweakData, "init", "tcd_skilltreetd_init", function(self
 	replace_skill(tree_indices.medic,4,{ --Life Insurance
 		{
 			upgrades = {
-				"first_aid_kit_auto_recovery_1"
+				"first_aid_kit_deploy_auto_recovery"
 			},
 			cost = self.costs.hightier
 		},
 		{
 			upgrades = {
+				"first_aid_kit_auto_recovery_1",
 				"first_aid_kit_auto_recovery_2"
 			},
 			cost = self.costs.hightierpro
@@ -4701,8 +4702,6 @@ Hooks:PostHook(SkillTreeTweakData, "init", "tcd_skilltreetd_init", function(self
 		--passive +50% max ammo reserves if ammo bag equipped (from cd)
 		"ammo_bag_passive_ammo_stock_bonus",
 		
-		--fak auto revive radius on deploying
-		"first_aid_kit_auto_revive",
 		--fak 80% faster interaction
 		"first_aid_kit_interaction_speed_multiplier",
 		--fak 80% faster deploy (tweaked vanilla)

@@ -582,6 +582,30 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 		}
 	}
 
+
+		--FAK auto revive radius on deploying
+	self.values.first_aid_kit.deploy_auto_recovery = {
+		150 -- 1.5 meters
+	}
+	self.definitions.first_aid_kit_deploy_auto_recovery = {
+		name_id = "menu_first_aid_kit_auto_revive",
+		category = "feature",
+		upgrade = {
+			value = 1,
+			upgrade = "deploy_auto_recovery",
+			category = "first_aid_kit"
+		}
+	}
+	
+	-- base upgrade (no definition/skill check, values only)
+	self.values.first_aid_kit.base_values = {
+		{
+			hot_max_value = 0.1, -- heal total 10% of max health over time
+			hot_duration = 10, -- heal over time is distributed over this many seconds
+			hot_mis_value = 0.5 -- heal 50% of missing health immediately
+		}
+	}
+	
 	self.values.first_aid_kit.quantity = {
 		2, -- + 4 = 6 total
 		6  -- + 4 = 10 total
@@ -628,25 +652,22 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 	
 	self.values.doctor_bag.heal_aura = {
 		{
-			interval = 1, -- 1 second per heal tick
 			radius = 300, -- 3m effective heal aura radius
 			linger_duration = false,
-			health_regen_missing = 0.01, -- regen 1% of missing health per tick
-			health_regen_maximum = nil
+			hot_mis_value = 0.01, -- regen 1% of missing health per tick (1s)
+			hot_max_value = nil
 		},
 		{
-			interval = 1, -- 1 second per heal tick
 			radius = 300, -- 3m effective heal aura radius
 			linger_duration = false,
-			health_regen_missing = 0.01, -- regen 1% of missing health per tick
-			health_regen_maximum = 0.01 -- regen 1% of max health per tick
+			hot_mis_value = 0.01, -- regen 1% of missing health per tick
+			hot_max_value = 0.01 -- regen 1% of max health per tick
 		},
 		{
-			interval = 1, -- 1 second per heal tick
 			radius = 300, -- 3m effective heal aura radius
 			linger_duration = 5, -- persists for 5 seconds after leaving docbag aura
-			health_regen_missing = 0.01, -- regen 1% of missing health per tick
-			health_regen_maximum = 0.01 -- regen 1% of max health per tick
+			hot_mis_value = 0.01, -- regen 1% of missing health per tick
+			hot_max_value = 0.01 -- regen 1% of max health per tick
 		}
 	}
 	
@@ -2848,19 +2869,6 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 	}
 
 	--General free skills (default upgrades)
-		--FAK auto revive radius on deploying
-	self.values.first_aid_kit.auto_revive = {
-		150 --1.5 meters
-	}
-	self.definitions.first_aid_kit_auto_revive = {
-		name_id = "menu_first_aid_kit_auto_revive",
-		category = "feature",
-		upgrade = {
-			value = 1,
-			upgrade = "auto_revive",
-			category = "first_aid_kit"
-		}
-	}
 	
 		--FAK Interaction Speed increased by 80% 
 	self.values.first_aid_kit.interaction_speed_multiplier = {

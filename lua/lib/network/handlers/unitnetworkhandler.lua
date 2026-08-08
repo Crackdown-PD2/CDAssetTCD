@@ -43,6 +43,21 @@ end
 
 
 
+function UnitNetworkHandler:revive_with_firstaidkit(upgrade_level,sender)
+	if not self._verify_sender(sender) or not self._verify_gamestate(self._gamestate_filter.any_ingame) then
+		return
+	end
+	
+	local player = managers.player:local_player()
+	if alive(player) then
+		dmg_ext = player:character_damage()
+		dmg_ext:revive()
+		
+		-- todo check if this needs a 1-frame delay for the revive to kick in
+		dmg_ext:_on_use_first_aid_kit(upgrade_level)
+	end
+end
+
 
 -- ==================================== TRIPMINES
 -- as host, from client

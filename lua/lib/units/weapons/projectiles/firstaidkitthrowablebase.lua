@@ -95,7 +95,7 @@ function FirstAidKitThrowableBase:clbk_impact(tag, unit, body, other_unit, other
 		
 		local revivable_unit = nil
 		
-		local closest_rev_dis = managers.player:upgrade_value("first_aid_kit", "auto_revive",0)
+		local closest_rev_dis = managers.player:upgrade_value("first_aid_kit", "deploy_auto_recovery",0)
 
 		if closest_rev_dis > 0 then
 			local nearby_criminals = world_g:find_units_quick(unit, "sphere" , position, closest_rev_dis, managers.slot:get_mask("criminals_no_deployables"))
