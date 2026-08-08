@@ -418,3 +418,11 @@ end
 function TripmineThrowableBase:set_owner_peer_id(peer_id)
 	self._owner_peer_id = peer_id 
 end
+
+function TripmineThrowableBase:outside_worlds_bounding_box(...)
+	if self._owner_peer_id and self._owner_peer_id == managers.network:session():local_peer():id() then
+		-- placement failed, so destroy it and refund the use
+		managers.player:add_grenade_amount(1, true)
+	end
+	return TripmineThrowableBase.super.outside_worlds_bounding_box(self,...)
+end
