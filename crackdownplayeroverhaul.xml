@@ -66,7 +66,7 @@
 	
 	<!-- Tripmine Throwable -->
 		<unit_mat path="units/equipment/tripmine_throwable/tripmine_throwable_dummy"/>
-		<unit_obj path="units/equipment/tripmine_throwable/tripmine_throwable"/>
+		<unit_mat path="units/equipment/tripmine_throwable/tripmine_throwable"/>
 		<unit     path="units/equipment/tripmine_throwable/tripmine_throwable_local"/>
 		
 		<animation path="anims/fps/unarmed/throw_tripmine_throwable" force="true" load="true" unload="false"/>
@@ -76,7 +76,7 @@
 		
 	<!-- First Aid Kit Throwable -->
 		<unit_mat path="units/equipment/fak_throwable/fak_throwable_dummy"/>
-		<unit_obj path="units/equipment/fak_throwable/fak_throwable"/>
+		<unit_mat path="units/equipment/fak_throwable/fak_throwable"/>
 		<unit     path="units/equipment/fak_throwable/fak_throwable_local"/>
 		
 		<animation path="anims/fps/unarmed/throw_fak_throwable" force="true" load="true" unload="false"/>

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <dynamic_object>
-	<diesel materials="units/equipment/fak_throwable/fak_throwable_dummy" orientation_object="rp_gen_equipment_medic_bag_small" />
+	<diesel materials="units/equipment/fak_throwable/fak_throwable" orientation_object="rp_gen_equipment_medic_bag_small" />
 	<bodies>
 		
 		<!--
