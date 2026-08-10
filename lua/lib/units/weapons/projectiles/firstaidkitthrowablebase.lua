@@ -92,6 +92,7 @@ function FirstAidKitThrowableBase:_on_collision(col_ray)
 		-- cannot land on the underside of a ceiling surface
 		-- a bit of a slope is okay
 		local session = managers.network:session()
+		if not session then return end -- prevent edge case crash if projectile lands after game ends
 		local player_unit = managers.player:local_player()
 		
 		if Network:is_server() then
@@ -105,7 +106,7 @@ function FirstAidKitThrowableBase:_on_collision(col_ray)
 			mrot_set_look_at(tmp_rot1, normal, math_up)
 			mrot_set(tmp_rot2, mrot_yaw(tmp_rot1), 0, 0)
 			
-			managers.network:session():send_to_host("place_deployable_bag", "FirstAidKitBase", position, tmp_rot1, bits)
+			session:send_to_host("place_deployable_bag", "FirstAidKitBase", position, tmp_rot1, bits)
 			
 			-- assume we succeeded; if the 
 			success = true
