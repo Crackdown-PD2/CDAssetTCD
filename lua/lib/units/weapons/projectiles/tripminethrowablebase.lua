@@ -433,3 +433,11 @@ function TripmineThrowableBase:outside_worlds_bounding_box(...)
 	self:refund_throwable()
 	return TripmineThrowableBase.super.outside_worlds_bounding_box(self,...)
 end
+
+function TripmineThrowableBase:destroy(...)
+	if self._timeout_clbk_id then
+		managers.enemy:remove_delayed_clbk(self._timeout_clbk_id)
+		self._timeout_clbk_id = nil
+	end
+	return TripmineThrowableBase.super.destroy(self,...)
+end
