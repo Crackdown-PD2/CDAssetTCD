@@ -50,7 +50,9 @@ local body_idstr = idstr_func("body")
 function FirstAidKitThrowableBase:init(...)
 	FirstAidKitThrowableBase.super.init(self,...)
 	self._wall_raycast = 50 -- 50cm; likely to bounce when angle of attack is close to parallel with impact surface
-	
+end
+
+function FirstAidKitThrowableBase:_setup_server_data()
 	self._slot_mask = managers.slot:get_mask("trip_mine_placeables")
 	self._collider_tag_name = Idstring("impact1") -- identifies the body involved in the collision
 end

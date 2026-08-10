@@ -78,15 +78,13 @@ function TripmineThrowableBase:init(unit,...)
 	self._orient_to_vel = false
 	self._timeout_invalid_timer = 5 -- this many seconds after being thrown, if no valid target hit, refund the use and destroy the object
 	
-	self._slot_mask = managers.slot:get_mask("trip_mine_targets") + managers.slot:get_mask("enemies") + managers.slot:get_mask("trip_mine_placeables")
-	self._collider_tag_name = Idstring("impact2")
 	self._wall_raycast = true
 	--asdf = self
 end
 
 function TripmineThrowableBase:_setup_server_data()
---	self._slot_mask = managers.slot:get_mask("trip_mine_targets") + managers.slot:get_mask("enemies") + managers.slot:get_mask("trip_mine_placeables")
---	self._collider_tag_name = Idstring("impact2")
+	self._slot_mask = managers.slot:get_mask("trip_mine_targets") + managers.slot:get_mask("enemies") + managers.slot:get_mask("trip_mine_placeables")
+	self._collider_tag_name = Idstring("impact2")
 end
 
 function TripmineThrowableBase:throw(params,...)
@@ -237,6 +235,7 @@ function TripmineThrowableBase:clbk_impact(tag, unit, body, other_unit, other_bo
 	--TripmineThrowableBase.super.clbk_impact(self, tag, unit, body, other_unit, other_body, position, normal, collision_velocity, velocity, other_velocity, new_velocity, direction, damage, ...)
 	--Print("Impact",tag,collision_velocity, velocity, other_velocity, new_velocity)
 	--Print("clbk_impact",tag, unit, body, other_unit, other_body, position, normal, collision_velocity, velocity, other_velocity, new_velocity, direction, damage)
+	
 	if self._sweep_data and not self._collided then
 		mvec3_set(mvec2, self._sweep_data.last_pos)
 		if self._wall_raycast then
@@ -297,38 +296,20 @@ end
 -- TODO visual rotating stuff should be handled in a different way
 -- note: look into rotating body params in object file
 function TripmineThrowableBase:update(unit, t, dt)
-	if not self._collided then
-		if not self._simulated then
-			-- husk
-			local collided 
-			if self._sweep_data then
-				mvector3.set(mvec1,self._sweep_data.last_pos)
-				mvector3.set(mvec2,mvec1)
-				mvector3.add(mvec2,unit:velocity() * dt)
-				local ig_units = self._ignore_units
-				local ray = self._unit:raycast("ray", mvec1, mvec2, "slot_mask", self._sweep_data.slot_mask, ig_units and "ignore_unit" or nil, ig_units or nil)
-				if ray then
-					collided = true
-				end
-			end
-			if collided then
-				self:_husk_on_collision(col_ray)
-			end
-			return
-		else
-			self._unit:m_position(mvec1)
-			mvector3.set(mvec2, self._velocity * dt)
-			mvector3.add(mvec1, mvec2)
-			self._unit:set_position(mvec1)
+	if not self._simulated and not self._collided then
+		self._unit:m_position(mvec1)
+		mvector3.set(mvec2, self._velocity * dt)
+		mvector3.add(mvec1, mvec2)
+		self._unit:set_position(mvec1)
 
-			if self._orient_to_vel then
-				mrotation.set_look_at(mrot1, mvec2, math.UP)
-				self._unit:set_rotation(mrot1)
-			end
-
-			self._velocity = Vector3(self._velocity.x, self._velocity.y, self._velocity.z - 980 * dt)
+		if self._orient_to_vel then
+			mrotation.set_look_at(mrot1, mvec2, math.UP)
+			self._unit:set_rotation(mrot1)
 		end
+
+		self._velocity = Vector3(self._velocity.x, self._velocity.y, self._velocity.z - 980 * dt)
 	end
+	
 	if self._rotatey_body then
 		local _body = self._rotatey_body
 		local rotation = _body:rotation()
@@ -433,6 +414,7 @@ function TripmineThrowableBase:update(unit, t, dt)
 			end
 
 			col_ray.velocity = self._unit:velocity()
+
 			if self:_on_collision(col_ray) then
 				self._collided = true
 			end
