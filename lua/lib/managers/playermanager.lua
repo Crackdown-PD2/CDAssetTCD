@@ -680,6 +680,41 @@ Hooks:PostHook(PlayerManager,"skill_dodge_chance","tcd_playermanager_dodge_chanc
 	end
 end)
 
+function PlayerManager:verify_equipment(peer_id, equipment_id)
+	if peer_id == 0 then
+		local id = "asset_" .. tostring(equipment_id)
+
+		self._asset_equipment = self._asset_equipment or {}
+		
+		local eqtd = tweak_data.equipments[equipment_id] 
+		if eqtd and eqtd.no_cheat_count then
+			-- skip anticheat check
+		else
+			local max_amount = tweak_data.equipments.max_amount[id]
+
+			max_amount = managers.modifiers:modify_value("PlayerManager:GetEquipmentMaxAmount", max_amount)
+
+			if not max_amount or self._asset_equipment[id] and max_amount < self._asset_equipment[id] + 1 then
+				local peer = managers.network:session():server_peer()
+
+				peer:mark_cheater(VoteManager.REASON.many_assets)
+
+				return false
+			end
+
+			self._asset_equipment[id] = (self._asset_equipment[id] or 0) + 1
+		end
+		return true
+	end
+
+	local peer = managers.network:session():peer(peer_id)
+
+	if not peer then
+		return false
+	end
+
+	return peer:verify_deployable(equipment_id)
+end
 
 
 --function written for cd, not vanilla

@@ -20,11 +20,15 @@ Hooks:PostHook(EquipmentsTweakData,"init","tcd_equipmentstweakdata_init",functio
 		}
 	}
 	
+	
 	self.specials.cable_tie.quantity = 10
 	self.specials.cable_tie.max_quantity = 20
 	
 	self.first_aid_kit.target_deploy_text = "hud_deploying_revive_fak"
 	self.first_aid_kit.target_type = "teammates"
+	self.first_aid_kit.no_cheat_count = true -- note: this flag does not exist in vanilla (for equipmenttweakdata)
+	
+	self.trip_mine.no_cheat_count = true 
 	
 	self.sentry_gun_silent = {
 		deploy_time = 1,
