@@ -62,9 +62,12 @@ function TripmineThrowableBase:_handle_hiding_and_destroying(...)
 end
 
 function TripmineThrowableBase:refund_throwable()
-	if self._owner_peer_id and self._owner_peer_id == managers.network:session():local_peer():id() then
-		-- placement failed, so destroy it and refund the use
-		managers.player:add_grenade_amount(1, true)
+	local session = managers.network and managers.network:session()
+	if session then
+		if self._owner_peer_id and self._owner_peer_id == session:local_peer():id() then
+			-- placement failed, so destroy it and refund the use
+			managers.player:add_grenade_amount(1, true)
+		end
 	end
 	self:_handle_hiding_and_destroying(true,nil)
 end
