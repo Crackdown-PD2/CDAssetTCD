@@ -296,12 +296,14 @@ function PlayerEquipment:use_doctor_bag(index)
 	return false
 end
 
+-- faks and most equipment use this
 function PlayerEquipment:valid_shape_placement(equipment_id, equipment_data,can_raycast_units,...)
 	local unit = self._unit
 	local mov_ext = unit:movement()
 	local rot = self:_m_deploy_rot()
+	
 	local from = mov_ext:m_head_pos()
-	local to, ray, stuck_enemy = tmp_vec1
+	local to = tmp_vec1
 
 	mrot_y(rot, to)
 	mvec3_mul(to, 220)
@@ -320,9 +322,16 @@ function PlayerEquipment:valid_shape_placement(equipment_id, equipment_data,can_
 		if valid then
 			local dummy_pos = ray.position
 			local dummy_rot = tmp_rot1
-			local yaw_mod = rot_yaw_mods[equipment_id]
-			local yaw = yaw_mod and mrot_yaw(rot) + yaw_mod or mrot_yaw(rot)
-			mrot_set(dummy_rot, yaw, 0, 0)
+			local yawrot = tmp_rot2
+			local fwd = tmp_vec2
+			mrot_set_look_at(yawrot,ray.ray or ray.direction or -ray.normal,math_up)
+			local yaw_mod = rot_yaw_mods[equipment_id] or 0
+			
+			mrot_set(yawrot, yawrot:yaw() + yaw_mod, 0, 0)
+			mvec3_set(fwd,math_left)
+			mvec3_rot(fwd,yawrot)
+			mvec3_cross(fwd,ray.normal,fwd)
+			mrot_set_look_at(dummy_rot,fwd,math_up)
 
 			if alive_g(dummy_unit) then
 				dummy_unit:set_position(dummy_pos)
@@ -393,6 +402,7 @@ function PlayerEquipment:valid_shape_placement(equipment_id, equipment_data,can_
 	return valid and ray, revivable_unit
 end
 
+-- tripmines use this
 function PlayerEquipment:valid_look_at_placement(equipment_data, can_place_on_enemies)
 	local unit = self._unit
 	local mov_ext = unit:movement()
