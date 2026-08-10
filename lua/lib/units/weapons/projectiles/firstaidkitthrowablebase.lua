@@ -89,8 +89,6 @@ function FirstAidKitThrowableBase:_on_collision(col_ray)
 		end
 	end
 	
-	Print(mvector3.angle(col_ray.ray,math.DOWN))
-	
 	if mvector3.angle(normal,math.UP) < 50 and mvector3.angle(col_ray.ray,math.DOWN) < 90 then
 		-- must land on a valid, relatively flat surface (no mountain goat faks on sheer vertical surfaces)
 		-- cannot land on the underside of a ceiling surface
