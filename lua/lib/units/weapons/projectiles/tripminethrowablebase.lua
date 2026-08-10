@@ -298,7 +298,7 @@ end
 -- note: look into rotating body params in object file
 function TripmineThrowableBase:update(unit, t, dt)
 	if not self._collided then
-		if self._simulated then
+		if not self._simulated then
 			-- husk
 			local collided 
 			if self._sweep_data then
