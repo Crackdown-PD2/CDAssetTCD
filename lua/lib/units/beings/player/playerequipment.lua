@@ -194,8 +194,8 @@ function PlayerEquipment:use_first_aid_kit(ray,criminal_to_revive)
 		managers.statistics:use_first_aid()
 
 		local overshield_upgrade_lvl = managers.player:upgrade_level("first_aid_kit","damage_overshield",0)
+		local session = managers.network:session()
 		if criminal_to_revive and alive_g(criminal_to_revive) then
-			local session = managers.network:session()
 			if criminal_to_revive ~= self._unit then
 				PlayerStandard.say_line(self, "f36x_any")
 				
