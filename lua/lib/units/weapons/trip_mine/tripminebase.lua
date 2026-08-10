@@ -192,6 +192,16 @@ function TripMineBase:_set_specials_only_mode(specials_only)
 	self._specials_only = specials_only
 end
 
+-- cd func
+-- gets the compressed tripmine instance upgrades to be sent over the network
+function TripMineBase.get_local_upgrade_bits()
+	local radius_upgrade_level = managers.player:upgrade_level("trip_mine", "stuck_enemy_panic_radius", 0)
+	local vulnerability_upgrade_level = managers.player:upgrade_level("trip_mine", "stuck_dozer_damage_vulnerability", 0)
+	local bits = Bitwise:lshift(radius_upgrade_level, TripMineBase.UPGRADE_SHIFT_RADIUS) + Bitwise:lshift(vulnerability_upgrade_level, TripMineBase.UPGRADE_SHIFT_VULN)
+	
+	return bits
+end
+
 -- handle any events, including custom ones
 function TripMineBase:sync_net_event(event_id)
 	if event_id == TripMineBase.EVENT_IDS.sensor_beep          then 

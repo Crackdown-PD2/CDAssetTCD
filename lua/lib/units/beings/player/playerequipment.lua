@@ -8,6 +8,7 @@ local mvec3_mul = mvector3.multiply
 local mvec3_dir = mvector3.direction
 local mvec3_rot = mvector3.rotate_with
 local mvec3_cpy = mvector3.copy
+local mvec3_cross = mvector3.cross
 local tmp_vec1 = Vector3()
 local tmp_vec2 = Vector3()
 local tmp_vec3 = Vector3()
@@ -31,6 +32,7 @@ local tmp_rot1 = Rotation()
 local tmp_rot2 = Rotation()
 
 local math_up = math.UP
+local math_left = math.X
 local math_dot = math.dot
 local math_clamp = math.clamp
 
@@ -230,8 +232,17 @@ function PlayerEquipment:use_first_aid_kit(ray,criminal_to_revive)
 		else
 			local pos = ray.position
 			local rot = tmp_rot1
-			mrot_set(rot, mrot_yaw(self:_m_deploy_rot()), 0, 0)
-
+			local fwd = tmp_vec1
+			local yawrot = tmp_rot2
+			local direction = ray.ray or ray.direction or -ray.normal
+			
+			mrot_set_look_at(yawrot,direction,math_up)
+			mrot_set(yawrot,yawrot:yaw(),0,0)
+			mvec3_set(fwd,math_left)
+			mvec3_rot(fwd,yawrot)
+			mvec3_cross(fwd,ray.normal,fwd)
+			mrot_set_look_at(rot,fwd,math_up)
+			
 			PlayerStandard.say_line(self, "s12")
 
 			local auto_recovery = managers.player:upgrade_level("first_aid_kit", "first_aid_kit_auto_recovery", 0)
