@@ -78,13 +78,14 @@ function TripmineThrowableBase:init(unit,...)
 	self._orient_to_vel = false
 	self._timeout_invalid_timer = 5 -- this many seconds after being thrown, if no valid target hit, refund the use and destroy the object
 	
+	self._slot_mask = managers.slot:get_mask("trip_mine_targets") + managers.slot:get_mask("enemies") + managers.slot:get_mask("trip_mine_placeables")
+	self._collider_tag_name = Idstring("impact2")
 	self._wall_raycast = true
 	--asdf = self
 end
 
 function TripmineThrowableBase:_setup_server_data()
-	self._slot_mask = managers.slot:get_mask("trip_mine_targets") + managers.slot:get_mask("enemies") + managers.slot:get_mask("trip_mine_placeables")
-	self._collider_tag_name = Idstring("impact2")
+	-- all this is set in init
 end
 
 function TripmineThrowableBase:throw(params,...)
