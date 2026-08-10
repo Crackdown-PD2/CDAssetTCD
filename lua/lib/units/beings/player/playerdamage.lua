@@ -16,6 +16,8 @@ PlayerDamage._UPPERS_COOLDOWN = 0 -- no cooldown, go hog wild
 Hooks:PostHook(PlayerDamage,"init","tcd_playerdmg_init",function(self)
 	self._lives_max = 0 -- tcd var
 	self._medic_hot_aura_t = 0 -- cooldown timer counter value for medic's docbag healing aura
+	--self._docbag_tether_obj = nil -- visual only
+	
 	self:recalculate_max_revives()
 end)
 
@@ -73,6 +75,8 @@ Hooks:PostHook(PlayerDamage,"_upd_health_regen","tcd_playerdmg_update_health_reg
 	
 	local pm = managers.player
 		
+	local bag,docbag_level,bag_distance = DoctorBagBase.get_best_hot(self._unit:movement():m_pos())
+	self._docbag_tether_obj = bag
 	if self._medic_hot_aura_t > 0 then
 		-- on cooldown
 		self._medic_hot_aura_t = self._medic_hot_aura_t - dt
@@ -98,7 +102,6 @@ Hooks:PostHook(PlayerDamage,"_upd_health_regen","tcd_playerdmg_update_health_reg
 		--]]
 		
 		local heal_aura_level,heal_aura_upgrade_data
-		local bag,docbag_level,bag_distance = DoctorBagBase.get_best_hot(self._unit:movement():m_pos())
 		if bag then
 			docbag_level = bag._healaura_upgrade_level
 			local upgrade_data = pm:upgrade_value_by_level("doctor_bag","heal_aura",docbag_level,nil)
@@ -110,7 +113,7 @@ Hooks:PostHook(PlayerDamage,"_upd_health_regen","tcd_playerdmg_update_health_reg
 				heal_aura_level = docbag_level
 				heal_aura_upgrade_data = upgrade_data
 			end
-			
+			--[[
 			local dir_to_bag = tmp_vec1
 			mvec3_set(dir_to_bag,bag._hot_draw_pos)
 			local player_pos = tmp_vec2
@@ -123,6 +126,8 @@ Hooks:PostHook(PlayerDamage,"_upd_health_regen","tcd_playerdmg_update_health_reg
 			
 			self._draw_bezier(bag._hot_brush,bag._unit:position(),player_pos,tangent)
 			bag._hot_brush:sphere(player_pos,1,2)
+			--]]
+			self._docbag_tether_obj = bag
 		end
 		
 		if docbag_level and heal_aura_level and docbag_level < heal_aura_level then
@@ -168,6 +173,23 @@ Hooks:PostHook(PlayerDamage,"_upd_health_regen","tcd_playerdmg_update_health_reg
 	end
 	
 	-- todo feed status info to buffmanager
+	-- visual tether for docbag heal aoe
+	if self._docbag_tether_obj then
+		local tether_bag = self._docbag_tether_obj
+		local dir_to_bag = tmp_vec1
+		mvec3_set(dir_to_bag,tether_bag._hot_draw_pos)
+		local player_pos = tmp_vec2
+		mvec3_set(player_pos,self._unit:position()) --self._unit:oobb():center())
+		mvec3_sub(dir_to_bag,player_pos)
+		
+		local bt = math.sin(t * math.pi * 3) * 10
+		local tangent = tmp_vec3
+		mvec3_cross(tangent,dir_to_bag,math.UP * bt)
+		
+		self._draw_bezier(tether_bag._hot_brush,tether_bag._unit:position(),player_pos,tangent)
+		tether_bag._hot_brush:sphere(player_pos,1,2)
+	end
+	
 end)
 
 function PlayerDamage:damage_melee(attack_data)
