@@ -195,6 +195,7 @@ function PlayerEquipment:use_first_aid_kit(ray,criminal_to_revive)
 
 		local overshield_upgrade_lvl = managers.player:upgrade_level("first_aid_kit","damage_overshield",0)
 		if criminal_to_revive and alive_g(criminal_to_revive) then
+			local session = managers.network:session()
 			if criminal_to_revive ~= self._unit then
 				PlayerStandard.say_line(self, "f36x_any")
 				
@@ -204,10 +205,10 @@ function PlayerEquipment:use_first_aid_kit(ray,criminal_to_revive)
 				local peer_id = managers.criminals:character_peer_id_by_unit(criminal_to_revive)
 				if peer_id then
 					is_npc = false
-					managers.network:session():send_to_peer(peer_id,"revive_with_firstaidkit",overshield_upgrade_lvl)
+					session:send_to_peer(session:peer(peer_id),"revive_with_firstaidkit",overshield_upgrade_lvl)
 					
 					local hint_index = 2
-					managers.network:session():send_to_peers_synched("sync_teammate_helped_hint", hint_index, criminal_to_revive, self._unit)
+					session:send_to_peers_synched("sync_teammate_helped_hint", hint_index, criminal_to_revive, self._unit)
 					managers.trade:sync_teammate_helped_hint(criminal_to_revive, self._unit, hint_index)
 					
 				else
@@ -249,9 +250,9 @@ function PlayerEquipment:use_first_aid_kit(ray,criminal_to_revive)
 			local bits = Bitwise:lshift(auto_recovery, FirstAidKitBase.auto_recovery_shift) + Bitwise:lshift(overshield_upgrade_lvl, FirstAidKitBase.upgrade_lvl_shift)
 
 			if Network:is_client() then
-				managers.network:session():send_to_host("place_deployable_bag", "FirstAidKitBase", pos, rot, bits)
+				session:send_to_host("place_deployable_bag", "FirstAidKitBase", pos, rot, bits)
 			else
-				FirstAidKitBase.spawn(pos, rot, bits, managers.network:session():local_peer():id())
+				FirstAidKitBase.spawn(pos, rot, bits, session:local_peer():id())
 			end
 		end
 
