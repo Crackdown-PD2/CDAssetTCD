@@ -53,19 +53,18 @@ function TripmineThrowableBase:_handle_hiding_and_destroying(...)
 		managers.enemy:remove_delayed_clbk(self._timeout_clbk_id)
 		self._timeout_clbk_id = nil
 	end
-	
-	TripmineThrowableBase.super._handle_hiding_and_destroying(self,...)
+	if not self._destroyed then
+		TripmineThrowableBase.super._handle_hiding_and_destroying(self,...)
+	end
+	self:set_active(false)
+	self._destroyed = true -- allow this to be called from multiple places, but only executed once
+	self._collided = true
 end
 
 function TripmineThrowableBase:refund_throwable()
 	if self._owner_peer_id and self._owner_peer_id == managers.network:session():local_peer():id() then
 		-- placement failed, so destroy it and refund the use
 		managers.player:add_grenade_amount(1, true)
-	end
-	
-	if self._timeout_clbk_id then
-		managers.enemy:remove_delayed_clbk(self._timeout_clbk_id)
-		self._timeout_clbk_id = nil
 	end
 	self:_handle_hiding_and_destroying(true,nil)
 end
