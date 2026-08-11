@@ -124,12 +124,12 @@ function PlayerEquipment:use_trip_mine(ray,stuck_enemy,...)
 			end
 			
 			if Network:is_server() then
-				local global_rot = tmp_rot1
-				
-				PlayerEquipment.check_trimpine_rot(ray,global_rot)
-				--mrot_set_look_at(global_rot, normal, math_up)
-				
 				local peer_id = session:local_peer():id()
+				
+				local global_rot = tmp_rot1
+				--mrot_set_look_at(global_rot, normal, math_up)
+				PlayerEquipment.check_trimpine_rot(ray,global_rot)
+				
 				local unit = TripMineBase.spawn(global_pos, global_rot, peer_id, upgrade_bits, payload_mode,specials_only)
 				unit:base():set_active(true, self._unit, true)
 				
@@ -141,13 +141,13 @@ function PlayerEquipment:use_trip_mine(ray,stuck_enemy,...)
 			end
 		else
 			if Network:is_server() then
+				local peer_id = session:local_peer():id()
 				
 				local global_rot = tmp_rot1
 				--mrot_set_look_at(global_rot, ray.normal, math_up)
-				
 				PlayerEquipment.check_trimpine_rot(ray,global_rot)
 				
-
+				
 				local unit = TripMineBase.spawn(ray.position, global_rot, peer_id, upgrade_bits, payload_mode, specials_only)
 				unit:base():set_active(true, self._unit)
 			else
