@@ -52,7 +52,6 @@ Hooks:PostHook(Drill,"init","tcd_drill_init",function(self)
 end)
 
 Hooks:OverrideFunction(Drill,"set_skill_upgrades",function(self,upgrades)
-	
 	if self._disable_upgrades then
 		return
 	end
@@ -266,7 +265,7 @@ function Drill.shock_enemy(unit,from_pos)
 	
 	local mov_ext = unit:movement()
 	if mov_ext then
-		log("Shocking",unit)
+		--log("Shocking",unit)
 		local hit_pos = mov_ext:m_com()
 		local attack_dir = hit_pos - from_pos:with_z(hit_pos.z)
 		attack_dir = attack_dir:normalized()
@@ -287,7 +286,7 @@ function Drill.shock_enemy(unit,from_pos)
 			dmg_ext._tased_time = tweak_data.upgrades.values.player.drill_shock_tase_time --to be used in huskcopdamage as well
 
 			managers.network:session():send_to_peers_synched("sync_unit_event_id_16", unit, "character_damage", HuskCopDamage._NET_EVENTS.set_drill_shock_tase_time)
-			log("Calling listeners!")
+			--log("Calling listeners!")
 			dmg_ext:_call_listeners(attack_data)
 		end
 	end
@@ -314,7 +313,7 @@ Hooks:OverrideFunction(Drill,"on_sabotage_SO_started",function(self,saboteur)
 				static_defense_clbk_id,
 				function()
 					--log("Sabotime!")
-					fdsa = saboteur
+--					fdsa = saboteur
 					if not alive_g(drill_unit) or not alive_g(self._saboteur) or not alive_g(saboteur) or self._saboteur:key() ~= saboteur:key() then
 						--log("Sabotime exit")
 						return
@@ -355,6 +354,30 @@ Hooks:OverrideFunction(Drill,"on_sabotage_SO_started",function(self,saboteur)
 					end
 					--log("Sabotime end")
 					
+					
+					local wp_color = Color.yellow
+					local shocktrap_level = self._skill_upgrades.shocktrap_level
+					if shocktrap_level == 2 then
+						wp_color = drill_unit:timer_gui():get_upgrade_icon_color("upgrade_color_1")
+					else
+						wp_color = drill_unit:timer_gui():get_upgrade_icon_color("upgrade_color_2")
+					end
+		
+					
+					local str_ukey = tostring(drill_unit:key())
+					local remove_icon_clbk_id = "shocktrap_wp_expire_" .. str_ukey
+					local waypoint_id = "wp_shocktrap_" .. str_ukey
+					managers.hud:add_waypoint(waypoint_id, {
+						blend_mode = "add",
+						distance = false,
+						no_sync = true,
+						present_timer = 0,
+						state = "sneak_present",
+						icon = "wp_shocktrap",
+						position = objective.pos,
+						color = wp_color
+					})
+					managers.enemy:add_delayed_clbk(remove_icon_clbk_id,function() managers.hud:remove_waypoint(waypoint_id) end,gametimer:time() + tweak_data.upgrades.values.player.drill_shock_tase_time)
 				end,
 				gametimer:time() + 0.5
 			)

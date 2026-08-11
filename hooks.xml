@@ -12,6 +12,7 @@
 	
 	<hook post="true" file="lib/tweak_data/equipmentstweakdata.lua" source_file="lib/tweak_data/equipmentstweakdata"/>	
 	<hook post="true" file="lib/tweak_data/enveffecttweakdata.lua" source_file="lib/tweak_data/enveffecttweakdata"/>	
+	<hook post="true" file="lib/tweak_data/hudiconstweakdata.lua" source_file="lib/tweak_data/hudiconstweakdata"/>
 	<hook post="true" file="lib/tweak_data/interactiontweakdata.lua" source_file="lib/tweak_data/interactiontweakdata"/>
 	<hook post="true" file="lib/tweak_data/skilltreetweakdata.lua" source_file="lib/tweak_data/skilltreetweakdata"/>
 	<hook post="true" file="lib/tweak_data/upgradestweakdata.lua" source_file="lib/tweak_data/upgradestweakdata"/>
