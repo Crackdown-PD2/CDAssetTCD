@@ -1,4 +1,4 @@
-Hooks:PostHook(HudIconsTweakData,"init","",function(self)
+Hooks:PostHook(HudIconsTweakData,"init","tcd_add_icons",function(self)
 	
 	-- pull directly from skilltree atlas
 	self.wp_shocktrap = {
