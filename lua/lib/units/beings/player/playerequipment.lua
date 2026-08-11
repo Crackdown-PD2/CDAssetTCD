@@ -91,91 +91,62 @@ function PlayerEquipment:use_trip_mine(ray,stuck_enemy,...)
 
 		local session = managers.network:session()
 
-		if Network:is_client() then
-			if stuck_enemy then
-				local body = ray.body
-				local normal = ray.normal
-				local parent_obj = body:root_object()
-				local global_pos, local_pos, local_rot_vec = tmp_vec1
-				mvec3_set(global_pos, ray.position)
+		if stuck_enemy then
+			local body = ray.body
+			local normal = ray.normal
+			local parent_obj = body:root_object()
+			local global_pos, local_pos, local_rot_vec = tmp_vec1
+			mvec3_set(global_pos, ray.position)
 
-				self:_check_unit_attach_segment(stuck_enemy, global_pos)
-
-				if parent_obj then
-					local_pos, local_rot_vec = tmp_vec2, tmp_vec3
-					local parent_pos, inv_parent_rot = tmp_vec4, tmp_rot1
-
-					parent_obj:m_position(parent_pos)
-					parent_obj:m_rotation(inv_parent_rot)
-					mrot_inv(inv_parent_rot)
-
-					mvec3_set(local_pos, global_pos)
-					mvec3_sub(local_pos, parent_pos)
-					mvec3_rot(local_pos, inv_parent_rot)
-
-					local normal_rot = tmp_rot2
-					mrot_set_look_at(normal_rot, normal, math_up)
-					mrot_mul(inv_parent_rot, normal_rot)
-					mvec3_set_stat(local_rot_vec, mrot_yaw(inv_parent_rot), mrot_pitch(inv_parent_rot), mrot_roll(inv_parent_rot))
-
-					local_pos = mvec3_cpy(local_pos)
-					local_rot_vec = mvec3_cpy(local_rot_vec)
-				end
-				
-				session:send_to_host("request_spawn_attach_trip_mine", stuck_enemy, body or nil, parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, upgrade_bits, payload_mode, specials_only)
-			else
-				session:send_to_host("place_trip_mine", ray.position, ray.normal, upgrade_bits, payload_mode, specials_only)
-			end
-		else
-
-			local peer_id = session:local_peer():id()
+			self:_check_unit_attach_segment(stuck_enemy, global_pos)
 			
-			if stuck_enemy then
-				local body = ray.body
-				local normal = ray.normal
-				local parent_obj = body:root_object()
-				local global_pos, local_pos, local_rot_vec = tmp_vec1
-				mvec3_set(global_pos, ray.position)
+			if parent_obj then
+				local_pos, local_rot_vec = tmp_vec2, tmp_vec3
+				local parent_pos, inv_parent_rot = tmp_vec4, tmp_rot1
 
-				self:_check_unit_attach_segment(stuck_enemy, global_pos)
+				parent_obj:m_position(parent_pos)
+				parent_obj:m_rotation(inv_parent_rot)
+				mrot_inv(inv_parent_rot)
 
+				mvec3_set(local_pos, global_pos)
+				mvec3_sub(local_pos, parent_pos)
+				mvec3_rot(local_pos, inv_parent_rot)
+
+				local normal_rot = tmp_rot2
+				mrot_set_look_at(normal_rot, normal, math_up)
+				mrot_mul(inv_parent_rot, normal_rot)
+				mvec3_set_stat(local_rot_vec, mrot_yaw(inv_parent_rot), mrot_pitch(inv_parent_rot), mrot_roll(inv_parent_rot))
+
+				local_pos = mvec3_cpy(local_pos)
+				local_rot_vec = mvec3_cpy(local_rot_vec)
+			end
+			
+			if Network:is_server() then
 				local global_rot = tmp_rot1
 				mrot_set_look_at(global_rot, normal, math_up)
-
-				if parent_obj then
-					local_pos, local_rot_vec = tmp_vec2, tmp_vec3
-					local parent_pos, inv_parent_rot = tmp_vec4, tmp_rot2
-
-					parent_obj:m_position(parent_pos)
-					parent_obj:m_rotation(inv_parent_rot)
-					mrot_inv(inv_parent_rot)
-
-					mvec3_set(local_pos, global_pos)
-					mvec3_sub(local_pos, parent_pos)
-					mvec3_rot(local_pos, inv_parent_rot)
-
-					mrot_mul(inv_parent_rot, global_rot)
-					mvec3_set_stat(local_rot_vec, mrot_yaw(inv_parent_rot), mrot_pitch(inv_parent_rot), mrot_roll(inv_parent_rot))
-
-					local_pos = mvec3_cpy(local_pos)
-					local_rot_vec = mvec3_cpy(local_rot_vec)
-				end
-
+				
+				local peer_id = session:local_peer():id()
 				local unit = TripMineBase.spawn(global_pos, global_rot, peer_id, upgrade_bits, payload_mode,specials_only)
 				unit:base():set_active(true, self._unit, true)
 				
 				unit:base():attach_to_enemy(stuck_enemy, local_pos, local_rot_vec, parent_obj, radius_upgrade_level, vulnerability_upgrade_level)
-
-
+				
 				session:send_to_peers_synched("sync_spawn_attach_trip_mine", unit, stuck_enemy, body or nil, parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, peer_id, upgrade_bits, payload_mode, specials_only)
 			else
-				local rot = tmp_rot1
-				mrot_set_look_at(rot, ray.normal, math_up)
+				session:send_to_host("request_spawn_attach_trip_mine", stuck_enemy, body or nil, parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, upgrade_bits, payload_mode, specials_only)
+			end
+		else
+			if Network:is_server() then
+				local global_rot = tmp_rot1
+				mrot_set_look_at(global_rot, ray.normal, math_up)
 
-				local unit = TripMineBase.spawn(ray.position, rot, peer_id, upgrade_bits, payload_mode, specials_only)
+				local unit = TripMineBase.spawn(ray.position, global_rot, peer_id, upgrade_bits, payload_mode, specials_only)
 				unit:base():set_active(true, self._unit)
+			else
+				session:send_to_host("place_trip_mine", ray.position, ray.normal, upgrade_bits, payload_mode, specials_only)
 			end
 		end
+		
 		return true
 	end
 
