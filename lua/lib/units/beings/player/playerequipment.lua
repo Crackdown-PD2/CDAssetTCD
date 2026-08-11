@@ -9,6 +9,7 @@ local mvec3_dir = mvector3.direction
 local mvec3_rot = mvector3.rotate_with
 local mvec3_cpy = mvector3.copy
 local mvec3_cross = mvector3.cross
+local mvec3_eq = mvector3.equal
 local tmp_vec1 = Vector3()
 local tmp_vec2 = Vector3()
 local tmp_vec3 = Vector3()
@@ -28,6 +29,7 @@ local mrot_mul = mrotation.multiply
 local mrot_inv = mrotation.invert
 local mrot_set = mrotation.set_yaw_pitch_roll
 local mrot_set_look_at = mrotation.set_look_at
+local mrot_axisangle = mrotation.set_axis_angle
 local tmp_rot1 = Rotation()
 local tmp_rot2 = Rotation()
 
@@ -123,7 +125,9 @@ function PlayerEquipment:use_trip_mine(ray,stuck_enemy,...)
 			
 			if Network:is_server() then
 				local global_rot = tmp_rot1
-				mrot_set_look_at(global_rot, normal, math_up)
+				
+				PlayerEquipment.check_trimpine_rot(ray,global_rot)
+				--mrot_set_look_at(global_rot, normal, math_up)
 				
 				local peer_id = session:local_peer():id()
 				local unit = TripMineBase.spawn(global_pos, global_rot, peer_id, upgrade_bits, payload_mode,specials_only)
@@ -137,8 +141,12 @@ function PlayerEquipment:use_trip_mine(ray,stuck_enemy,...)
 			end
 		else
 			if Network:is_server() then
+				
 				local global_rot = tmp_rot1
-				mrot_set_look_at(global_rot, ray.normal, math_up)
+				--mrot_set_look_at(global_rot, ray.normal, math_up)
+				
+				PlayerEquipment.check_trimpine_rot(ray,global_rot)
+				
 
 				local unit = TripMineBase.spawn(ray.position, global_rot, peer_id, upgrade_bits, payload_mode, specials_only)
 				unit:base():set_active(true, self._unit)
@@ -422,8 +430,9 @@ function PlayerEquipment:valid_look_at_placement(equipment_data, can_place_on_en
 			end
 
 			local dummy_rot = tmp_rot1
-			mrot_set_look_at(dummy_rot, ray.normal, math_up)
-
+			--mrot_set_look_at(dummy_rot, ray.normal, math_up)
+			PlayerEquipment.check_trimpine_rot(ray,dummy_rot)
+			
 			if alive_g(dummy_unit) then
 				dummy_unit:set_position(dummy_pos)
 				dummy_unit:set_rotation(dummy_rot)
@@ -443,6 +452,35 @@ function PlayerEquipment:valid_look_at_placement(equipment_data, can_place_on_en
 	end
 
 	return ray, stuck_enemy
+end
+
+-- beware of memory collision- uses tmp_vec4
+-- because this uses the yaw of the direction, 
+-- it may place tripmines at unexpected angles on vertical walls depending on your yaw, 
+-- even though intuitively it feels like it should use static yaw
+function PlayerEquipment.check_trimpine_rot(ray,rot_out)
+	local tmp_rot = rot_out
+	-- same memory allocation,
+	-- but the name tmp_rot will be used to indicate to the reader where the value is temporary
+	-- as it will be thrown out (replaced) with the final calculation
+	
+	local dir = ray.ray or ray.direction or -ray.normal
+	-- set tmp_rot to represent forward direction of the ray
+	mrot_set_look_at(tmp_rot, dir, math_up)
+	local yaw = tmp_rot:yaw()
+	
+	if mvec3_eq(ray.normal,math_up) then
+		-- adjust rotation so it's the same when placing on a flat surface
+		mrot_set(rot_out,90 + yaw, 90, 0)
+	else
+		local new_up = tmp_vec4
+		mvec3_set(new_up,math_up)
+		
+		mrot_axisangle(tmp_rot,ray.normal,yaw)
+		mvec3_rot(new_up,tmp_rot)
+		
+		mrot_set_look_at(rot_out, ray.normal, new_up)
+	end
 end
 
 function PlayerEquipment:_check_unit_attach_segment(hit_unit, m_global_pos)

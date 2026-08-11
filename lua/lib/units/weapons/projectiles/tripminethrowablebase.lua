@@ -117,111 +117,25 @@ end
 
 
 function TripmineThrowableBase:_on_collision(col_ray)
+	local success = false
 	
-	local body = col_ray.body
-	local position = col_ray.position
-	local hit_unit = col_ray.unit
-	local normal = col_ray.normal
-	
---	Print("Collided with ",col_ray.unit)
-	
-	
-	
-	local payload_mode = TripmineControlMenu._current_mode
-	local specials_only = TripmineControlMenu._current_specials_enabled
-	
-	local bits = TripMineBase.get_local_upgrade_bits()
-	
-	local global_pos, local_pos, local_rot_vec = tmp_vec1
-	mvec3_set(global_pos, position)
-	
-	--PlayerEquipment._check_unit_attach_segment(hit_unit, global_pos)
-	
-	local session = managers.network:session()
-
-	local player_unit = managers.player:local_player()
-
-	if body and hit_unit:in_slot(managers.slot:get_mask("enemies")) then
-	
-		local parent_obj = body:root_object()
-	
-		if Network:is_client() then
-			-- stuck as client
-			if parent_obj then
-				local_pos, local_rot_vec = tmp_vec2, tmp_vec3
-				local parent_pos, inv_parent_rot = tmp_vec4, tmp_rot1
-
-				parent_obj:m_position(parent_pos)
-				parent_obj:m_rotation(inv_parent_rot)
-				mrot_inv(inv_parent_rot)
-
-				mvec3_set(local_pos, global_pos)
-				mvec3_sub(local_pos, parent_pos)
-				mvec3_rot(local_pos, inv_parent_rot)
-
-				local normal_rot = tmp_rot2
-				mrot_set_look_at(normal_rot, normal, math_up)
-				mrot_mul(inv_parent_rot, normal_rot)
-				mvec3_set_stat(local_rot_vec, mrot_yaw(inv_parent_rot), mrot_pitch(inv_parent_rot), mrot_roll(inv_parent_rot))
-
-				local_pos = mvec3_cpy(local_pos)
-				local_rot_vec = mvec3_cpy(local_rot_vec)
-			end
-			
-			session:send_to_host("request_spawn_attach_trip_mine", hit_unit, body or nil, parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, bits, payload_mode, specials_only)
-		else
-			-- stuck as host
-			local global_rot = tmp_rot1
-			mrot_set_look_at(global_rot, normal, math_up)
-
-			if parent_obj then
-				local_pos, local_rot_vec = tmp_vec2, tmp_vec3
-				local parent_pos, inv_parent_rot = tmp_vec4, tmp_rot2
-
-				parent_obj:m_position(parent_pos)
-				parent_obj:m_rotation(inv_parent_rot)
-				mrot_inv(inv_parent_rot)
-
-				mvec3_set(local_pos, global_pos)
-				mvec3_sub(local_pos, parent_pos)
-				mvec3_rot(local_pos, inv_parent_rot)
-
-				mrot_mul(inv_parent_rot, global_rot)
-				mvec3_set_stat(local_rot_vec, mrot_yaw(inv_parent_rot), mrot_pitch(inv_parent_rot), mrot_roll(inv_parent_rot))
-				
-				local_pos = mvec3_cpy(local_pos)
-				local_rot_vec = mvec3_cpy(local_rot_vec)
-			end
-
-			local peer_id = session:local_peer():id()
-			local tripmine_unit = TripMineBase.spawn(global_pos, global_rot, peer_id, bits, payload_mode, specials_only)
-			local tripmine_base = tripmine_unit:base()
-			tripmine_base:set_active(true, player_unit, true)
-			
-			tripmine_base:attach_to_enemy(hit_unit, local_pos, local_rot_vec, parent_obj)
-			
-			managers.network:session():send_to_peers_synched("sync_spawn_attach_trip_mine", tripmine_unit, hit_unit, body or nil, parent_obj or nil, local_pos or global_pos, local_rot_vec or normal, peer_id, bits, payload_mode, specials_only)
-		end
+	if col_ray then
+		local hit_unit = col_ray.unit
 		
-		--self:_handle_hiding_and_destroying(true,nil)
-	else
+		local player = managers.player:local_player()
+		local eq_ext = player:equipment()
 		
-		-- place tripmine on geometry surface
-		if Network:is_client() then
-			session:send_to_host("place_trip_mine", position, normal, bits, payload_mode, specials_only)
-		else	
-			local rot = tmp_rot1
-			mrot_set_look_at(rot, normal, math_up)
-
-			local tripmine_unit = TripMineBase.spawn(position, rot, session:local_peer():id(), bits, payload_mode, specials_only)
-			tripmine_unit:base():set_active(true, player_unit)
-			
+		if not alive(hit_unit) or not hit_unit:in_slot(managers.slot:get_mask("enemies")) then
+			hit_unit = nil
 		end
+		success = eq_ext:use_trip_mine(col_ray,hit_unit)
 	end
 	
-	self:_handle_hiding_and_destroying(true,nil)
+	if success then
+		self:_handle_hiding_and_destroying(true,nil)
+	end
 	
-	return true
+	return success
 end
 
 -- tcd function
