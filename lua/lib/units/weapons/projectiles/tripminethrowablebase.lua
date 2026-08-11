@@ -51,18 +51,13 @@ local body_idstr = idstr_func("body")
 
 function TripmineThrowableBase:_handle_hiding_and_destroying(destroy,destruction_delay,...)
 	self._collided = true
-	if destroy then
-		self._destroyed = true -- allow this to be called from multiple places, but only executed once
-		
-		if self._timeout_clbk_id then
-			managers.enemy:remove_delayed_clbk(self._timeout_clbk_id)
-			self._timeout_clbk_id = nil
-		end
-		
-		if not self._destroyed and alive(self._unit) then
-			self:set_active(false)
-			return TripmineThrowableBase.super._handle_hiding_and_destroying(self,destroy,destruction_delay,...)
-		end
+	if self._timeout_clbk_id then
+		managers.enemy:remove_delayed_clbk(self._timeout_clbk_id)
+		self._timeout_clbk_id = nil
+	end
+	if alive(self._unit) then
+		self:set_active(false)
+		return TripmineThrowableBase.super._handle_hiding_and_destroying(self,destroy,destruction_delay,...)
 	end
 end
 
@@ -109,6 +104,7 @@ function TripmineThrowableBase:throw(params,...)
 	
 	TripmineThrowableBase.super.throw(self,params,...)
 
+	--[[
 	if params.projectile_entry and tweak_data.projectiles[params.projectile_entry] then
 		local push_at_body_index = tweak_data.projectiles[params.projectile_entry].push_at_body_index
 		local body = self._unit:body(push_at_body_index)
@@ -116,6 +112,7 @@ function TripmineThrowableBase:throw(params,...)
 			self._rotatey_body = body
 		end
 	end
+	--]]
 end
 
 
@@ -230,9 +227,7 @@ end
 -- tcd function
 -- only called as host when another player's tripmine is removed
 function TripmineThrowableBase:_husk_on_collision(...)
-	if not self._destroyed then
-		self:_handle_hiding_and_destroying(true,nil)
-	end
+	self:_handle_hiding_and_destroying(true,nil)
 end
 
 -- diesel physics collision callback
@@ -307,7 +302,6 @@ function TripmineThrowableBase:update(unit, t, dt)
 		mvector3.set(mvec2, self._velocity * dt)
 		mvector3.add(mvec1, mvec2)
 		self._unit:set_position(mvec1)
-
 		if self._orient_to_vel then
 			mrotation.set_look_at(mrot1, mvec2, math.UP)
 			self._unit:set_rotation(mrot1)
@@ -315,14 +309,6 @@ function TripmineThrowableBase:update(unit, t, dt)
 
 		self._velocity = Vector3(self._velocity.x, self._velocity.y, self._velocity.z - 980 * dt)
 		
-		if self._rotatey_body then
-			local _body = self._rotatey_body
-			local rotation = _body:rotation()
-			local yaw = rotation:yaw()
-			local pitch = rotation:pitch() - (dt * 360)
-			local roll = rotation:roll()
-			_body:set_rotation(Rotation(yaw,pitch,roll + (dt * 30)))
-		end
 	end
 	
 	if self._sweep_data and not self._collided then
