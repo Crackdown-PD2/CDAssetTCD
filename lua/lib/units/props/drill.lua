@@ -353,7 +353,6 @@ Hooks:OverrideFunction(Drill,"on_sabotage_SO_started",function(self,saboteur)
 						end
 					end
 					--log("Sabotime end")
-					managers.enemy:add_delayed_clbk(remove_icon_clbk_id,function() managers.hud:remove_waypoint(waypoint_id) end,gametimer:time() + tweak_data.upgrades.values.player.drill_shock_tase_time)
 				end,
 				gametimer:time() + 0.5
 			)
