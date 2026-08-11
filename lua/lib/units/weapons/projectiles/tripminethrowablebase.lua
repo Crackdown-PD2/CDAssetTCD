@@ -48,17 +48,22 @@ local world_g = World
 local idstr_func = Idstring
 local body_idstr = idstr_func("body")
 
-function TripmineThrowableBase:_handle_hiding_and_destroying(...)
-	if self._timeout_clbk_id then
-		managers.enemy:remove_delayed_clbk(self._timeout_clbk_id)
-		self._timeout_clbk_id = nil
-	end
-	if not self._destroyed then
-		TripmineThrowableBase.super._handle_hiding_and_destroying(self,...)
-	end
-	self:set_active(false)
-	self._destroyed = true -- allow this to be called from multiple places, but only executed once
+
+function TripmineThrowableBase:_handle_hiding_and_destroying(destroy,destruction_delay,...)
 	self._collided = true
+	if destroy then
+		self._destroyed = true -- allow this to be called from multiple places, but only executed once
+		
+		if self._timeout_clbk_id then
+			managers.enemy:remove_delayed_clbk(self._timeout_clbk_id)
+			self._timeout_clbk_id = nil
+		end
+		
+		if not self._destroyed and alive(self._unit) then
+			self:set_active(false)
+			return TripmineThrowableBase.super._handle_hiding_and_destroying(self,destroy,destruction_delay,...)
+		end
+	end
 end
 
 function TripmineThrowableBase:refund_throwable()
@@ -309,17 +314,17 @@ function TripmineThrowableBase:update(unit, t, dt)
 		end
 
 		self._velocity = Vector3(self._velocity.x, self._velocity.y, self._velocity.z - 980 * dt)
+		
+		if self._rotatey_body then
+			local _body = self._rotatey_body
+			local rotation = _body:rotation()
+			local yaw = rotation:yaw()
+			local pitch = rotation:pitch() - (dt * 360)
+			local roll = rotation:roll()
+			_body:set_rotation(Rotation(yaw,pitch,roll + (dt * 30)))
+		end
 	end
 	
-	if self._rotatey_body then
-		local _body = self._rotatey_body
-		local rotation = _body:rotation()
-		local yaw = rotation:yaw()
-		local pitch = rotation:pitch() - (dt * 360)
-		local roll = rotation:roll()
-		_body:set_rotation(Rotation(yaw,pitch,roll + (dt * 30)))
-	end
-
 	if self._sweep_data and not self._collided then
 		self._unit:m_position(self._sweep_data.current_pos)
 
