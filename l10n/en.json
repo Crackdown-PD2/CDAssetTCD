@@ -307,7 +307,7 @@
 	"menu_third_degree" : "Third Degree",
 	"menu_third_degree_desc" : "BASIC: ##$basic##\nYour $ICN_ARD Area Denial effects last ##+50%## longer.\n\nACE: ##$pro##\nYou and your $ICN_ARD Area Denial effects deal ##+25%## more damage to enemies that are on fire.",
 	"menu_cheap_trick" : "Cheap Trick",
-	"menu_cheap_trick_desc" : "BASIC: ##$basic##\nEvery ##50## Ammo Boxes grants you ##+1## $ICN_GRN Grenade.\n\nACE: ##$pro##\n(NOT YET IMPLEMENTED)\n\nYou gain the ability to throw Trip Mines. To throw a Trip Mine, release $BTN_THROW_GRENADE while aiming the Trip Mine outside of its placement range.",
+	"menu_cheap_trick_desc" : "BASIC: ##$basic##\nYou gain the ability to throw Trip Mines. To throw a Trip Mine, release $BTN_THROW_GRENADE while aiming the Trip Mine outside of its placement range.\n\nACE: ##$pro##\nEvery ##50## Ammo Boxes grants you ##+1## $ICN_GRN Grenade.",
 	"menu_special_toys" : "Special Toys",
 	"menu_special_toys_desc" : "BASIC: ##$basic##\n$ICN_SPC Specialist Weapons gain ##+25%## more Ammunition and ##+30%## Reload Speed.\n\nACE: ##$pro##\nAllows $ICN_SPC Specialist Weapons to gain Ammunition from gathered Ammo Boxes.",
 	"menu_smart_bombs" : "Smart Bombs",

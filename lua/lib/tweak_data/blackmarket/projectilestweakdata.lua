@@ -60,7 +60,8 @@ Hooks:PostHook(BlackMarketTweakData, "_init_projectiles", "tcd_projectiletd_init
 		primary_class = nil,
 		subclasses = {},
 		throw_skill_check = { category = "first_aid_kit", upgrade = "can_throw" },
-		unitcast_skill_check = { category = "first_aid_kit", upgrade = "deploy_auto_recovery" }
+		unitcast_skill_check = { category = "first_aid_kit", upgrade = "deploy_auto_recovery" },
+		quantity_skill_check = { category = "player", upgrade = "fak_throwable_quantity_increase" }
 	}
 	table.insert(self._projectiles_index,#self._projectiles_index+1,"fak_throwable")
 	

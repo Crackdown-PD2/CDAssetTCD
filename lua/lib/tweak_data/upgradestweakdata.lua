@@ -606,9 +606,28 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 		}
 	}
 	
-	self.values.first_aid_kit.quantity = {
+	
+	self.values.player.fak_throwable_quantity_increase = {
 		2, -- + 4 = 6 total
 		6  -- + 4 = 10 total
+	}
+	self.definitions.player_fak_throwable_quantity_increase_1 = {
+		name_id = "menu_incaseoftrouble",
+		category = "feature",
+		upgrade = {
+			value = 1,
+			upgrade = "fak_throwable_quantity_increase",
+			category = "player"
+		}
+	}
+	self.definitions.player_fak_throwable_quantity_increase_2 = {
+		name_id = "menu_incaseoftrouble",
+		category = "feature",
+		upgrade = {
+			value = 2,
+			upgrade = "fak_throwable_quantity_increase",
+			category = "player"
+		}
 	}
 	
 	self.values.first_aid_kit.first_aid_kit_auto_recovery = {
@@ -2599,14 +2618,14 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 	self.values.trip_mine.stuck_enemy_damage_mul = {3}
 
 		--Have a Blast Aced
-	self.values.player.grenades_amount_increase_mul = {1.33}
-	self.definitions.player_grenades_amount_increase_mul = {
+	self.values.class_grenade.amount_increase_mul = {1.33}
+	self.definitions.class_grenade_amount_increase_mul = {
 		name_id = "menu_have_blast_aced",
 		category = "feature",
 		upgrade = {
 			value = 1,
-			upgrade = "grenades_amount_increase_mul",
-			category = "player"
+			upgrade = "amount_increase_mul",
+			category = "class_grenade"
 		}
 	}
 	

@@ -363,13 +363,13 @@ Hooks:PostHook(SkillTreeTweakData, "init", "tcd_skilltreetd_init", function(self
 	replace_skill(tree_indices.medic,2,{ --In Case Of Trouble
 		{
 			upgrades = {
-				"first_aid_kit_quantity_increase_1"
+				"player_fak_throwable_quantity_increase_1"
 			},
 			cost = self.costs.hightier
 		},
 		{
 			upgrades = {
-				"first_aid_kit_quantity_increase_2"
+				"player_fak_throwable_quantity_increase_2"
 			},
 			cost = self.costs.hightierpro
 		},
@@ -1860,7 +1860,7 @@ Hooks:PostHook(SkillTreeTweakData, "init", "tcd_skilltreetd_init", function(self
 		},
 		{
 			upgrades = {
-				"player_grenades_amount_increase_mul"
+				"class_grenade_amount_increase_mul"
 --					"trip_mine_stuck_dozer_stun",
 --					"trip_mine_stuck_dozer_damage_vulnerability"
 			},

@@ -816,19 +816,14 @@ function PlayerManager:get_max_grenades(grenade_id)
 --		local max_amount = tweak_data:get_raw_value("blackmarket", "projectiles", grenade_id, "max_amount") or 0
 	if gtd then 
 		max_amount = gtd.max_amount or max_amount
-		if gtd.throwable then
-			if gtd.is_a_grenade then 
-				max_amount = math.round(max_amount * self:upgrade_value("player","grenades_amount_increase_mul",1))
-			else
-				max_amount = math.round(max_amount * self:upgrade_value("class_throwing","throwing_amount_increase_mul",1))
-			end
+		if gtd.primary_class then
+			max_amount = math.round(max_amount * self:upgrade_value(gtd.primary_class,"amount_increase_mul",1))
 		end
 		max_amount = managers.modifiers:modify_value("PlayerManager:GetThrowablesMaxAmount", max_amount)
 		
-		if gtd.override_equipment_id then
-			if tweak_data.upgrades.values[gtd.override_equipment_id] then
-				max_amount = max_amount + self:upgrade_value(gtd.override_equipment_id,"quantity",0)
-			end
+		-- no other throwables have specific 
+		if gtd.quantity_skill_check then
+			max_amount = max_amount + self:upgrade_value(gtd.quantity_skill_check.category,gtd.quantity_skill_check.upgrade,0)
 		end
 		
 	end
