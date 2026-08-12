@@ -149,6 +149,7 @@ Hooks:PostHook(BlackMarketTweakData, "_init_projectiles", "tcd_projectiletd_init
 	self.projectiles.dada_com.primary_class = "class_grenade"
 	self.projectiles.dada_com.subclasses = {}
 	self.projectiles.dada_com.no_cheat_count = true
+	self.projectiles.dada_com.num_submunitions = 7
 	
 	self.projectiles.concussion.impact_detonation = true
 	self.projectiles.concussion.max_amount = 6

@@ -83,7 +83,8 @@
 		<animation path="anims/fps/unarmed/throw_fak_throwable_idle" force="true" load="true" unload="false"/>
 		<animation path="anims/fps/unarmed/throw_fak_throwable_equip" force="true" load="true" unload="false"/>
 		
-	
+	<!-- Matryoshka Grenade -->
+		<unit path="units/pd2_dlc_mtl/weapons/wpn_fps_thr_dada/wpn_third_thr_dada"/>
 		
 	<!-- Large weapon class/subclass icon assets -->
 		<texture path="guis/textures/pd2/blackmarket/icons/tcd/class_grenade"  force="false"/>

@@ -78,9 +78,9 @@ tweak_data.projectiles.dada_com.slot_mask_id = "bullet_impact_targets"
 tweak_data.projectiles.dada_com.damage = 40
 tweak_data.projectiles.dada_com.player_damage = 10
 tweak_data.projectiles.dada_com.range = 200
-tweak_data.projectiles.dada_com.child_clusters = 7
+--tweak_data.projectiles.dada_com.child_clusters = 7
+tweak_data.projectiles.dada_com.sound_event = "grenade_explode"
 --tweak_data.projectiles.dada_com.launch_speed = 1500
---cluster splitting not yet implemented
 
 --concussion
 tweak_data.projectiles.concussion._cant_be_shot_to_detonate = true

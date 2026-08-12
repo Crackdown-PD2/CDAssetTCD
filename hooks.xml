@@ -81,6 +81,7 @@
 
 	<hook post="true" file="lib/units/weapons/grenades/concussiongrenade.lua" source_file="lib/units/weapons/grenades/concussiongrenade"/>
 	<hook post="true" file="lib/units/weapons/grenades/fraggrenade.lua" source_file="lib/units/weapons/grenades/fraggrenade"/>
+	<hook post="true" file="lib/units/weapons/grenades/clustergrenadebase.lua" source_file="lib/units/weapons/grenades/fraggrenade"/>
 	<hook post="true" file="lib/units/weapons/grenades/incendiaryburstgrenade.lua" source_file="lib/units/weapons/grenades/incendiaryburstgrenade"/>
 	
 	<hook post="true" file="lib/units/contourext.lua" source_file="lib/units/contourext"/>
