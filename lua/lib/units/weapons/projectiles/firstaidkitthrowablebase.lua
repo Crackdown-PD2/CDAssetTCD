@@ -47,6 +47,9 @@ local world_g = World
 local idstr_func = Idstring
 local body_idstr = idstr_func("body")
 
+FirstAidKitThrowableBase.MAX_DEPLOY_ANGLE_NORMAL = 55 -- cannot land on a slope steeper than this many degrees
+FirstAidKitThrowableBase.MAX_DEPLOY_ANGLE_DIRECTION = 90 -- cannot land if it is currently moving upward (aka if its azimuth is greater than 0)
+
 function FirstAidKitThrowableBase:init(...)
 	FirstAidKitThrowableBase.super.init(self,...)
 	self._wall_raycast = 50 -- 50cm; likely to bounce when angle of attack is close to parallel with impact surface
@@ -56,63 +59,46 @@ function FirstAidKitThrowableBase:init(...)
 end
 
 function FirstAidKitThrowableBase:_on_collision(col_ray)
-	local success
-	--Print("Collision")
-	local position = col_ray.position
-	local normal = col_ray.normal
 	
+	local success = false
 	
---	Draw:brush(Color(1,0,0.5):with_alpha(0.7),10):cone(position + (normal * 100),position, 3) -- draw normal
---	Draw:brush(Color(1,0,1):with_alpha(0.1),10):cylinder(position, position + col_ray.velocity, 2) -- draw velocity ray
-
-	local revivable_unit = nil
+	if col_ray then
 	
-	local closest_rev_dis = managers.player:upgrade_value("first_aid_kit", "deploy_auto_recovery",0)
+		-- this check only applies to thrown FAKs;
+		-- regularly deployed FAKs should only need to follow the same restrictions of the preview placement in PlayerEquipment
+		if mvector3.angle(col_ray.normal,math.UP) < FirstAidKitThrowableBase.MAX_DEPLOY_ANGLE_NORMAL and mvector3.angle(col_ray.ray,math.DOWN) < FirstAidKitThrowableBase.MAX_DEPLOY_ANGLE_DIRECTION then
+			-- must land on a valid, relatively flat surface (no mountain goat faks on sheer vertical surfaces)
+			-- cannot land on the underside of a ceiling surface
+			-- a bit of a slope is okay
+			
+			local position = col_ray.position
+			local revivable_unit
+			
+			local player = managers.player:local_player()
+			local eq_ext = player:equipment()
+			
+			local closest_rev_dis = managers.player:upgrade_value("first_aid_kit", "deploy_auto_recovery",0)
 
-	if closest_rev_dis > 0 then
-		local nearby_criminals = world_g:find_units_quick("sphere" , position, closest_rev_dis, managers.slot:get_mask("criminals_no_deployables"))
+			if closest_rev_dis > 0 then
+				local nearby_criminals = world_g:find_units_quick("sphere" , position, closest_rev_dis, managers.slot:get_mask("criminals_no_deployables"))
 
-		for i = 1, #nearby_criminals do
-			local criminal = nearby_criminals[i]
-			local ext_mov = criminal:movement()
+				for i = 1, #nearby_criminals do
+					local criminal = nearby_criminals[i]
+					local ext_mov = criminal:movement()
 
-			if ext_mov and ext_mov.downed and ext_mov:downed() then
-				local dis = mvec3_dis(position, ext_mov:m_pos())
+					if ext_mov and ext_mov.downed and ext_mov:downed() then
+						local dis = mvec3_dis(position, ext_mov:m_pos())
 
-				if dis < closest_rev_dis then
-					closest_rev_dis = dis
-					revivable_unit = criminal
+						if dis < closest_rev_dis then
+							closest_rev_dis = dis
+							revivable_unit = criminal
+						end
+					end
 				end
 			end
+			
+			success = eq_ext:use_first_aid_kit(col_ray,revivable_unit)
 		end
-	end
-	
-	if mvector3.angle(normal,math.UP) < 50 and mvector3.angle(col_ray.ray,math.DOWN) < 90 then
-		-- must land on a valid, relatively flat surface (no mountain goat faks on sheer vertical surfaces)
-		-- cannot land on the underside of a ceiling surface
-		-- a bit of a slope is okay
-		local session = managers.network:session()
-		if not session then return end -- prevent edge case crash if projectile lands after game ends
-		local player_unit = managers.player:local_player()
-		
-		if Network:is_server() then
-			success = player_unit:equipment():use_first_aid_kit(col_ray,revivable_unit)
-		else
-			-- send place fak request
-			local upgrade_lvl = managers.player:upgrade_level("first_aid_kit", "damage_overshield", 0)
-			local auto_recovery = managers.player:upgrade_level("first_aid_kit", "first_aid_kit_auto_recovery", 0)
-			local bits = Bitwise:lshift(auto_recovery, FirstAidKitBase.auto_recovery_shift) + Bitwise:lshift(upgrade_lvl, FirstAidKitBase.upgrade_lvl_shift)
-			
-			mrot_set_look_at(tmp_rot1, normal, math_up)
-			mrot_set(tmp_rot2, mrot_yaw(tmp_rot1), 0, 0)
-			
-			session:send_to_host("place_deployable_bag", "FirstAidKitBase", position, tmp_rot1, bits)
-			
-			-- assume we succeeded; if the 
-			success = true
-		end
-	else
-		success = false
 	end
 	
 	if success then

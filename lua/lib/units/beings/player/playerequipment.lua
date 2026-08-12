@@ -175,6 +175,7 @@ function PlayerEquipment:use_first_aid_kit(ray,criminal_to_revive)
 		local overshield_upgrade_lvl = managers.player:upgrade_level("first_aid_kit","damage_overshield",0)
 		local session = managers.network:session()
 		if criminal_to_revive and alive_g(criminal_to_revive) then
+			-- revive teammate
 			if criminal_to_revive ~= self._unit then
 				PlayerStandard.say_line(self, "f36x_any")
 				
@@ -210,18 +211,10 @@ function PlayerEquipment:use_first_aid_kit(ray,criminal_to_revive)
 				criminal_to_revive:character_damage():_on_use_first_aid_kit(overshield_upgrade_lvl)
 			end
 		else
+			-- deploy on world geometry
 			local pos = ray.position
 			local rot = tmp_rot1
-			local fwd = tmp_vec1
-			local yawrot = tmp_rot2
-			local direction = ray.ray or ray.direction or -ray.normal
-			
-			mrot_set_look_at(yawrot,direction,math_up)
-			mrot_set(yawrot,yawrot:yaw(),0,0)
-			mvec3_set(fwd,math_left)
-			mvec3_rot(fwd,yawrot)
-			mvec3_cross(fwd,ray.normal,fwd)
-			mrot_set_look_at(rot,fwd,math_up)
+			PlayerEquipment.check_fak_rot(ray,rot)
 			
 			PlayerStandard.say_line(self, "s12")
 
@@ -291,7 +284,7 @@ function PlayerEquipment:valid_shape_placement(equipment_id, equipment_data,can_
 
 	local slot_manager = managers.slot
 	local slotmask = slot_manager:get_mask("trip_mine_placeables")
-	local ray = unit:raycast("ray", from, to, "slot_mask", slotmask, "ray_type", "equipment_placement")
+	local ray = unit:raycast("ray", from, to, "slot_mask", slotmask) -- "ray_type", "equipment_placement")
 	local valid = ray and true or false
 	local dummy_unit = self._dummy_unit
 	local revivable_unit = nil
@@ -302,6 +295,8 @@ function PlayerEquipment:valid_shape_placement(equipment_id, equipment_data,can_
 		if valid then
 			local dummy_pos = ray.position
 			local dummy_rot = tmp_rot1
+			
+			--[[
 			local yawrot = tmp_rot2
 			local fwd = tmp_vec2
 			mrot_set_look_at(yawrot,ray.ray or ray.direction or -ray.normal,math_up)
@@ -312,6 +307,9 @@ function PlayerEquipment:valid_shape_placement(equipment_id, equipment_data,can_
 			mvec3_rot(fwd,yawrot)
 			mvec3_cross(fwd,ray.normal,fwd)
 			mrot_set_look_at(dummy_rot,fwd,math_up)
+			--]]
+			
+			PlayerEquipment.check_fak_rot(ray,dummy_rot)
 
 			if alive_g(dummy_unit) then
 				dummy_unit:set_position(dummy_pos)
@@ -454,6 +452,7 @@ function PlayerEquipment:valid_look_at_placement(equipment_data, can_place_on_en
 	return ray, stuck_enemy
 end
 
+-- cd func
 -- beware of memory collision- uses tmp_vec4
 -- because this uses the yaw of the direction, 
 -- it may place tripmines at unexpected angles on vertical walls depending on your yaw, 
@@ -483,6 +482,72 @@ function PlayerEquipment.check_trimpine_rot(ray,rot_out)
 	end
 end
 
+-- cd func
+-- uses tmp_vec3 and tmp_vec4
+-- yeah it's not an optimal solution.
+-- too many trig functions.
+-- probably an easier way to do this,
+-- but the rotation axis angle/look at functions eliminate the roll on x-aligned slopes, so i can't use it here
+function PlayerEquipment.check_fak_rot(ray,rot_out)
+	local tmp_rot = rot_out
+	-- same memory allocation,
+	-- but the name tmp_rot will be used to indicate to the reader where the value is temporary
+	-- as it will be thrown out (replaced) with the final calculation
+	
+	local dir = ray.ray or ray.direction or -ray.normal
+	-- set tmp_rot to represent forward direction of the ray
+	mrot_set_look_at(tmp_rot, dir, math_up)
+	
+	local yaw = tmp_rot:yaw()
+	if mvec3_eq(ray.normal,math_up) then
+		-- adjust rotation so it's the same when placing on a flat surface
+		mrot_set(rot_out,0 + tmp_rot:yaw(), 0, 0)
+	else
+		local fwd = tmp_vec4
+		local yawrot = rot_out
+		mrot_set_look_at(yawrot,dir,math_up)
+		mrot_set(yawrot,yawrot:yaw(),0,0)
+		mvec3_set(fwd,math_left)
+		mvec3_rot(fwd,yawrot)
+		mvec3_cross(fwd,ray.normal,fwd)
+		mrot_set_look_at(rot_out,fwd,math_up)
+	--[[ needs fixing
+			local dir_side = Vector3()
+			local dir_fwd = Vector3()
+			mvec3_cross(dir_side,dir,ray.normal) -- left-facing vector (relative to velocity direction)
+			mvector3.normalize(dir_side)
+			Draw:brush(Color(0,1,1):with_alpha(0.1)):cylinder(ray.position,ray.position + dir_fwd * 500,50) -- left
+			mvec3_cross(dir_fwd,dir_side,ray.normal) -- forward-facing vector (downslope, relative to velocity direction)
+			Draw:brush(Color(1,0,1):with_alpha(0.1)):cylinder(ray.position,ray.position + dir_fwd * 500,50) -- forward
+		
+		local dir_yaw = yaw % 360
+		local downslope_fwd = tmp_vec3
+		local downslope_side = tmp_vec4
+		mvec3_cross(downslope_side,ray.normal,math.UP) -- left-facing vector (relative to downslope)
+		mvector3.normalize(downslope_side)
+			Draw:brush(Color.red:with_alpha(0.1)):cylinder(ray.position,ray.position + downslope_side * 500,50) -- left
+		mvec3_cross(downslope_fwd,ray.normal,downslope_side) -- forward-facing vector (downslope), perpendicular to normal
+			Draw:brush(Color.green:with_alpha(0.1)):cylinder(ray.position,ray.position + downslope_fwd * 500,50) -- forward
+		local downslope_yaw = math.atan2(downslope_fwd.y,downslope_fwd.x) % 360
+		
+		local local_yaw = dir_yaw - downslope_yaw - 90
+		
+		local downslope_pitch = math.acos(downslope_fwd.z) - 90
+		local local_pitch = math.cos(local_yaw+180) * downslope_pitch
+		local local_roll = math.sin(local_yaw) * downslope_pitch
+			Console:SetTracker(string.format("dir yaw %i pitch %i roll %i",dir_yaw,math.acos(downslope_fwd.z),downslope_fwd.z),1)
+			--Console:SetTracker(string.format("vec downslope %0.3f %0.3f %0.3f",downslope_fwd.x,downslope_fwd.y,downslope_fwd.z),1)
+			Console:SetTracker(string.format("direction %0.1f %0.1f %0.1f",dir_fwd.x,dir_fwd.y,dir_fwd.z),2)
+			Console:SetTracker(string.format("local rot %i %i %i",local_yaw,local_pitch,local_roll),2)
+		
+		mrot_set(rot_out,local_yaw,local_pitch,local_roll)
+			Console:SetTracker(string.format("final %i %i %i",rot_out:yaw(),rot_out:pitch(),rot_out:roll()),3)
+			Console:SetTracker(string.format("yaws %i %i %i",dir_yaw,downslope_yaw,local_yaw),4)
+	--]]
+	end
+end
+
+-- cd func
 function PlayerEquipment:_check_unit_attach_segment(hit_unit, m_global_pos)
 	local damage_ext = hit_unit:character_damage()
 
