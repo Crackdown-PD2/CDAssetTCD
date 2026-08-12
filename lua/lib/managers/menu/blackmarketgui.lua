@@ -171,6 +171,27 @@ Hooks:PostHook(BlackMarketGuiSlotItem,"init","tcd_bmgui_slotitem_init",function(
 	end
 end)
 
+Hooks:PostHook(BlackMarketGui,"_get_grenade_stats","tcd_bmgui_grenadestats",function(self,name)
+	local base_stats, mods_stats, skill_stats = Hooks:GetReturn()
+	
+	local bm_projectile_data = tweak_data.blackmarket.projectiles[name]
+	
+	if bm_projectile_data.quantity_skill_check then
+		local bonus_add = managers.player:upgrade_value(bm_projectile_data.quantity_skill_check.category,bm_projectile_data.quantity_skill_check.upgrade,0)
+--		local base_amount = base_stats.amount.value
+--		local total_amount = base_amount * bonus_add
+		
+		base_stats.amount.value = base_stats.amount.value + bonus_add
+		--base_stats.amount.value = base_stats.amount.value + (total_amount / base_amount)
+		--skill_stats.amount.value = skill_stats.amount.value + (total_amount / base_amount)
+	elseif bm_projectile_data.primary_class then 
+		base_stats.amount.value = base_stats.amount.value * managers.player:upgrade_value(bm_projectile_data.primary_class,"amount_increase_mul",1)
+		--skill_stats.amount = skill_stats.amount + managers.player:upgrade_value(bm_projectile_data.primary_class,"amount_increase_mul",1)
+	end
+	
+	
+	return base_stats, mods_stats, skill_stats
+end)
 
 --only change is to add icon macros for item descriptions, at: line 1301
 function BlackMarketGui:update_info_text()
