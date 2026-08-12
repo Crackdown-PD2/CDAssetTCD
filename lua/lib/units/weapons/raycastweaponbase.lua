@@ -888,7 +888,7 @@ function InstantBulletBase:on_collision(col_ray, weapon_unit, user_unit, damage,
 				end
 
 				if projectile_td and projectile_td.throwable and not projectile_td.is_a_grenade then 
-				
+					can_pierce_armor = can_pierce_armor or projectile_td.can_pierce_armor
 					if managers.player:has_category_upgrade("class_throwing","throwing_boosts_melee_loop") then 
 						local stacks = managers.player:get_property("shuffle_cut_melee_bonus_damage",0)
 						local max_stacks = managers.player:upgrade_value("class_throwing","throwing_boosts_melee_loop",0)[1]

@@ -13,12 +13,6 @@ function ClusterGrenadeBase:_setup_from_tweak_data(...)
 	return tweak_entry
 end
 
---[[
-function ClusterGrenadeBase:init(unit,...)
-	return ClusterGrenadeBase.super.init(self,unit,...)
-end
---]]
-
 function ClusterGrenadeBase:throw(params)
 	self._owner = params.owner
 	if params.submunitions then
