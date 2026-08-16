@@ -2653,7 +2653,7 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 	
 	
 		--Third Degree Basic
-	self.values.subclass_areadenial.effect_duration_increase_mul = {1.5}
+	self.values.subclass_areadenial.effect_duration_increase_mul = {0.5} -- +50% duration
 	self.definitions.subclass_areadenial_effect_duration_increase_1 = {
 		name_id = "menu_third_degree",
 		category = "feature",

@@ -54,6 +54,8 @@
 	<hook post="true" file="lib/units/enemies/cop/copdamage.lua" source_file="lib/units/enemies/cop/copdamage"/>
 	<hook post="true" file="lib/units/enemies/cop/huskcopdamage.lua" source_file="lib/units/enemies/cop/huskcopdamage"/>
 	
+	<hook post="true" file="lib/units/environment/environmentfire.lua" source_file="lib/units/environment/environmentfire"/>
+	
 	<hook post="true" file="lib/units/equipment/doctor_bag/doctorbagbase.lua" source_file="lib/units/equipment/doctor_bag/doctorbagbase"/>
 	<hook post="true" file="lib/units/equipment/first_aid_kit/firstaidkitbase.lua" source_file="lib/units/equipment/first_aid_kit/firstaidkitbase"/>
 	

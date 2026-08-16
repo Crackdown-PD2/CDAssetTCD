@@ -96,8 +96,7 @@ tweak_data.projectiles.molotov.damage = 0
 tweak_data.projectiles.molotov.player_damage = 5
 tweak_data.projectiles.molotov.range = 250
 --tweak_data.projectiles.molotov.launch_speed = 1500
-tweak_data.projectiles.molotov.burn_duration = 10
---all of this needs to be checked
+tweak_data.projectiles.molotov.burn_duration = 15
 
 --incendiary grenade
 tweak_data.projectiles.fir_com.damage = 0
@@ -106,9 +105,20 @@ tweak_data.projectiles.fir_com._cant_be_shot_to_detonate = true
 tweak_data.projectiles.fir_com.slot_mask_id = "bullet_impact_targets"
 tweak_data.projectiles.fir_com.range = 112.5
 --tweak_data.projectiles.fir_com.launch_speed = 1500
-tweak_data.projectiles.fir_com.burn_duration = 10
---central flame only (no subflame pools) not implemented
---all of this needs to be checked
+tweak_data.projectiles.fir_com.burn_duration = 30
+
+-- various incendiary grenade rounds
+tweak_data.projectiles.launcher_incendiary_arbiter.damage = 5
+tweak_data.projectiles.launcher_incendiary_arbiter.burn_duration = 10
+tweak_data.projectiles.launcher_incendiary.damage = 10
+tweak_data.projectiles.launcher_incendiary.burn_duration = 15
+tweak_data.projectiles.launcher_incendiary_china.damage = 10
+tweak_data.projectiles.launcher_incendiary_china.burn_duration = 15
+tweak_data.projectiles.launcher_incendiary_m32.damage = 10
+tweak_data.projectiles.launcher_incendiary_m32.burn_duration = 15
+tweak_data.projectiles.launcher_incendiary_ms3gl.damage = 5
+tweak_data.projectiles.launcher_incendiary_ms3gl.burn_duration = 10
+
 
 tweak_data.contour.character.civilian_mark_special_color = Vector3(206/255,48/255,0/255)
 tweak_data.contour.character.civilian_mark_standard_color = Vector3(134/255,31/255,0/255)

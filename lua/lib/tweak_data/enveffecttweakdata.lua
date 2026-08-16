@@ -1,3 +1,5 @@
+-- note: burn durations here are overridden by the projectile tweakdata defined in tweakdata.lua
+
 function EnvEffectTweakData:trip_mine_fire()
 	local params = {
 		alert_radius = 15000,
