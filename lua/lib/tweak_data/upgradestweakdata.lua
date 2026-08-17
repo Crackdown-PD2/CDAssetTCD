@@ -2673,8 +2673,8 @@ Hooks:PostHook(UpgradesTweakData, "init", "tcd_upgradestd_init", function(self, 
 		upgrade = {
 			value = 1,
 			upgrade = "effect_doubleroasting_damage_increase_mul",
-			category = "subclass_areadenial",
-			synced = true
+			category = "subclass_areadenial"
+--			synced = true
 		}
 	}
 	
